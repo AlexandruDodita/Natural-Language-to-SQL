@@ -1,0 +1,179 @@
+@import "tailwindcss";
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #2d2d2d;
+  color: #e8e8e8;
+}
+
+#root {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Custom scrollbar - dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Markdown content styling - dark theme */
+.markdown-content {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #e8e8e8;
+}
+
+.markdown-content > * {
+  margin: 0;
+}
+
+.markdown-content > * + * {
+  margin-top: 1em;
+}
+
+.markdown-content p {
+  margin: 0;
+}
+
+.markdown-content p + p {
+  margin-top: 0.75em;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4 {
+  font-weight: 600;
+  line-height: 1.25;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  color: #ffffff;
+}
+
+.markdown-content h1 {
+  font-size: 1.5em;
+}
+
+.markdown-content h2 {
+  font-size: 1.25em;
+}
+
+.markdown-content h3 {
+  font-size: 1.125em;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  padding-left: 1.5em;
+  margin: 0.75em 0;
+}
+
+.markdown-content li {
+  margin: 0.25em 0;
+}
+
+.markdown-content a {
+  color: #7aa7ff;
+  text-decoration: none;
+}
+
+.markdown-content a:hover {
+  text-decoration: underline;
+}
+
+/* Inline code */
+.markdown-content :not(pre) > code {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e8e8e8;
+  padding: 0.125em 0.375em;
+  border-radius: 3px;
+  font-size: 0.875em;
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+}
+
+/* Code blocks */
+.markdown-content pre {
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 0.75em 0;
+}
+
+.markdown-content pre code {
+  color: #e8e8e8;
+  font-size: 0.875em;
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+  line-height: 1.5;
+  background: none;
+  padding: 0;
+}
+
+/* SQL code blocks */
+.markdown-content pre.language-sql {
+  border-left: 2px solid #7aa7ff;
+}
+
+/* Tables */
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 0.875em;
+}
+
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.markdown-content th {
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.markdown-content tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Blockquotes */
+.markdown-content blockquote {
+  border-left: 2px solid rgba(255, 255, 255, 0.2);
+  padding-left: 1em;
+  margin: 1em 0;
+  color: #b8b8b8;
+}
+
+/* Horizontal rule */
+.markdown-content hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 1.5em 0;
+}
