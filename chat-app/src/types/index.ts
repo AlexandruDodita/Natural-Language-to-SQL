@@ -10,6 +10,8 @@ export interface Conversation {
   title: string;
   messages: Message[];
   createdAt: Date;
+  messageCount?: number;
+  lastMessage?: string;
 }
 
 export interface ChatState {

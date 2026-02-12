@@ -39,6 +39,8 @@ class ConversationSummary(BaseModel):
     created_at: datetime
     updated_at: datetime
     user_id: Optional[str] = None
+    message_count: int = 0
+    last_message: Optional[str] = None
 
     class Config:
         from_attributes = True

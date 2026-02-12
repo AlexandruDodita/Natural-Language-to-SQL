@@ -8,6 +8,8 @@ export interface ConversationSummary {
   created_at: string;
   updated_at: string;
   user_id?: string;
+  message_count?: number;
+  last_message?: string;
 }
 
 export interface MessageCreate {
@@ -67,6 +69,8 @@ export const backendApi = {
       title: conv.title,
       createdAt: new Date(conv.created_at),
       messages: [],
+      messageCount: conv.message_count,
+      lastMessage: conv.last_message,
     }));
   },
 

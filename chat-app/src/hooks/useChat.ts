@@ -53,6 +53,7 @@ export function useChat() {
       if (!content.trim() || isStreaming) return;
 
       let conversationId = currentConversationId;
+      let assistantMessageId: string | null = null;
 
       try {
         // Create a new conversation if none exists
@@ -81,8 +82,8 @@ export function useChat() {
           updateConversationTitle(conversationId, content);
         }
 
-      // Create assistant message placeholder
-      const assistantMessageId = crypto.randomUUID();
+        // Create assistant message placeholder
+        assistantMessageId = crypto.randomUUID();
       const assistantMessage: Message = {
         id: assistantMessageId,
         role: 'assistant',
@@ -145,29 +146,31 @@ export function useChat() {
         const errorContent = 'Sorry, there was an error processing your request. Please try again.';
 
         // Update assistant message with error in local state
-        setConversations(prev =>
-          prev.map(conv =>
-            conv.id === conversationId
-              ? {
-                  ...conv,
-                  messages: conv.messages.map(msg =>
-                    msg.id === assistantMessageId
-                      ? { ...msg, content: errorContent }
-                      : msg
-                  ),
-                }
-              : conv
-          )
-        );
+        if (conversationId && assistantMessageId) {
+          setConversations(prev =>
+            prev.map(conv =>
+              conv.id === conversationId
+                ? {
+                    ...conv,
+                    messages: conv.messages.map(msg =>
+                      msg.id === assistantMessageId
+                        ? { ...msg, content: errorContent }
+                        : msg
+                    ),
+                  }
+                : conv
+            )
+          );
 
-        // Try to save error message to backend
-        try {
-          await backendApi.createMessage(conversationId, {
-            role: 'assistant',
-            content: errorContent,
-          });
-        } catch (backendError) {
-          console.error('Error saving error message to backend:', backendError);
+          // Try to save error message to backend
+          try {
+            await backendApi.createMessage(conversationId, {
+              role: 'assistant',
+              content: errorContent,
+            });
+          } catch (backendError) {
+            console.error('Error saving error message to backend:', backendError);
+          }
         }
       } finally {
         setIsStreaming(false);

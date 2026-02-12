@@ -18,11 +18,36 @@ def create_conversation(db: Session, conversation: schemas.ConversationCreate) -
 def get_conversation(db: Session, conversation_id: str) -> Optional[models.Conversation]:
     return db.query(models.Conversation).filter(models.Conversation.id == conversation_id).first()
 
-def get_conversations(db: Session, user_id: Optional[str] = None, skip: int = 0, limit: int = 100) -> List[models.Conversation]:
+def get_conversations(db: Session, user_id: Optional[str] = None, skip: int = 0, limit: int = 100) -> List[dict]:
     query = db.query(models.Conversation)
     if user_id:
         query = query.filter(models.Conversation.user_id == user_id)
-    return query.order_by(models.Conversation.updated_at.desc()).offset(skip).limit(limit).all()
+    conversations = query.order_by(models.Conversation.updated_at.desc()).offset(skip).limit(limit).all()
+
+    # Add message count and last message preview for each conversation
+    result = []
+    for conv in conversations:
+        messages = db.query(models.Message).filter(
+            models.Message.conversation_id == conv.id
+        ).order_by(models.Message.created_at.desc()).limit(1).all()
+
+        message_count = db.query(models.Message).filter(
+            models.Message.conversation_id == conv.id
+        ).count()
+
+        last_message = messages[0].content if messages else None
+
+        result.append({
+            'id': conv.id,
+            'title': conv.title,
+            'created_at': conv.created_at,
+            'updated_at': conv.updated_at,
+            'user_id': conv.user_id,
+            'message_count': message_count,
+            'last_message': last_message
+        })
+
+    return result
 
 def delete_conversation(db: Session, conversation_id: str) -> bool:
     db_conversation = get_conversation(db, conversation_id)

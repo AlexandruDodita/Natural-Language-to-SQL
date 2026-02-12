@@ -7,7 +7,9 @@ interface ConversationItemProps {
 }
 
 export function ConversationItem({ conversation, isActive, onSelect }: ConversationItemProps) {
-  const preview = conversation.messages.length > 0
+  const preview = conversation.lastMessage
+    ? conversation.lastMessage.slice(0, 45)
+    : conversation.messages.length > 0
     ? conversation.messages[conversation.messages.length - 1].content.slice(0, 45)
     : 'Empty conversation';
 
