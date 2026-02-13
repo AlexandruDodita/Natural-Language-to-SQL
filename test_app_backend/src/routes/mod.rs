@@ -1,4 +1,4 @@
-use axum::routing::get;
+use axum::routing::{get, post};
 use axum::Router;
 use sqlx::PgPool;
 
@@ -11,6 +11,7 @@ mod maintenance;
 mod payments;
 mod reservations;
 mod reviews;
+mod sql;
 mod vehicles;
 
 pub fn create_router(pool: PgPool) -> Router {
@@ -37,5 +38,6 @@ pub fn create_router(pool: PgPool) -> Router {
         .route("/api/dashboard/revenue-by-month", get(dashboard::revenue_by_month))
         .route("/api/dashboard/top-vehicles", get(dashboard::top_vehicles))
         .route("/api/dashboard/client-stats", get(dashboard::client_stats))
+        .route("/api/sql", post(sql::execute))
         .with_state(pool)
 }

@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (tabName === 'dashboard') {
             await renderDashboard(content);
+        } else if (tabName === 'sql') {
+            await renderSqlRunner(content);
         } else {
             const config = TABLES[tabName];
             if (config) await renderTable(content, config);
