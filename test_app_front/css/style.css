@@ -186,6 +186,128 @@ th {
     white-space: nowrap;
 }
 
+th.th-sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: color .15s;
+}
+
+th.th-sortable:hover { color: var(--primary); }
+th.th-sorted { color: var(--primary); }
+
+.sort-hint {
+    opacity: .3;
+    font-size: 11px;
+}
+
+/* ── Filter bar ─────────────────────────────── */
+.filter-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+
+.filter-bar-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+}
+
+.search-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    background: var(--bg);
+    transition: border .15s;
+    min-width: 0;
+}
+
+.search-input:focus { border-color: var(--primary); }
+.search-input::placeholder { color: var(--text-muted); opacity: .6; }
+
+.adv-toggle { white-space: nowrap; }
+.adv-toggle-active { background: var(--primary); color: #fff; }
+.adv-toggle-active:hover { background: var(--primary-hover); color: #fff; }
+
+/* ── Advanced panel ─────────────────────────── */
+.adv-panel {
+    border-top: 1px solid var(--border);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    background: var(--bg);
+}
+
+.adv-group-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.adv-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.adv-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 140px;
+}
+
+.adv-field label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.adv-field select,
+.adv-field input {
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 13px;
+    outline: none;
+    background: var(--surface);
+    transition: border .15s;
+}
+
+.adv-field select:focus,
+.adv-field input:focus { border-color: var(--primary); }
+
+.adv-field-range { min-width: 240px; }
+
+.range-inputs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.range-inputs input { flex: 1; min-width: 0; }
+
+.range-sep {
+    font-size: 12px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .adv-row { flex-direction: column; }
+    .adv-field, .adv-field-range { min-width: 100%; }
+}
+
 td {
     padding: 8px 12px;
     border-bottom: 1px solid var(--border);

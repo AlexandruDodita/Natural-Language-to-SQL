@@ -124,11 +124,22 @@ const TABLES = {
 const PAGE_SIZE = 25;
 let currentPage = 0;
 let currentData = [];
+let filteredData = [];
 let currentConfig = null;
+let sortKey = null;
+let sortDir = 'asc';
+let searchQuery = '';
+let advancedFilters = {}; // { key: { min, max } } for number/decimal/date, { key: value } for select
+let advancedOpen = false;
 
 async function renderTable(container, config) {
     currentConfig = config;
     currentPage = 0;
+    sortKey = null;
+    sortDir = 'asc';
+    searchQuery = '';
+    advancedFilters = {};
+    advancedOpen = false;
     container.innerHTML = '<div class="loading">Loading...</div>';
 
     try {
@@ -138,28 +149,226 @@ async function renderTable(container, config) {
         return;
     }
 
+    applyFiltersAndSort();
     renderPage(container);
+}
+
+function applyFiltersAndSort() {
+    const q = searchQuery.toLowerCase().trim();
+
+    filteredData = currentData.filter(row => {
+        // global text search across all columns
+        if (q) {
+            const match = Object.values(row).some(v =>
+                String(v ?? '').toLowerCase().includes(q)
+            );
+            if (!match) return false;
+        }
+
+        // advanced filters
+        for (const [key, filter] of Object.entries(advancedFilters)) {
+            const col = currentConfig.columns.find(c => c.key === key);
+            if (!col) continue;
+            const val = row[key];
+
+            if (col.type === 'select' || col.type === 'boolean') {
+                if (filter.value && String(val) !== filter.value) return false;
+            } else if (col.type === 'date') {
+                if (filter.min && String(val || '') < filter.min) return false;
+                if (filter.max && String(val || '') > filter.max) return false;
+            } else if (col.type === 'number' || col.type === 'decimal') {
+                const num = Number(val);
+                if (filter.min !== '' && filter.min != null && num < Number(filter.min)) return false;
+                if (filter.max !== '' && filter.max != null && num > Number(filter.max)) return false;
+            }
+        }
+
+        return true;
+    });
+
+    if (sortKey) {
+        filteredData.sort((a, b) => {
+            let va = a[sortKey], vb = b[sortKey];
+            if (va == null) va = '';
+            if (vb == null) vb = '';
+            const na = Number(va), nb = Number(vb);
+            if (!isNaN(na) && !isNaN(nb) && va !== '' && vb !== '') {
+                return sortDir === 'asc' ? na - nb : nb - na;
+            }
+            const sa = String(va).toLowerCase(), sb = String(vb).toLowerCase();
+            if (sa < sb) return sortDir === 'asc' ? -1 : 1;
+            if (sa > sb) return sortDir === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }
+}
+
+function handleSort(key) {
+    if (sortKey === key) {
+        sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortKey = key;
+        sortDir = 'asc';
+    }
+    currentPage = 0;
+    applyFiltersAndSort();
+    renderPage(document.getElementById('content'));
+}
+
+function handleSearch(value) {
+    searchQuery = value;
+    currentPage = 0;
+    applyFiltersAndSort();
+    renderPage(document.getElementById('content'));
+    // restore focus and cursor position
+    const el = document.getElementById('global-search');
+    if (el) { el.focus(); el.selectionStart = el.selectionEnd = value.length; }
+}
+
+function toggleAdvanced() {
+    advancedOpen = !advancedOpen;
+    renderPage(document.getElementById('content'));
+}
+
+function updateAdvancedFilter(key, field, value) {
+    if (!advancedFilters[key]) advancedFilters[key] = {};
+    advancedFilters[key][field] = value;
+    currentPage = 0;
+    applyFiltersAndSort();
+    renderPage(document.getElementById('content'));
+}
+
+function clearAllFilters() {
+    searchQuery = '';
+    advancedFilters = {};
+    currentPage = 0;
+    applyFiltersAndSort();
+    renderPage(document.getElementById('content'));
+}
+
+function hasActiveFilters() {
+    if (searchQuery.trim()) return true;
+    return Object.values(advancedFilters).some(f =>
+        (f.value && f.value !== '') || (f.min != null && f.min !== '') || (f.max != null && f.max !== '')
+    );
+}
+
+function buildAdvancedPanel() {
+    const cols = currentConfig.columns.filter(c => c.key !== 'id' && c.type);
+    const groups = [];
+
+    // select/boolean filters
+    const selectCols = cols.filter(c => c.type === 'select' || c.type === 'boolean');
+    if (selectCols.length) {
+        groups.push(`<div class="adv-group">
+            <div class="adv-group-title">Status / Type</div>
+            <div class="adv-row">
+                ${selectCols.map(c => {
+                    const cur = (advancedFilters[c.key] || {}).value || '';
+                    const opts = c.type === 'boolean'
+                        ? ['true', 'false']
+                        : c.options;
+                    const labels = c.type === 'boolean'
+                        ? { 'true': 'Yes', 'false': 'No' }
+                        : null;
+                    return `<div class="adv-field">
+                        <label>${c.label}</label>
+                        <select onchange="updateAdvancedFilter('${c.key}','value',this.value)">
+                            <option value="">All</option>
+                            ${opts.map(o => `<option value="${o}" ${cur === String(o) ? 'selected' : ''}>${labels ? labels[o] : o}</option>`).join('')}
+                        </select>
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>`);
+    }
+
+    // date range filters
+    const dateCols = cols.filter(c => c.type === 'date');
+    if (dateCols.length) {
+        groups.push(`<div class="adv-group">
+            <div class="adv-group-title">Date Ranges</div>
+            <div class="adv-row">
+                ${dateCols.map(c => {
+                    const f = advancedFilters[c.key] || {};
+                    return `<div class="adv-field adv-field-range">
+                        <label>${c.label}</label>
+                        <div class="range-inputs">
+                            <input type="date" value="${f.min || ''}" onchange="updateAdvancedFilter('${c.key}','min',this.value)" title="From">
+                            <span class="range-sep">to</span>
+                            <input type="date" value="${f.max || ''}" onchange="updateAdvancedFilter('${c.key}','max',this.value)" title="To">
+                        </div>
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>`);
+    }
+
+    // number/decimal range filters
+    const numCols = cols.filter(c => c.type === 'number' || c.type === 'decimal');
+    if (numCols.length) {
+        groups.push(`<div class="adv-group">
+            <div class="adv-group-title">Numeric Ranges</div>
+            <div class="adv-row">
+                ${numCols.map(c => {
+                    const f = advancedFilters[c.key] || {};
+                    const step = c.type === 'decimal' ? '0.01' : '1';
+                    return `<div class="adv-field adv-field-range">
+                        <label>${c.label}</label>
+                        <div class="range-inputs">
+                            <input type="number" step="${step}" placeholder="Min" value="${f.min ?? ''}" onchange="updateAdvancedFilter('${c.key}','min',this.value)">
+                            <span class="range-sep">to</span>
+                            <input type="number" step="${step}" placeholder="Max" value="${f.max ?? ''}" onchange="updateAdvancedFilter('${c.key}','max',this.value)">
+                        </div>
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>`);
+    }
+
+    return groups.join('');
 }
 
 function renderPage(container) {
     const config = currentConfig;
-    const totalPages = Math.ceil(currentData.length / PAGE_SIZE);
-    const pageData = currentData.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
+    const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
+    const pageData = filteredData.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
 
     const visibleCols = config.columns.filter(c => c.key !== 'created_at');
 
+    const countLabel = filteredData.length !== currentData.length
+        ? `${filteredData.length} / ${currentData.length}`
+        : `${currentData.length}`;
+
+    const activeFilters = hasActiveFilters();
+    const advChevron = advancedOpen ? '&#9650;' : '&#9660;';
+
     let html = `
         <div class="table-header">
-            <h2>${config.label} <span style="color:var(--text-muted);font-size:14px;font-weight:400">(${currentData.length})</span></h2>
+            <h2>${config.label} <span style="color:var(--text-muted);font-size:14px;font-weight:400">(${countLabel})</span></h2>
             <button class="btn btn-primary" onclick="openCreateModal()">+ New</button>
         </div>
+        <div class="filter-bar">
+            <div class="filter-bar-main">
+                <input type="text" id="global-search" class="search-input" placeholder="Search all columns..." value="${escHtml(searchQuery)}" oninput="handleSearch(this.value)">
+                <button class="btn btn-secondary btn-sm adv-toggle ${advancedOpen ? 'adv-toggle-active' : ''}" onclick="toggleAdvanced()">Advanced ${advChevron}</button>
+                ${activeFilters ? `<button class="btn btn-danger btn-sm" onclick="clearAllFilters()">Clear filters</button>` : ''}
+            </div>
+            ${advancedOpen ? `<div class="adv-panel">${buildAdvancedPanel()}</div>` : ''}
+        </div>
         <table>
-            <thead><tr>
-                ${visibleCols.map(c => `<th>${c.label}</th>`).join('')}
-                <th>Actions</th>
-            </tr></thead>
+            <thead>
+                <tr>
+                    ${visibleCols.map(c => {
+                        const arrow = sortKey === c.key ? (sortDir === 'asc' ? ' &#9650;' : ' &#9660;') : ' <span class="sort-hint">&#8693;</span>';
+                        const cls = sortKey === c.key ? 'th-sortable th-sorted' : 'th-sortable';
+                        return `<th class="${cls}" onclick="handleSort('${c.key}')">${c.label}${arrow}</th>`;
+                    }).join('')}
+                    <th>Actions</th>
+                </tr>
+            </thead>
             <tbody>
-                ${pageData.map(row => `<tr>
+                ${pageData.length === 0 ? `<tr><td colspan="${visibleCols.length + 1}" style="text-align:center;padding:24px;color:var(--text-muted)">No matching records</td></tr>` : pageData.map(row => `<tr>
                     ${visibleCols.map(c => `<td title="${escHtml(String(row[c.key] ?? ''))}">${escHtml(formatCell(row[c.key], c))}</td>`).join('')}
                     <td class="actions">
                         <button class="btn btn-secondary btn-sm" onclick='openEditModal(${row.id})'>Edit</button>
@@ -193,7 +402,7 @@ function prevPage() {
 }
 
 function nextPage() {
-    const totalPages = Math.ceil(currentData.length / PAGE_SIZE);
+    const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
     if (currentPage < totalPages - 1) { currentPage++; renderPage(document.getElementById('content')); }
 }
 
