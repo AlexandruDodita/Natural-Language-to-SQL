@@ -236,8 +236,9 @@ BEGIN
         v_ln := last_names[1 + (random() * (array_length(last_names, 1) - 1))::INTEGER];
         -- Unique email with number suffix
         v_email := lower(v_fn || '.' || v_ln || i::TEXT || '@email.com');
-        v_dob := '1960-01-01'::DATE + (random() * 18000)::INTEGER;  -- ages ~25-65
         v_reg := '2022-01-01'::DATE + (random() * 1095)::INTEGER;   -- 2022-2024
+        -- DOB: 21-65 years before registration date
+        v_dob := v_reg - (21 * 365 + (random() * 44 * 365)::INTEGER);
         v_dl  := 'DL' || lpad(i::TEXT, 6, '0') || chr(65 + (i % 26));
 
         INSERT INTO clients (first_name, last_name, email, phone, drivers_license, date_of_birth, registration_date)
