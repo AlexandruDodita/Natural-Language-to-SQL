@@ -8,7 +8,7 @@ mod routes;
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::init();
+    tracing_subscriber::fmt::init();
 
     let pool = db::create_pool().await;
 

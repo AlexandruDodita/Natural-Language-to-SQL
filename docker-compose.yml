@@ -67,6 +67,27 @@ services:
       timeout: 5s
       retries: 5
 
+  test_app_backend:
+    build: ./test_app_backend
+    container_name: test-app-backend
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@test_app_db:5432/car_rental
+    ports:
+      - "8080:8080"
+    depends_on:
+      test_app_db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  test_app_front:
+    build: ./test_app_front
+    container_name: test-app-front
+    ports:
+      - "3001:80"
+    depends_on:
+      - test_app_backend
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   test_app_db_data:
