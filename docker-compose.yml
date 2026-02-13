@@ -49,16 +49,16 @@ services:
       - backend
     restart: unless-stopped
 
-  test_db:
+  test_app_db:
     image: postgres:15-alpine
-    container_name: test-car-rental-db
+    container_name: test-app-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: car_rental
     volumes:
-      - test_db_data:/var/lib/postgresql/data
-      - ./test_db/init:/docker-entrypoint-initdb.d
+      - test_app_db_data:/var/lib/postgresql/data
+      - ./test_app_db/init:/docker-entrypoint-initdb.d
     ports:
       - "5434:5432"
     healthcheck:
@@ -69,4 +69,4 @@ services:
 
 volumes:
   postgres_data:
-  test_db_data:
+  test_app_db_data:

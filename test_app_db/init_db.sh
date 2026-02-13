@@ -2,14 +2,14 @@
 # ============================================================
 # init_db.sh — Initialize (or reset) the car rental test database
 # Usage:
-#   ./test_db/init_db.sh          # start fresh
-#   ./test_db/init_db.sh --reset  # destroy volume and re-seed
+#   ./test_app_db/init_db.sh          # start fresh
+#   ./test_app_db/init_db.sh --reset  # destroy volume and re-seed
 # ============================================================
 set -euo pipefail
 
 COMPOSE_FILE="$(cd "$(dirname "$0")/.." && pwd)/docker-compose.yml"
-SERVICE="test_db"
-CONTAINER="test-car-rental-db"
+SERVICE="test_app_db"
+CONTAINER="test-app-db"
 DB_NAME="car_rental"
 DB_USER="postgres"
 
@@ -38,7 +38,7 @@ fi
 if [[ "${1:-}" == "--reset" ]]; then
     warn "Resetting test database — destroying volume..."
     $COMPOSE -f "$COMPOSE_FILE" rm -sf "$SERVICE" 2>/dev/null || true
-    docker volume rm licenta_test_db_data 2>/dev/null || docker volume rm ai_test_db_data 2>/dev/null || true
+    docker volume rm licenta_test_app_db_data 2>/dev/null || docker volume rm ai_test_app_db_data 2>/dev/null || true
     ok "Old container and volume removed"
 fi
 

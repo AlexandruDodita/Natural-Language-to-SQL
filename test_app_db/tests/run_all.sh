@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # ============================================================
 # run_all.sh — Execute all test SQL files against the test DB
-# Usage:  ./test_db/tests/run_all.sh
+# Usage:  ./test_app_db/tests/run_all.sh
 # ============================================================
 set -uo pipefail
 
-CONTAINER="test-car-rental-db"
+CONTAINER="test-app-db"
 DB_NAME="car_rental"
 DB_USER="postgres"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -30,7 +30,7 @@ echo ""
 # Check container is running
 if ! docker inspect "$CONTAINER" >/dev/null 2>&1; then
     echo -e "${RED}[ERROR] Container '$CONTAINER' is not running.${NC}"
-    echo "  Start it with: ./test_db/init_db.sh"
+    echo "  Start it with: ./test_app_db/init_db.sh"
     exit 1
 fi
 

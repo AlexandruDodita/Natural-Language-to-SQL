@@ -1,0 +1,16 @@
+[package]
+name = "test_app_backend"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = "0.8"
+tokio = { version = "1", features = ["full"] }
+sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "chrono", "rust_decimal"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", features = ["serde"] }
+rust_decimal = { version = "1", features = ["serde-with-str"] }
+tower-http = { version = "0.6", features = ["cors"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
