@@ -34,19 +34,29 @@ services:
       - ./backend:/app
     restart: unless-stopped
 
+  rag-service:
+    build: ./rag-service
+    container_name: rag-service
+    environment:
+      GEMINI_API_KEY: ${VITE_GEMINI_API_KEY}
+      GEMINI_MODEL: ${VITE_MODEL:-gemini-2.0-flash}
+    ports:
+      - "8100:8100"
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./chat-app
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: http://localhost:8000
-        VITE_GEMINI_API_KEY: ${VITE_GEMINI_API_KEY}
-        VITE_MODEL: ${VITE_MODEL:-gemini-3-flash-preview}
+        VITE_RAG_URL: http://localhost:8100
     container_name: chat-app-frontend
     ports:
       - "3000:80"
     depends_on:
       - backend
+      - rag-service
     restart: unless-stopped
 
   test_app_db:

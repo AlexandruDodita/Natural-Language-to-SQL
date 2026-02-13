@@ -1,11 +1,6 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Message } from '../types';
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const MODEL = import.meta.env.VITE_MODEL || 'gemini-3-flash';
-
-// Initialize the Gemini AI client
-const genAI = new GoogleGenerativeAI(API_KEY);
+const RAG_URL = import.meta.env.VITE_RAG_URL || 'http://localhost:8100';
 
 export interface StreamResponse {
   chunk: string;
@@ -15,73 +10,65 @@ export interface StreamResponse {
 export async function* streamChat(
   messages: Message[]
 ): AsyncGenerator<StreamResponse, void, undefined> {
-  try {
-    if (!API_KEY) {
-      throw new Error('Gemini API key is not configured. Please set VITE_GEMINI_API_KEY in your .env file.');
-    }
+  const body = {
+    messages: messages.map(m => ({
+      role: m.role,
+      content: m.content,
+    })),
+  };
 
-    // Get the generative model
-    const model = genAI.getGenerativeModel({ model: MODEL });
+  const response = await fetch(`${RAG_URL}/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
 
-    // Convert messages to Gemini format
-    // Gemini expects alternating user/model messages
-    const history = messages.slice(0, -1).map(msg => ({
-      role: msg.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: msg.content }],
-    }));
-
-    const lastMessage = messages[messages.length - 1];
-
-    // Start a chat session with history
-    const chat = model.startChat({
-      history,
-    });
-
-    // Stream the response
-    const result = await chat.sendMessageStream(lastMessage.content);
-
-    // Yield chunks as they arrive
-    for await (const chunk of result.stream) {
-      const text = chunk.text();
-      if (text) {
-        yield { chunk: text, done: false };
-      }
-    }
-
-    // Signal completion
-    yield { chunk: '', done: true };
-  } catch (error) {
-    console.error('Gemini API error:', error);
-    throw error;
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`RAG service error: ${err}`);
   }
+
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error('No response body');
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+
+    // Parse SSE lines
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const data = line.slice(6);
+
+      if (data === '[DONE]') {
+        yield { chunk: '', done: true };
+        return;
+      }
+
+      if (data.startsWith('[ERROR]')) {
+        throw new Error(data.slice(8));
+      }
+
+      yield { chunk: data, done: false };
+    }
+  }
+
+  yield { chunk: '', done: true };
 }
 
-// Fallback non-streaming function
 export async function sendMessage(messages: Message[]): Promise<string> {
-  try {
-    if (!API_KEY) {
-      throw new Error('Gemini API key is not configured. Please set VITE_GEMINI_API_KEY in your .env file.');
-    }
-
-    const model = genAI.getGenerativeModel({ model: MODEL });
-
-    // Convert messages to Gemini format
-    const history = messages.slice(0, -1).map(msg => ({
-      role: msg.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: msg.content }],
-    }));
-
-    const lastMessage = messages[messages.length - 1];
-
-    const chat = model.startChat({
-      history,
-    });
-
-    const result = await chat.sendMessage(lastMessage.content);
-    const response = await result.response;
-    return response.text();
-  } catch (error) {
-    console.error('Gemini API error:', error);
-    throw error;
+  let result = '';
+  for await (const { chunk, done } of streamChat(messages)) {
+    if (done) break;
+    result += chunk;
   }
+  return result;
 }

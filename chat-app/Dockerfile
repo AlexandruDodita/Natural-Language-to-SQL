@@ -14,12 +14,10 @@ COPY . .
 
 # Set build-time environment variables
 ARG VITE_API_BASE_URL=http://localhost:8000
-ARG VITE_GEMINI_API_KEY
-ARG VITE_MODEL=gemini-3-flash-preview
+ARG VITE_RAG_URL=http://localhost:8100
 
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
-ENV VITE_GEMINI_API_KEY=$VITE_GEMINI_API_KEY
-ENV VITE_MODEL=$VITE_MODEL
+ENV VITE_RAG_URL=$VITE_RAG_URL
 
 # Build the application
 RUN npm run build
