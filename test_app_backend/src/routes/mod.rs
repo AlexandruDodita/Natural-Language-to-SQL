@@ -1,6 +1,21 @@
+use axum::extract::FromRef;
 use axum::routing::{get, post};
 use axum::Router;
 use sqlx::PgPool;
+
+#[derive(Clone)]
+pub struct AppState {
+    pub pool: PgPool,
+    pub readonly_pool: PgPool,
+}
+
+// Allows existing handlers with State(pool): State<PgPool> to keep working
+// unchanged — axum calls PgPool::from_ref(&state) which returns state.pool.
+impl FromRef<AppState> for PgPool {
+    fn from_ref(state: &AppState) -> Self {
+        state.pool.clone()
+    }
+}
 
 mod categories;
 mod clients;
@@ -14,7 +29,7 @@ mod reviews;
 mod sql;
 mod vehicles;
 
-pub fn create_router(pool: PgPool) -> Router {
+pub fn create_router(state: AppState) -> Router {
     Router::new()
         .route("/api/locations", get(locations::list).post(locations::create))
         .route("/api/locations/{id}", get(locations::get_one).put(locations::update).delete(locations::delete))
@@ -39,5 +54,5 @@ pub fn create_router(pool: PgPool) -> Router {
         .route("/api/dashboard/top-vehicles", get(dashboard::top_vehicles))
         .route("/api/dashboard/client-stats", get(dashboard::client_stats))
         .route("/api/sql", post(sql::execute))
-        .with_state(pool)
+        .with_state(state)
 }

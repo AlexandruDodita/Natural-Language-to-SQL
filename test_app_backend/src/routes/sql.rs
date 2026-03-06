@@ -7,6 +7,8 @@ use sqlx::postgres::PgRow;
 use sqlx::{Column, PgPool, Row, TypeInfo};
 use std::time::Instant;
 
+use super::AppState;
+
 #[derive(Deserialize)]
 pub struct SqlRequest {
     query: String,
@@ -25,20 +27,74 @@ struct SqlError {
     error: String,
 }
 
+const BLOCKED_KEYWORDS: &[&str] = &[
+    "INSERT", "UPDATE", "DELETE", "DROP", "CREATE", "ALTER",
+    "TRUNCATE", "GRANT", "REVOKE", "EXECUTE", "CALL", "MERGE",
+    "REPLACE", "COPY",
+];
+
+fn validate_readonly_sql(query: &str) -> Result<(), String> {
+    let trimmed = query.trim();
+
+    if trimmed.is_empty() {
+        return Err("Empty query".to_string());
+    }
+
+    // Reject multiple statements: strip trailing semicolon then check for any remaining one
+    let without_trailing = trimmed.trim_end_matches(';').trim();
+    if without_trailing.contains(';') {
+        return Err("Multiple statements are not allowed".to_string());
+    }
+
+    // First keyword must be SELECT
+    let first_keyword = trimmed
+        .split_whitespace()
+        .next()
+        .unwrap_or("")
+        .to_uppercase();
+
+    if first_keyword != "SELECT" {
+        return Err(format!(
+            "Only SELECT statements are allowed, got '{}'",
+            first_keyword
+        ));
+    }
+
+    // Scan all words for blocked keywords (whole-word match)
+    let upper = trimmed.to_uppercase();
+    for keyword in BLOCKED_KEYWORDS {
+        if let Some(pos) = upper.find(keyword) {
+            let before_ok = pos == 0
+                || !upper.as_bytes()[pos - 1].is_ascii_alphanumeric();
+            let after = pos + keyword.len();
+            let after_ok = after >= upper.len()
+                || !upper.as_bytes()[after].is_ascii_alphanumeric();
+            if before_ok && after_ok {
+                return Err(format!("Keyword '{}' is not allowed", keyword));
+            }
+        }
+    }
+
+    Ok(())
+}
+
 pub async fn execute(
-    State(pool): State<PgPool>,
+    State(state): State<AppState>,
     Json(req): Json<SqlRequest>,
 ) -> impl IntoResponse {
     let query = req.query.trim();
-    if query.is_empty() {
+
+    if let Err(reason) = validate_readonly_sql(query) {
         return (
-            StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({"error": "Empty query"})),
+            StatusCode::FORBIDDEN,
+            Json(serde_json::json!({"error": reason})),
         );
     }
 
+    let pool: &PgPool = &state.readonly_pool;
+
     let start = Instant::now();
-    let result = sqlx::query(query).fetch_all(&pool).await;
+    let result = sqlx::query(query).fetch_all(pool).await;
     let duration_ms = start.elapsed().as_secs_f64() * 1000.0;
 
     match result {
@@ -138,7 +194,6 @@ fn pg_value_to_json(row: &PgRow, idx: usize) -> serde_json::Value {
         _ => {}
     }
 
-    // fallback: try as string
     if let Ok(v) = row.try_get::<Option<String>, _>(idx) {
         return match v {
             Some(val) => serde_json::json!(val),

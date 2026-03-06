@@ -11,13 +11,15 @@ async fn main() {
     tracing_subscriber::fmt::init();
 
     let pool = db::create_pool().await;
+    let readonly_pool = db::create_readonly_pool().await;
 
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods(Any)
         .allow_headers(Any);
 
-    let app = routes::create_router(pool).layer(cors);
+    let state = routes::AppState { pool, readonly_pool };
+    let app = routes::create_router(state).layer(cors);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
     tracing::info!("Listening on {}", addr);
