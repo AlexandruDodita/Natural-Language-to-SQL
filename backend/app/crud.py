@@ -1,8 +1,11 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
+import os
 
 from app import models, schemas
+
+SQL_META_TTL_HOURS = int(os.getenv("SQL_META_TTL_HOURS", "48"))
 
 # Conversation CRUD operations
 def create_conversation(db: Session, conversation: schemas.ConversationCreate) -> models.Conversation:
@@ -71,6 +74,19 @@ def create_message(db: Session, conversation_id: str, message: schemas.MessageCr
         content=message.content
     )
     db.add(db_message)
+    db.flush()  # get the id before committing
+
+    if message.sql_meta and (message.sql_meta.sql_query or message.sql_meta.blocked):
+        db_sql_meta = models.MessageSqlMeta(
+            message_id=db_message.id,
+            sql_query=message.sql_meta.sql_query,
+            row_count=message.sql_meta.row_count,
+            duration_ms=message.sql_meta.duration_ms,
+            blocked=message.sql_meta.blocked,
+            expires_at=datetime.utcnow() + timedelta(hours=SQL_META_TTL_HOURS),
+        )
+        db.add(db_sql_meta)
+
     db.commit()
     db.refresh(db_message)
 
@@ -80,6 +96,21 @@ def create_message(db: Session, conversation_id: str, message: schemas.MessageCr
     return db_message
 
 def get_messages(db: Session, conversation_id: str) -> List[models.Message]:
-    return db.query(models.Message).filter(
+    messages = db.query(models.Message).filter(
         models.Message.conversation_id == conversation_id
     ).order_by(models.Message.created_at.asc()).all()
+
+    # Expire sql_meta in-memory so the response omits it without touching the row
+    now = datetime.utcnow()
+    for msg in messages:
+        if msg.sql_meta and msg.sql_meta.expires_at < now:
+            msg.sql_meta = None
+
+    return messages
+
+def delete_expired_sql_meta(db: Session) -> int:
+    deleted = db.query(models.MessageSqlMeta).filter(
+        models.MessageSqlMeta.expires_at < datetime.utcnow()
+    ).delete()
+    db.commit()
+    return deleted

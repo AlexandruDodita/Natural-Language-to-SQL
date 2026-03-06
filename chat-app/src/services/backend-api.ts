@@ -15,11 +15,32 @@ export interface ConversationSummary {
 export interface MessageCreate {
   role: 'user' | 'assistant';
   content: string;
+  sql_meta?: {
+    sql_query: string | null;
+    row_count: number | null;
+    duration_ms: number | null;
+    blocked: string | null;
+  } | null;
 }
 
 export interface ConversationCreate {
   title: string;
   user_id?: string;
+}
+
+function mapMessage(msg: any): Message {
+  return {
+    id: msg.id,
+    role: msg.role,
+    content: msg.content,
+    timestamp: new Date(msg.created_at),
+    sqlMeta: msg.sql_meta ? {
+      sql: msg.sql_meta.sql_query,
+      row_count: msg.sql_meta.row_count,
+      duration_ms: msg.sql_meta.duration_ms,
+      blocked: msg.sql_meta.blocked,
+    } : undefined,
+  };
 }
 
 export const backendApi = {
@@ -42,12 +63,7 @@ export const backendApi = {
       id: conversation.id,
       title: conversation.title,
       createdAt: new Date(conversation.created_at),
-      messages: (conversation.messages || []).map((msg: any) => ({
-        id: msg.id,
-        role: msg.role,
-        content: msg.content,
-        timestamp: new Date(msg.created_at),
-      })),
+      messages: (conversation.messages || []).map(mapMessage),
     };
   },
 
@@ -86,12 +102,7 @@ export const backendApi = {
       id: conversation.id,
       title: conversation.title,
       createdAt: new Date(conversation.created_at),
-      messages: (conversation.messages || []).map((msg: any) => ({
-        id: msg.id,
-        role: msg.role,
-        content: msg.content,
-        timestamp: new Date(msg.created_at),
-      })),
+      messages: (conversation.messages || []).map(mapMessage),
     };
   },
 
@@ -120,12 +131,7 @@ export const backendApi = {
     }
 
     const msg = await response.json();
-    return {
-      id: msg.id,
-      role: msg.role,
-      content: msg.content,
-      timestamp: new Date(msg.created_at),
-    };
+    return mapMessage(msg);
   },
 
   async getMessages(conversationId: string): Promise<Message[]> {
@@ -136,11 +142,6 @@ export const backendApi = {
     }
 
     const messages = await response.json();
-    return messages.map((msg: any) => ({
-      id: msg.id,
-      role: msg.role,
-      content: msg.content,
-      timestamp: new Date(msg.created_at),
-    }));
+    return messages.map(mapMessage);
   },
 };

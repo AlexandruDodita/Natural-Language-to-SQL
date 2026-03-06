@@ -151,9 +151,18 @@ export function useChat() {
 
         // Save assistant message to backend after streaming is complete
         if (accumulatedContent) {
+          const currentMsgs = conversations.find(c => c.id === conversationId)?.messages ?? [];
+          const assistantMsg = currentMsgs.find(m => m.id === assistantMessageId);
+          const meta = assistantMsg?.sqlMeta;
           await backendApi.createMessage(conversationId, {
             role: 'assistant',
             content: accumulatedContent,
+            sql_meta: meta ? {
+              sql_query: meta.sql ?? null,
+              row_count: meta.row_count ?? null,
+              duration_ms: meta.duration_ms ?? null,
+              blocked: meta.blocked ?? null,
+            } : null,
           });
         }
       } catch (error) {

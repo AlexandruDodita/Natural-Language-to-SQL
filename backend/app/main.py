@@ -1,17 +1,43 @@
 
 
+import asyncio
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from app import models, schemas, crud
-from app.database import engine, get_db
+from app.database import engine, get_db, SessionLocal
+
+logger = logging.getLogger(__name__)
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Chat App API")
+async def _cleanup_loop():
+    """Delete expired sql_meta rows once per hour."""
+    while True:
+        await asyncio.sleep(3600)
+        db = SessionLocal()
+        try:
+            deleted = crud.delete_expired_sql_meta(db)
+            if deleted:
+                logger.info("Cleaned up %d expired sql_meta rows", deleted)
+        except Exception as e:
+            logger.error("sql_meta cleanup error: %s", e)
+        finally:
+            db.close()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(_cleanup_loop())
+    yield
+    task.cancel()
+
+app = FastAPI(title="Chat App API", lifespan=lifespan)
 
 # Configure CORS
 app.add_middleware(

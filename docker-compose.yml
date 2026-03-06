@@ -26,6 +26,7 @@ services:
     container_name: chat-app-backend
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/chat_app
+      SQL_META_TTL_HOURS: ${SQL_META_TTL_HOURS:-48}
     ports:
       - "8000:8000"
     depends_on:
