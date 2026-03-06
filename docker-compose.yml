@@ -41,8 +41,11 @@ services:
     environment:
       GEMINI_API_KEY: ${VITE_GEMINI_API_KEY}
       GEMINI_MODEL: ${VITE_MODEL:-gemini-2.0-flash}
+      SQL_BACKEND_URL: http://test_app_backend:8080
     ports:
       - "8100:8100"
+    depends_on:
+      - test_app_backend
     restart: unless-stopped
 
   frontend:
