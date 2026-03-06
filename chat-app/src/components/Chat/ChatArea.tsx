@@ -6,10 +6,11 @@ interface ChatAreaProps {
   messages: Message[];
   isStreaming: boolean;
   onSendMessage: (content: string) => void;
+  onRetry: () => void;
   onToggleSidebar: () => void;
 }
 
-export function ChatArea({ messages, isStreaming, onSendMessage, onToggleSidebar }: ChatAreaProps) {
+export function ChatArea({ messages, isStreaming, onSendMessage, onRetry, onToggleSidebar }: ChatAreaProps) {
   return (
     <div className="flex-1 flex flex-col bg-[#2d2d2d] relative">
       {/* Mobile header */}
@@ -27,7 +28,7 @@ export function ChatArea({ messages, isStreaming, onSendMessage, onToggleSidebar
       </div>
 
       {/* Messages */}
-      <MessageList messages={messages} isStreaming={isStreaming} />
+      <MessageList messages={messages} isStreaming={isStreaming} onRetry={onRetry} />
 
       {/* Input */}
       <ChatInput onSendMessage={onSendMessage} disabled={isStreaming} />

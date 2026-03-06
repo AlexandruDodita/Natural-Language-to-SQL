@@ -134,6 +134,15 @@ export const backendApi = {
     return mapMessage(msg);
   },
 
+  async deleteMessage(conversationId: string, messageId: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/conversations/${conversationId}/messages/${messageId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to delete message');
+    }
+  },
+
   async getMessages(conversationId: string): Promise<Message[]> {
     const response = await fetch(`${API_BASE_URL}/conversations/${conversationId}/messages/`);
 

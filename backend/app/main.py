@@ -79,6 +79,17 @@ def get_conversation(
         raise HTTPException(status_code=404, detail="Conversation not found")
     return db_conversation
 
+@app.delete("/conversations/{conversation_id}/messages/{message_id}")
+def delete_message(
+    conversation_id: str,
+    message_id: str,
+    db: Session = Depends(get_db)
+):
+    success = crud.delete_message(db, conversation_id, message_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Message not found")
+    return {"message": "Message deleted successfully"}
+
 @app.delete("/conversations/{conversation_id}")
 def delete_conversation(
     conversation_id: str,

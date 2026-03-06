@@ -6,10 +6,17 @@ import { useAutoScroll } from '../../hooks/useAutoScroll';
 interface MessageListProps {
   messages: Message[];
   isStreaming: boolean;
+  onRetry: () => void;
 }
 
-export function MessageList({ messages, isStreaming }: MessageListProps) {
+export function MessageList({ messages, isStreaming, onRetry }: MessageListProps) {
   const scrollRef = useAutoScroll<HTMLDivElement>(messages.length);
+
+  // Find the index of the last user message for the retry button
+  let lastUserMsgIdx = -1;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === 'user') { lastUserMsgIdx = i; break; }
+  }
 
   return (
     <div
@@ -28,16 +35,20 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
           </div>
         </div>
       ) : (
-        <>
-          <div>
-            {messages.map(message => (
-              <MessageBubble key={message.id} message={message} />
-            ))}
-          </div>
+        <div className="flex flex-col gap-5 pt-5 pb-4">
+          {messages.map((message, idx) => (
+            <MessageBubble
+              key={message.id}
+              message={message}
+              isLastUserMessage={idx === lastUserMsgIdx}
+              isStreaming={isStreaming}
+              onRetry={onRetry}
+            />
+          ))}
           {isStreaming && messages[messages.length - 1]?.role === 'user' && (
             <TypingIndicator />
           )}
-        </>
+        </div>
       )}
     </div>
   );

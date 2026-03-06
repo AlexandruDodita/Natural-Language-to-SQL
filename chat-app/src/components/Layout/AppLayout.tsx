@@ -11,6 +11,7 @@ export function AppLayout() {
     currentConversationId,
     isStreaming,
     sendMessage,
+    retryLastMessage,
     createNewConversation,
     selectConversation,
   } = useChat();
@@ -51,6 +52,7 @@ export function AppLayout() {
         messages={currentConversation?.messages || []}
         isStreaming={isStreaming}
         onSendMessage={sendMessage}
+        onRetry={retryLastMessage}
         onToggleSidebar={handleToggleSidebar}
       />
     </div>

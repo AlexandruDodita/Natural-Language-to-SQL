@@ -108,6 +108,17 @@ def get_messages(db: Session, conversation_id: str) -> List[models.Message]:
 
     return messages
 
+def delete_message(db: Session, conversation_id: str, message_id: str) -> bool:
+    msg = db.query(models.Message).filter(
+        models.Message.id == message_id,
+        models.Message.conversation_id == conversation_id,
+    ).first()
+    if not msg:
+        return False
+    db.delete(msg)
+    db.commit()
+    return True
+
 def delete_expired_sql_meta(db: Session) -> int:
     deleted = db.query(models.MessageSqlMeta).filter(
         models.MessageSqlMeta.expires_at < datetime.utcnow()

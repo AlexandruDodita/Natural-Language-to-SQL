@@ -1,5 +1,7 @@
 import type { Conversation } from '../../types';
 
+const DEBUG = import.meta.env.VITE_DEBUG === 'true';
+
 interface ConversationItemProps {
   conversation: Conversation;
   isActive: boolean;
@@ -22,8 +24,13 @@ export function ConversationItem({ conversation, isActive, onSelect }: Conversat
           : 'text-white/60 hover:bg-white/5 hover:text-white/80'
       }`}
     >
-      <div className="truncate font-medium">
-        {conversation.title}
+      <div className="flex items-center gap-1 min-w-0">
+        <span className="truncate font-medium flex-1">{conversation.title}</span>
+        {DEBUG && (
+          <span className="flex-shrink-0 text-[10px] font-mono text-yellow-500/60 ml-1">
+            {conversation.id.slice(0, 8)}
+          </span>
+        )}
       </div>
       <div className={`text-xs truncate mt-0.5 ${isActive ? 'text-white/50' : 'text-white/40'}`}>
         {preview}

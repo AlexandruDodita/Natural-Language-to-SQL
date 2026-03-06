@@ -48,6 +48,9 @@ function SqlDebugPanel({ meta }: { meta: SqlMeta }) {
 
 interface MessageBubbleProps {
   message: Message;
+  isLastUserMessage?: boolean;
+  isStreaming?: boolean;
+  onRetry?: () => void;
 }
 
 interface CodeBlockProps {
@@ -86,15 +89,22 @@ function CodeBlock({ children, className }: CodeBlockProps) {
   );
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+export function MessageBubble({ message, isLastUserMessage, isStreaming, onRetry }: MessageBubbleProps) {
   const isUser = message.role === 'user';
+  const showRetry = isUser && isLastUserMessage && !isStreaming && onRetry;
 
   return (
-    <div className="w-full px-4 py-4 flex justify-center">
+    <div className="w-full px-4 flex justify-center">
       <div className="w-full max-w-3xl">
         <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+          <div className="relative group/bubble max-w-[85%]">
+          {DEBUG && (
+            <span className={`absolute -top-5 ${isUser ? 'right-0' : 'left-0'} text-[10px] font-mono text-yellow-500/50 opacity-0 group-hover/bubble:opacity-100 transition-opacity pointer-events-none whitespace-nowrap`}>
+              {message.id}
+            </span>
+          )}
           <div
-            className={`max-w-[85%] ${isUser ? 'bg-[#404040] rounded-2xl rounded-br-md' : 'bg-[#353535] rounded-2xl rounded-bl-md'} shadow-lg border ${isUser ? 'border-white/10' : 'border-white/5'}`}
+            className={`${isUser ? 'bg-[#404040] rounded-2xl rounded-br-md border-white/10' : message.isError ? 'bg-[#3d2020] rounded-2xl rounded-bl-md border-red-900/40' : 'bg-[#353535] rounded-2xl rounded-bl-md border-white/5'} shadow-lg border`}
             style={{
               paddingLeft: isUser ? '24px' : '28px',
               paddingRight: isUser ? '24px' : '28px',
@@ -104,6 +114,8 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           >
             {isUser ? (
               <p className="text-[15px] text-white/90 leading-relaxed whitespace-pre-wrap">{message.content}</p>
+            ) : message.isError ? (
+              <p className="text-[15px] text-red-400 leading-relaxed whitespace-pre-wrap">{message.content}</p>
             ) : message.content === '' ? (
               <div className="flex items-center gap-1 py-1">
                 <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0ms', animationDuration: '1.2s' }} />
@@ -140,7 +152,23 @@ export function MessageBubble({ message }: MessageBubbleProps) {
               </div>
             )}
           </div>
+          </div>
         </div>
+        {showRetry && (
+          <div className="flex justify-end mt-1.5">
+            <button
+              onClick={onRetry}
+              className="flex items-center gap-1 text-[12px] text-white/35 hover:text-white/70 transition-colors"
+              aria-label="Retry message"
+            >
+              <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+              </svg>
+              Retry
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

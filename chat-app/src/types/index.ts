@@ -11,6 +11,7 @@ export interface Message {
   content: string;
   timestamp: Date;
   sqlMeta?: SqlMeta;
+  isError?: boolean;
 }
 
 export interface Conversation {

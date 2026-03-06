@@ -179,7 +179,7 @@ export function useChat() {
                     ...conv,
                     messages: conv.messages.map(msg =>
                       msg.id === assistantMessageId
-                        ? { ...msg, content: errorContent }
+                        ? { ...msg, content: errorContent, isError: true }
                         : msg
                     ),
                   }
@@ -203,6 +203,107 @@ export function useChat() {
     },
     [currentConversationId, isStreaming, conversations, createNewConversation, updateConversationTitle]
   );
+
+  const retryLastMessage = useCallback(async () => {
+    if (!currentConversationId || isStreaming) return;
+
+    const conversation = conversations.find(c => c.id === currentConversationId);
+    if (!conversation || conversation.messages.length === 0) return;
+
+    // Find the last user message
+    const messages = conversation.messages;
+    let lastUserMsgIdx = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'user') { lastUserMsgIdx = i; break; }
+    }
+    if (lastUserMsgIdx === -1) return;
+
+    // Delete any messages that came after it (assistant response) from backend
+    const toDelete = messages.slice(lastUserMsgIdx + 1);
+    for (const msg of toDelete) {
+      try {
+        await backendApi.deleteMessage(currentConversationId, msg.id);
+      } catch (e) {
+        console.error('Error deleting message for retry:', e);
+      }
+    }
+
+    const assistantMessageId = crypto.randomUUID();
+    const trimmedMessages = [
+      ...messages.slice(0, lastUserMsgIdx + 1),
+      { id: assistantMessageId, role: 'assistant' as const, content: '', timestamp: new Date() },
+    ];
+
+    setConversations(prev =>
+      prev.map(conv =>
+        conv.id === currentConversationId ? { ...conv, messages: trimmedMessages } : conv
+      )
+    );
+    setIsStreaming(true);
+
+    const messagesToSend = messages.slice(0, lastUserMsgIdx + 1);
+    let accumulatedContent = '';
+    let capturedSqlMeta: Message['sqlMeta'] = undefined;
+
+    try {
+      for await (const { chunk, done, sqlMeta } of streamChat(messagesToSend)) {
+        if (done) break;
+
+        if (sqlMeta !== undefined) {
+          capturedSqlMeta = sqlMeta;
+          setConversations(prev =>
+            prev.map(conv =>
+              conv.id === currentConversationId
+                ? { ...conv, messages: conv.messages.map(m => m.id === assistantMessageId ? { ...m, sqlMeta } : m) }
+                : conv
+            )
+          );
+          continue;
+        }
+
+        accumulatedContent += chunk;
+        setConversations(prev =>
+          prev.map(conv =>
+            conv.id === currentConversationId
+              ? { ...conv, messages: conv.messages.map(m => m.id === assistantMessageId ? { ...m, content: accumulatedContent } : m) }
+              : conv
+          )
+        );
+      }
+
+      if (accumulatedContent) {
+        await backendApi.createMessage(currentConversationId, {
+          role: 'assistant',
+          content: accumulatedContent,
+          sql_meta: capturedSqlMeta ? {
+            sql_query: capturedSqlMeta.sql ?? null,
+            row_count: capturedSqlMeta.row_count ?? null,
+            duration_ms: capturedSqlMeta.duration_ms ?? null,
+            blocked: capturedSqlMeta.blocked ?? null,
+          } : null,
+        });
+      }
+    } catch (error) {
+      console.error('Error retrying message:', error);
+      const errorContent = 'Sorry, there was an error processing your request. Please try again.';
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.id === currentConversationId
+            ? {
+                ...conv,
+                messages: conv.messages.map(msg =>
+                  msg.id === assistantMessageId
+                    ? { ...msg, content: errorContent, isError: true }
+                    : msg
+                ),
+              }
+            : conv
+        )
+      );
+    } finally {
+      setIsStreaming(false);
+    }
+  }, [currentConversationId, isStreaming, conversations]);
 
   const selectConversation = useCallback(async (conversationId: string) => {
     setCurrentConversationId(conversationId);
@@ -241,6 +342,7 @@ export function useChat() {
     isStreaming,
     isLoading,
     sendMessage,
+    retryLastMessage,
     createNewConversation,
     selectConversation,
     deleteConversation,
