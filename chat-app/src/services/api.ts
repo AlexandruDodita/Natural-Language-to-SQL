@@ -12,10 +12,12 @@ export async function* streamChat(
   messages: Message[]
 ): AsyncGenerator<StreamResponse, void, undefined> {
   const body = {
-    messages: messages.map(m => ({
-      role: m.role,
-      content: m.content,
-    })),
+    messages: messages
+      .filter(m => m.content.trim() !== '')
+      .map(m => ({
+        role: m.role,
+        content: m.content,
+      })),
   };
 
   const response = await fetch(`${RAG_URL}/chat`, {
@@ -68,7 +70,11 @@ export async function* streamChat(
         continue;
       }
 
-      yield { chunk: data, done: false };
+      try {
+        yield { chunk: JSON.parse(data), done: false };
+      } catch {
+        yield { chunk: data, done: false };
+      }
     }
   }
 

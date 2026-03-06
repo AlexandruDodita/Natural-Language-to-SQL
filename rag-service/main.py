@@ -99,6 +99,7 @@ You have access to live data from the company database.
 Answer the user's question naturally and concisely based on the data provided.
 If the data is a table, summarise the key findings rather than listing every row unless asked.
 Format numbers clearly (e.g. currency with 2 decimal places).
+Do NOT include, repeat, or show the SQL query in your response — only present the results in plain language.
 """
 
 
@@ -275,8 +276,7 @@ async def chat(req: ChatRequest):
     if sql_result_text:
         answer_context = (
             f"The user asked: {last_message}\n\n"
-            f"SQL run: `{sql_query}`\n\n"
-            f"Results:\n{sql_result_text}"
+            f"Database results:\n{sql_result_text}"
         )
     else:
         answer_context = last_message
@@ -291,7 +291,8 @@ async def chat(req: ChatRequest):
             response = answer_chat.send_message(answer_prompt, stream=True)
             for chunk in response:
                 if chunk.text:
-                    yield f"data: {chunk.text}\n\n"
+                    # JSON-encode the chunk so multi-line text stays on one SSE line
+                    yield f"data: {json.dumps(chunk.text)}\n\n"
             yield "data: [DONE]\n\n"
         except Exception as e:
             logger.error("Gemini streaming error: %s", e)
