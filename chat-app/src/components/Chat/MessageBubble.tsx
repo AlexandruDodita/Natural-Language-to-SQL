@@ -91,6 +91,8 @@ function CodeBlock({ children, className }: CodeBlockProps) {
 
 export function MessageBubble({ message, isLastUserMessage, isStreaming, onRetry }: MessageBubbleProps) {
   const isUser = message.role === 'user';
+  const hasSqlLeak = !isUser && /```sql/i.test(message.content);
+  const isError = message.isError || hasSqlLeak;
   const showRetry = isUser && isLastUserMessage && !isStreaming && onRetry;
   const [copiedId, setCopiedId] = useState(false);
   const handleCopyId = useCallback(async () => {
@@ -110,7 +112,7 @@ export function MessageBubble({ message, isLastUserMessage, isStreaming, onRetry
               </span>
             )}
             <div
-              className={`max-w-[85vw] md:max-w-[680px] ${isUser ? 'bg-[#404040] rounded-2xl rounded-br-md border-white/10' : message.isError ? 'bg-[#3d2020] rounded-2xl rounded-bl-md border-red-900/40' : 'bg-[#353535] rounded-2xl rounded-bl-md border-white/5'} shadow-lg border`}
+              className={`max-w-[85vw] md:max-w-[680px] ${isUser ? 'bg-[#404040] rounded-2xl rounded-br-md border-white/10' : isError ? 'bg-[#3d2020] rounded-2xl rounded-bl-md border-red-900/40' : 'bg-[#353535] rounded-2xl rounded-bl-md border-white/5'} shadow-lg border`}
               style={{
                 paddingLeft: isUser ? '24px' : '28px',
                 paddingRight: isUser ? '24px' : '28px',
@@ -120,7 +122,7 @@ export function MessageBubble({ message, isLastUserMessage, isStreaming, onRetry
             >
               {isUser ? (
                 <p className="text-[15px] text-white/90 leading-relaxed whitespace-pre-wrap">{message.content}</p>
-              ) : message.isError ? (
+              ) : isError ? (
                 <p className="text-[15px] text-red-400 leading-relaxed whitespace-pre-wrap">{message.content}</p>
               ) : message.content === '' ? (
                 <div className="flex items-center gap-1 py-1">

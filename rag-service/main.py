@@ -171,12 +171,20 @@ def validate_sql(sql: str) -> str | None:
     return None
 
 
-async def _generate_sql(model, last_message: str) -> dict:
+async def _generate_sql(model, history: list[dict], last_message: str) -> dict:
     """Turn 1: ask the model for SQL. Returns {sql, reasoning}."""
+    # Build a condensed history summary for context (role + first 200 chars)
+    history_text = ""
+    if history:
+        lines = []
+        for msg in history[-6:]:  # last 3 exchanges
+            role = "Assistant" if msg["role"] == "model" else "User"
+            text = msg["parts"][0][:200].replace("\n", " ")
+            lines.append(f"{role}: {text}")
+        history_text = "\n".join(lines) + "\n\n"
+
     chat = model.start_chat(history=[])
-    # Prepend the system prompt as the very first user turn for models
-    # that don't support a dedicated system role via start_chat.
-    prompt = f"{SQL_SYSTEM_PROMPT}\n\nUser question: {last_message}"
+    prompt = f"{SQL_SYSTEM_PROMPT}\n\n{history_text}User question: {last_message}"
     response = chat.send_message(prompt)
     raw = response.text.strip()
 
@@ -246,7 +254,7 @@ async def chat(req: ChatRequest):
     sql_result_text = None
     sql_query = None
     try:
-        sql_data = await _generate_sql(model, last_message)
+        sql_data = await _generate_sql(model, history, last_message)
         sql_query = sql_data.get("sql")
         logger.info("SQL decision — query: %s | reasoning: %s", sql_query, sql_data.get("reasoning"))
     except Exception as e:

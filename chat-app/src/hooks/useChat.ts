@@ -154,7 +154,7 @@ export function useChat() {
           const currentMsgs = conversations.find(c => c.id === conversationId)?.messages ?? [];
           const assistantMsg = currentMsgs.find(m => m.id === assistantMessageId);
           const meta = assistantMsg?.sqlMeta;
-          await backendApi.createMessage(conversationId, {
+          const savedMessage = await backendApi.createMessage(conversationId, {
             role: 'assistant',
             content: accumulatedContent,
             sql_meta: meta ? {
@@ -164,6 +164,19 @@ export function useChat() {
               blocked: meta.blocked ?? null,
             } : null,
           });
+          // Replace placeholder UUID with the real DB-assigned ID
+          setConversations(prev =>
+            prev.map(conv =>
+              conv.id === conversationId
+                ? {
+                    ...conv,
+                    messages: conv.messages.map(msg =>
+                      msg.id === assistantMessageId ? { ...msg, id: savedMessage.id } : msg
+                    ),
+                  }
+                : conv
+            )
+          );
         }
       } catch (error) {
         console.error('Error sending message:', error);
@@ -272,7 +285,7 @@ export function useChat() {
       }
 
       if (accumulatedContent) {
-        await backendApi.createMessage(currentConversationId, {
+        const savedMessage = await backendApi.createMessage(currentConversationId, {
           role: 'assistant',
           content: accumulatedContent,
           sql_meta: capturedSqlMeta ? {
@@ -282,6 +295,19 @@ export function useChat() {
             blocked: capturedSqlMeta.blocked ?? null,
           } : null,
         });
+        // Replace placeholder UUID with the real DB-assigned ID
+        setConversations(prev =>
+          prev.map(conv =>
+            conv.id === currentConversationId
+              ? {
+                  ...conv,
+                  messages: conv.messages.map(msg =>
+                    msg.id === assistantMessageId ? { ...msg, id: savedMessage.id } : msg
+                  ),
+                }
+              : conv
+          )
+        );
       }
     } catch (error) {
       console.error('Error retrying message:', error);
