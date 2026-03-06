@@ -2,6 +2,9 @@ import os
 import json
 import logging
 import httpx
+import sqlparse
+from sqlparse.sql import Statement
+from sqlparse.tokens import Keyword, DDL, DML
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -130,6 +133,43 @@ def _build_history(messages: list[MessageIn]) -> tuple[list[dict], str]:
     return history, messages[-1].content
 
 
+BLOCKED_KEYWORDS = {
+    "INSERT", "UPDATE", "DELETE", "DROP", "CREATE", "ALTER",
+    "TRUNCATE", "GRANT", "REVOKE", "EXECUTE", "CALL", "MERGE",
+    "REPLACE", "UPSERT", "COPY",
+}
+
+
+def validate_sql(sql: str) -> str | None:
+    """
+    Returns None if the SQL is safe (read-only SELECT).
+    Returns an error string describing the problem otherwise.
+    """
+    statements = sqlparse.parse(sql.strip())
+
+    if len(statements) == 0:
+        return "Empty query."
+
+    if len(statements) > 1:
+        return "Multiple statements are not allowed."
+
+    stmt: Statement = statements[0]
+
+    # Check the top-level statement type
+    stmt_type = stmt.get_type()
+    if stmt_type != "SELECT":
+        return f"Statement type '{stmt_type}' is not allowed — only SELECT is permitted."
+
+    # Walk every token and block any dangerous keywords regardless of position
+    # (catches things like SELECT ... INTO, subquery abuse, etc.)
+    for token in stmt.flatten():
+        upper = token.normalized.upper()
+        if token.ttype in (Keyword, DDL, DML) and upper in BLOCKED_KEYWORDS:
+            return f"Keyword '{upper}' is not allowed."
+
+    return None
+
+
 async def _generate_sql(model, last_message: str) -> dict:
     """Turn 1: ask the model for SQL. Returns {sql, reasoning}."""
     chat = model.start_chat(history=[])
@@ -211,15 +251,20 @@ async def chat(req: ChatRequest):
     except Exception as e:
         logger.error("SQL generation failed: %s", e)
 
-    # -- Turn 2 (optional): execute SQL --
+    # -- Turn 2 (optional): validate then execute SQL --
     if sql_query:
-        try:
-            result = await _execute_sql(sql_query)
-            sql_result_text = _format_results(result)
-            logger.info("SQL executed successfully — %d rows", result.get("row_count", 0))
-        except Exception as e:
-            logger.error("SQL execution failed: %s", e)
-            sql_result_text = f"SQL execution error: {e}"
+        validation_error = validate_sql(sql_query)
+        if validation_error:
+            logger.warning("SQL blocked by validator: %s | query: %s", validation_error, sql_query)
+            sql_result_text = f"SQL blocked: {validation_error}"
+        else:
+            try:
+                result = await _execute_sql(sql_query)
+                sql_result_text = _format_results(result)
+                logger.info("SQL executed successfully — %d rows", result.get("row_count", 0))
+            except Exception as e:
+                logger.error("SQL execution failed: %s", e)
+                sql_result_text = f"SQL execution error: {e}"
 
     # -- Turn 3: stream the final answer --
     if sql_result_text:
