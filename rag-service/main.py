@@ -252,19 +252,24 @@ async def chat(req: ChatRequest):
         logger.error("SQL generation failed: %s", e)
 
     # -- Turn 2 (optional): validate then execute SQL --
+    sql_meta: dict = {"sql": sql_query, "row_count": None, "duration_ms": None, "blocked": None}
     if sql_query:
         validation_error = validate_sql(sql_query)
         if validation_error:
             logger.warning("SQL blocked by validator: %s | query: %s", validation_error, sql_query)
             sql_result_text = f"SQL blocked: {validation_error}"
+            sql_meta["blocked"] = validation_error
         else:
             try:
                 result = await _execute_sql(sql_query)
                 sql_result_text = _format_results(result)
+                sql_meta["row_count"] = result.get("row_count")
+                sql_meta["duration_ms"] = result.get("duration_ms")
                 logger.info("SQL executed successfully — %d rows", result.get("row_count", 0))
             except Exception as e:
                 logger.error("SQL execution failed: %s", e)
                 sql_result_text = f"SQL execution error: {e}"
+                sql_meta["blocked"] = str(e)
 
     # -- Turn 3: stream the final answer --
     if sql_result_text:
@@ -282,6 +287,7 @@ async def chat(req: ChatRequest):
 
     async def stream_response():
         try:
+            yield f"data: [META]{json.dumps(sql_meta)}\n\n"
             response = answer_chat.send_message(answer_prompt, stream=True)
             for chunk in response:
                 if chunk.text:

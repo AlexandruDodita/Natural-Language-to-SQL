@@ -111,8 +111,24 @@ export function useChat() {
         let accumulatedContent = '';
 
         // Stream the response
-        for await (const { chunk, done } of streamChat(messagesToSend)) {
+        for await (const { chunk, done, sqlMeta } of streamChat(messagesToSend)) {
           if (done) break;
+
+          if (sqlMeta !== undefined) {
+            setConversations(prev =>
+              prev.map(conv =>
+                conv.id === conversationId
+                  ? {
+                      ...conv,
+                      messages: conv.messages.map(msg =>
+                        msg.id === assistantMessageId ? { ...msg, sqlMeta } : msg
+                      ),
+                    }
+                  : conv
+              )
+            );
+            continue;
+          }
 
           accumulatedContent += chunk;
 

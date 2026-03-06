@@ -15,9 +15,11 @@ COPY . .
 # Set build-time environment variables
 ARG VITE_API_BASE_URL=http://localhost:8000
 ARG VITE_RAG_URL=http://localhost:8100
+ARG VITE_DEBUG=false
 
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 ENV VITE_RAG_URL=$VITE_RAG_URL
+ENV VITE_DEBUG=$VITE_DEBUG
 
 # Build the application
 RUN npm run build

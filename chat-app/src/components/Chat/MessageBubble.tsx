@@ -1,6 +1,50 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import type { Message } from '../../types';
+import type { Message, SqlMeta } from '../../types';
+
+const DEBUG = import.meta.env.VITE_DEBUG === 'true';
+
+function SqlDebugPanel({ meta }: { meta: SqlMeta }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="mt-2 border border-yellow-500/30 rounded-md text-[12px] font-mono">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center gap-2 px-3 py-1.5 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400/80 rounded-md transition-colors text-left"
+      >
+        <span>{open ? '▾' : '▸'}</span>
+        <span>SQL Debug</span>
+        {meta.blocked && <span className="ml-auto text-red-400">blocked</span>}
+        {!meta.blocked && meta.sql && (
+          <span className="ml-auto text-white/40">
+            {meta.row_count ?? '?'} rows · {meta.duration_ms?.toFixed(1) ?? '?'} ms
+          </span>
+        )}
+        {!meta.sql && !meta.blocked && <span className="ml-auto text-white/40">no SQL</span>}
+      </button>
+
+      {open && (
+        <div className="p-3 space-y-2 bg-black/20 rounded-b-md">
+          {meta.sql ? (
+            <div>
+              <div className="text-white/40 mb-1">query</div>
+              <pre className="whitespace-pre-wrap text-yellow-300/80">{meta.sql}</pre>
+            </div>
+          ) : (
+            <div className="text-white/40">No SQL generated for this message.</div>
+          )}
+          {meta.blocked && (
+            <div>
+              <div className="text-white/40 mb-1">blocked reason</div>
+              <span className="text-red-400">{meta.blocked}</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface MessageBubbleProps {
   message: Message;
@@ -60,8 +104,15 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           >
             {isUser ? (
               <p className="text-[15px] text-white/90 leading-relaxed whitespace-pre-wrap">{message.content}</p>
+            ) : message.content === '' ? (
+              <div className="flex items-center gap-1 py-1">
+                <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0ms', animationDuration: '1.2s' }} />
+                <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '200ms', animationDuration: '1.2s' }} />
+                <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '400ms', animationDuration: '1.2s' }} />
+              </div>
             ) : (
               <div className="markdown-content">
+                {DEBUG && message.sqlMeta && <SqlDebugPanel meta={message.sqlMeta} />}
                 <ReactMarkdown
                   components={{
                     code: ({ node, className, children, ...props }) => {

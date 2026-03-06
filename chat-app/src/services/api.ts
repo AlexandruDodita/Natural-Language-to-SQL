@@ -1,10 +1,11 @@
-import type { Message } from '../types';
+import type { Message, SqlMeta } from '../types';
 
 const RAG_URL = import.meta.env.VITE_RAG_URL || 'http://localhost:8100';
 
 export interface StreamResponse {
   chunk: string;
   done: boolean;
+  sqlMeta?: SqlMeta;
 }
 
 export async function* streamChat(
@@ -55,6 +56,16 @@ export async function* streamChat(
 
       if (data.startsWith('[ERROR]')) {
         throw new Error(data.slice(8));
+      }
+
+      if (data.startsWith('[META]')) {
+        try {
+          const sqlMeta: SqlMeta = JSON.parse(data.slice(6));
+          yield { chunk: '', done: false, sqlMeta };
+        } catch {
+          // malformed meta — ignore
+        }
+        continue;
       }
 
       yield { chunk: data, done: false };
