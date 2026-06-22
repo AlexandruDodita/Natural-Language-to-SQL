@@ -1,4 +1,4 @@
-import type { Message } from '../../types';
+import type { Message, ArtifactData } from '../../types';
 import { MessageBubble } from './MessageBubble';
 import { TypingIndicator } from './TypingIndicator';
 import { useAutoScroll } from '../../hooks/useAutoScroll';
@@ -7,9 +7,10 @@ interface MessageListProps {
   messages: Message[];
   isStreaming: boolean;
   onRetry: () => void;
+  onOpenArtifact: (artifact: ArtifactData) => void;
 }
 
-export function MessageList({ messages, isStreaming, onRetry }: MessageListProps) {
+export function MessageList({ messages, isStreaming, onRetry, onOpenArtifact }: MessageListProps) {
   const scrollRef = useAutoScroll<HTMLDivElement>(messages.length);
 
   // Find the index of the last user message for the retry button
@@ -43,6 +44,7 @@ export function MessageList({ messages, isStreaming, onRetry }: MessageListProps
               isLastUserMessage={idx === lastUserMsgIdx}
               isStreaming={isStreaming}
               onRetry={onRetry}
+              onOpenArtifact={onOpenArtifact}
             />
           ))}
           {isStreaming && messages[messages.length - 1]?.role === 'user' && (

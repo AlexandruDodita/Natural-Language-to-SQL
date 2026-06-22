@@ -1,4 +1,4 @@
-import type { Message } from '../../types';
+import type { Message, ArtifactData } from '../../types';
 import { MessageList } from './MessageList';
 import { ChatInput } from '../Input/ChatInput';
 
@@ -8,11 +8,12 @@ interface ChatAreaProps {
   onSendMessage: (content: string) => void;
   onRetry: () => void;
   onToggleSidebar: () => void;
+  onOpenArtifact: (artifact: ArtifactData) => void;
 }
 
-export function ChatArea({ messages, isStreaming, onSendMessage, onRetry, onToggleSidebar }: ChatAreaProps) {
+export function ChatArea({ messages, isStreaming, onSendMessage, onRetry, onToggleSidebar, onOpenArtifact }: ChatAreaProps) {
   return (
-    <div className="flex-1 flex flex-col bg-[#2d2d2d] relative">
+    <div className="flex-1 flex flex-col bg-[#2d2d2d] relative min-w-0">
       {/* Mobile header */}
       <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-white/10 bg-[#2d2d2d]">
         <button
@@ -28,7 +29,7 @@ export function ChatArea({ messages, isStreaming, onSendMessage, onRetry, onTogg
       </div>
 
       {/* Messages */}
-      <MessageList messages={messages} isStreaming={isStreaming} onRetry={onRetry} />
+      <MessageList messages={messages} isStreaming={isStreaming} onRetry={onRetry} onOpenArtifact={onOpenArtifact} />
 
       {/* Input */}
       <ChatInput onSendMessage={onSendMessage} disabled={isStreaming} />

@@ -5,12 +5,26 @@ export interface SqlMeta {
   blocked: string | null;
 }
 
+export interface ChartConfig {
+  type: 'bar' | 'line' | 'pie' | 'area';
+  title: string;
+  x: string;
+  y: string;
+}
+
+export interface ArtifactData {
+  columns: string[];
+  rows: (string | number | null)[][];
+  chart: ChartConfig | null;
+}
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
   sqlMeta?: SqlMeta;
+  artifact?: ArtifactData;
   isError?: boolean;
 }
 

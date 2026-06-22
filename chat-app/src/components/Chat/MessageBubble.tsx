@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
-import type { Message, SqlMeta } from '../../types';
+import type { Message, SqlMeta, ArtifactData } from '../../types';
 
 const DEBUG = import.meta.env.VITE_DEBUG === 'true';
 
@@ -51,6 +51,7 @@ interface MessageBubbleProps {
   isLastUserMessage?: boolean;
   isStreaming?: boolean;
   onRetry?: () => void;
+  onOpenArtifact?: (artifact: ArtifactData) => void;
 }
 
 interface CodeBlockProps {
@@ -89,11 +90,12 @@ function CodeBlock({ children, className }: CodeBlockProps) {
   );
 }
 
-export function MessageBubble({ message, isLastUserMessage, isStreaming, onRetry }: MessageBubbleProps) {
+export function MessageBubble({ message, isLastUserMessage, isStreaming, onRetry, onOpenArtifact }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const hasSqlLeak = !isUser && /```sql/i.test(message.content);
   const isError = message.isError || hasSqlLeak;
   const showRetry = isUser && isLastUserMessage && !isStreaming && onRetry;
+  const hasArtifact = !isUser && message.artifact && message.artifact.columns.length > 0;
   const [copiedId, setCopiedId] = useState(false);
   const handleCopyId = useCallback(async () => {
     await navigator.clipboard.writeText(message.id);
@@ -160,6 +162,30 @@ export function MessageBubble({ message, isLastUserMessage, isStreaming, onRetry
                 </div>
               )}
             </div>
+            {hasArtifact && (
+              <button
+                onClick={() => onOpenArtifact?.(message.artifact!)}
+                className="mt-2 w-full flex items-center gap-2.5 px-3 py-2 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 rounded-lg transition-all group/artifact"
+              >
+                <div className="w-8 h-8 rounded bg-blue-600/20 flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h4l3-7 4 14 3-7h4" />
+                  </svg>
+                </div>
+                <div className="text-left min-w-0">
+                  <div className="text-[13px] text-white/80 truncate">
+                    {message.artifact!.chart?.title || 'Query Results'}
+                  </div>
+                  <div className="text-[11px] text-white/40">
+                    {message.artifact!.rows.length} rows
+                    {message.artifact!.chart ? ` · ${message.artifact!.chart.type} chart` : ''}
+                  </div>
+                </div>
+                <svg className="w-4 h-4 text-white/30 group-hover/artifact:text-white/60 ml-auto shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            )}
             {(showRetry || DEBUG) && (
               <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} items-center gap-3 mt-1.5`}>
                 {showRetry && (

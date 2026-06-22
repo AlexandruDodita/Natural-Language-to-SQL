@@ -111,7 +111,7 @@ export function useChat() {
         let accumulatedContent = '';
 
         // Stream the response
-        for await (const { chunk, done, sqlMeta } of streamChat(messagesToSend)) {
+        for await (const { chunk, done, sqlMeta, artifact } of streamChat(messagesToSend)) {
           if (done) break;
 
           if (sqlMeta !== undefined) {
@@ -122,6 +122,22 @@ export function useChat() {
                       ...conv,
                       messages: conv.messages.map(msg =>
                         msg.id === assistantMessageId ? { ...msg, sqlMeta } : msg
+                      ),
+                    }
+                  : conv
+              )
+            );
+            continue;
+          }
+
+          if (artifact !== undefined) {
+            setConversations(prev =>
+              prev.map(conv =>
+                conv.id === conversationId
+                  ? {
+                      ...conv,
+                      messages: conv.messages.map(msg =>
+                        msg.id === assistantMessageId ? { ...msg, artifact } : msg
                       ),
                     }
                   : conv
@@ -259,7 +275,7 @@ export function useChat() {
     let capturedSqlMeta: Message['sqlMeta'] = undefined;
 
     try {
-      for await (const { chunk, done, sqlMeta } of streamChat(messagesToSend)) {
+      for await (const { chunk, done, sqlMeta, artifact } of streamChat(messagesToSend)) {
         if (done) break;
 
         if (sqlMeta !== undefined) {
@@ -268,6 +284,17 @@ export function useChat() {
             prev.map(conv =>
               conv.id === currentConversationId
                 ? { ...conv, messages: conv.messages.map(m => m.id === assistantMessageId ? { ...m, sqlMeta } : m) }
+                : conv
+            )
+          );
+          continue;
+        }
+
+        if (artifact !== undefined) {
+          setConversations(prev =>
+            prev.map(conv =>
+              conv.id === currentConversationId
+                ? { ...conv, messages: conv.messages.map(m => m.id === assistantMessageId ? { ...m, artifact } : m) }
                 : conv
             )
           );

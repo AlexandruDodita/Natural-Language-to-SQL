@@ -1,3 +1,4 @@
+import io
 import os
 import json
 import logging
@@ -9,7 +10,11 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from typing import Optional
 import google.generativeai as genai
+from openpyxl import Workbook
+from openpyxl.chart import BarChart, LineChart, PieChart, AreaChart, Reference
+from openpyxl.utils import get_column_letter
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -82,12 +87,22 @@ When given a user question, decide if it requires querying the database.
 Respond ONLY with a valid JSON object — no markdown, no explanation, no extra text.
 
 If the question needs data:
-{{"sql": "SELECT ...", "reasoning": "one-line explanation"}}
+{{"sql": "SELECT ...", "reasoning": "one-line explanation", "chart": {{"type": "bar|line|pie|area|none", "title": "Chart title", "x": "column_name_for_x_axis", "y": "column_name_for_y_axis"}}}}
 
 If the question does NOT need data (e.g. greetings, general knowledge):
-{{"sql": null, "reasoning": "no data needed"}}
+{{"sql": null, "reasoning": "no data needed", "chart": null}}
 
-Rules:
+Chart rules:
+- Set chart.type to "none" when the result is a single scalar, a list of text-only rows, or not meaningful as a visualization.
+- Use "bar" for comparisons across categories.
+- Use "line" for time-series or trends.
+- Use "pie" for proportions (fewer than ~8 slices).
+- Use "area" for cumulative or stacked time-series.
+- x must be the column name used for labels/categories; y must be the column with numeric values.
+- If multiple numeric columns exist, pick the most relevant one for y.
+- The user may explicitly ask for a chart/report/export — always honour that request.
+
+SQL rules:
 - Use only the tables and columns listed above.
 - Always use table aliases for clarity in JOINs.
 - Limit results to 100 rows unless the user asks for more.
@@ -253,10 +268,15 @@ async def chat(req: ChatRequest):
     # -- Turn 1: SQL generation --
     sql_result_text = None
     sql_query = None
+    chart_config = None
+    raw_result = None
     try:
         sql_data = await _generate_sql(model, history, last_message)
         sql_query = sql_data.get("sql")
-        logger.info("SQL decision — query: %s | reasoning: %s", sql_query, sql_data.get("reasoning"))
+        chart_raw = sql_data.get("chart")
+        if isinstance(chart_raw, dict) and chart_raw.get("type") not in (None, "none"):
+            chart_config = chart_raw
+        logger.info("SQL decision — query: %s | reasoning: %s | chart: %s", sql_query, sql_data.get("reasoning"), chart_config)
     except Exception as e:
         logger.error("SQL generation failed: %s", e)
 
@@ -270,11 +290,11 @@ async def chat(req: ChatRequest):
             sql_meta["blocked"] = validation_error
         else:
             try:
-                result = await _execute_sql(sql_query)
-                sql_result_text = _format_results(result)
-                sql_meta["row_count"] = result.get("row_count")
-                sql_meta["duration_ms"] = result.get("duration_ms")
-                logger.info("SQL executed successfully — %d rows", result.get("row_count", 0))
+                raw_result = await _execute_sql(sql_query)
+                sql_result_text = _format_results(raw_result)
+                sql_meta["row_count"] = raw_result.get("row_count")
+                sql_meta["duration_ms"] = raw_result.get("duration_ms")
+                logger.info("SQL executed successfully — %d rows", raw_result.get("row_count", 0))
             except Exception as e:
                 logger.error("SQL execution failed: %s", e)
                 sql_result_text = f"SQL execution error: {e}"
@@ -296,6 +316,13 @@ async def chat(req: ChatRequest):
     async def stream_response():
         try:
             yield f"data: [META]{json.dumps(sql_meta)}\n\n"
+            if raw_result and raw_result.get("columns"):
+                data_payload = {
+                    "columns": raw_result["columns"],
+                    "rows": raw_result["rows"],
+                    "chart": chart_config,
+                }
+                yield f"data: [DATA]{json.dumps(data_payload)}\n\n"
             response = answer_chat.send_message(answer_prompt, stream=True)
             for chunk in response:
                 if chunk.text:
@@ -314,4 +341,101 @@ async def chat(req: ChatRequest):
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
         },
+    )
+
+
+# ---------------------------------------------------------------------------
+# Excel report generation
+# ---------------------------------------------------------------------------
+class ChartConfig(BaseModel):
+    type: str  # bar, line, pie, area
+    title: str
+    x: str
+    y: str
+
+
+class ReportRequest(BaseModel):
+    columns: list[str]
+    rows: list[list]
+    chart: Optional[ChartConfig] = None
+    title: Optional[str] = "Report"
+
+
+CHART_BUILDERS = {
+    "bar": BarChart,
+    "line": LineChart,
+    "pie": PieChart,
+    "area": AreaChart,
+}
+
+
+def _build_excel(req: ReportRequest) -> bytes:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Data"
+
+    ws.append(req.columns)
+    for row in req.rows:
+        ws.append(row)
+
+    for col_idx in range(1, len(req.columns) + 1):
+        col_letter = get_column_letter(col_idx)
+        max_len = max(
+            len(str(ws.cell(row=r, column=col_idx).value or ""))
+            for r in range(1, len(req.rows) + 2)
+        )
+        ws.column_dimensions[col_letter].width = min(max_len + 4, 40)
+
+    if req.chart and req.chart.type in CHART_BUILDERS:
+        x_idx = None
+        y_idx = None
+        for i, col in enumerate(req.columns):
+            if col == req.chart.x:
+                x_idx = i + 1
+            if col == req.chart.y:
+                y_idx = i + 1
+
+        if x_idx and y_idx:
+            chart_cls = CHART_BUILDERS[req.chart.type]
+            chart = chart_cls()
+            chart.title = req.chart.title or req.title
+            chart.width = 20
+            chart.height = 12
+
+            num_rows = len(req.rows)
+
+            if req.chart.type == "pie":
+                data_ref = Reference(ws, min_col=y_idx, min_row=1, max_row=num_rows + 1)
+                cat_ref = Reference(ws, min_col=x_idx, min_row=2, max_row=num_rows + 1)
+                chart.add_data(data_ref, titles_from_data=True)
+                chart.set_categories(cat_ref)
+            else:
+                data_ref = Reference(ws, min_col=y_idx, min_row=1, max_row=num_rows + 1)
+                cat_ref = Reference(ws, min_col=x_idx, min_row=2, max_row=num_rows + 1)
+                chart.add_data(data_ref, titles_from_data=True)
+                chart.set_categories(cat_ref)
+                chart.x_axis.title = req.chart.x
+                chart.y_axis.title = req.chart.y
+
+            chart_ws = wb.create_sheet("Chart")
+            chart_ws.add_chart(chart, "A1")
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+@app.post("/report")
+async def generate_report(req: ReportRequest):
+    try:
+        excel_bytes = _build_excel(req)
+    except Exception as e:
+        logger.error("Excel generation failed: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+    filename = f"{req.title or 'report'}.xlsx"
+    return StreamingResponse(
+        io.BytesIO(excel_bytes),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )

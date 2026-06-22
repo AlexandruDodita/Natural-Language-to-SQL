@@ -1,4 +1,4 @@
-import type { Message, SqlMeta } from '../types';
+import type { Message, SqlMeta, ArtifactData } from '../types';
 
 const RAG_URL = import.meta.env.VITE_RAG_URL || 'http://localhost:8100';
 
@@ -6,6 +6,7 @@ export interface StreamResponse {
   chunk: string;
   done: boolean;
   sqlMeta?: SqlMeta;
+  artifact?: ArtifactData;
 }
 
 export async function* streamChat(
@@ -66,6 +67,16 @@ export async function* streamChat(
           yield { chunk: '', done: false, sqlMeta };
         } catch {
           // malformed meta — ignore
+        }
+        continue;
+      }
+
+      if (data.startsWith('[DATA]')) {
+        try {
+          const artifact: ArtifactData = JSON.parse(data.slice(6));
+          yield { chunk: '', done: false, artifact };
+        } catch {
+          // malformed data — ignore
         }
         continue;
       }

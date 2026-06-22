@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { Sidebar } from '../Sidebar/Sidebar';
 import { ChatArea } from '../Chat/ChatArea';
+import { ArtifactPanel } from '../Artifact/ArtifactPanel';
 import { useChat } from '../../hooks/useChat';
+import type { ArtifactData } from '../../types';
 
 export function AppLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [openArtifact, setOpenArtifact] = useState<ArtifactData | null>(null);
   const {
     conversations,
     currentConversation,
@@ -18,7 +21,6 @@ export function AppLayout() {
 
   const handleNewChat = () => {
     createNewConversation();
-    // Don't close sidebar on desktop, only on mobile
     if (window.innerWidth < 768) {
       setIsSidebarOpen(false);
     }
@@ -26,7 +28,6 @@ export function AppLayout() {
 
   const handleSelectConversation = (id: string) => {
     selectConversation(id);
-    // Close sidebar only on mobile when selecting conversation
     if (window.innerWidth < 768) {
       setIsSidebarOpen(false);
     }
@@ -54,7 +55,14 @@ export function AppLayout() {
         onSendMessage={sendMessage}
         onRetry={retryLastMessage}
         onToggleSidebar={handleToggleSidebar}
+        onOpenArtifact={setOpenArtifact}
       />
+
+      {openArtifact && (
+        <div className="w-[480px] shrink-0 h-full hidden md:block">
+          <ArtifactPanel artifact={openArtifact} onClose={() => setOpenArtifact(null)} />
+        </div>
+      )}
     </div>
   );
 }
