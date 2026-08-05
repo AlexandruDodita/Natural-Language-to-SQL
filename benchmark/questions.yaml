@@ -1,0 +1,361 @@
+# Benchmark question set for the car_rental database.
+#
+# Every question carries gold SQL. Scoring is EXECUTION accuracy: the gold SQL
+# and the generated SQL are both run and their result sets compared, so any
+# semantically equivalent formulation counts as correct. This is the metric
+# Spider and BIRD use, and it avoids penalising a correct query for using a
+# different but equivalent join order, alias, or subquery shape.
+#
+# Fields:
+#   id        stable identifier, referenced in results tables
+#   question  natural-language question as a user would type it
+#   lang      en | ro  (the system is specified to accept both)
+#   category  simple | aggregate | join | subquery | window | ambiguous
+#   tables    gold tables a correct answer must touch (schema-linking recall)
+#   gold_sql  reference query; null for questions with no single correct answer
+#   ordered   true when row order is part of correctness (gold SQL has ORDER BY
+#             and the question asks for a ranking or a "top N")
+#   note      why the question is here, when that is not obvious
+
+questions:
+  # ---- simple: single table, filter or count -------------------------------
+  - id: q01
+    question: How many vehicles are currently available?
+    lang: en
+    category: simple
+    tables: [vehicles]
+    ordered: false
+    gold_sql: SELECT COUNT(*) FROM vehicles WHERE status = 'available'
+
+  - id: q02
+    question: List all branch offices and the city they are in. Show the branch name and city.
+    lang: en
+    category: simple
+    tables: [locations]
+    ordered: false
+    gold_sql: SELECT name, city FROM locations
+
+  - id: q03
+    question: How many Toyota cars do we own?
+    lang: en
+    category: simple
+    tables: [vehicles]
+    ordered: false
+    gold_sql: SELECT COUNT(*) FROM vehicles WHERE make = 'Toyota'
+    note: Value-index question - "Toyota" must link to vehicles.make, not a table name.
+
+  - id: q04
+    question: Which vehicles are currently in maintenance? Show make, model and license plate.
+    lang: en
+    category: simple
+    tables: [vehicles]
+    ordered: false
+    gold_sql: SELECT make, model, license_plate FROM vehicles WHERE status = 'maintenance'
+
+  - id: q05
+    question: Câți clienți sunt înregistrați în total?
+    lang: ro
+    category: simple
+    tables: [clients]
+    ordered: false
+    gold_sql: SELECT COUNT(*) FROM clients
+    note: Romanian, per the bilingual requirement in the specification.
+
+  - id: q06
+    question: Show the five most expensive vehicles by daily rate. Show make, model and daily rate.
+    lang: en
+    category: simple
+    tables: [vehicles]
+    ordered: true
+    gold_sql: SELECT make, model, daily_rate FROM vehicles ORDER BY daily_rate DESC LIMIT 5
+
+  # ---- aggregate: grouping, aggregation, having ----------------------------
+  - id: q07
+    question: What is the average salary of employees per branch?
+    lang: en
+    category: aggregate
+    tables: [employees, locations]
+    ordered: false
+    gold_sql: >
+      SELECT l.name, AVG(e.salary) AS avg_salary
+      FROM employees e JOIN locations l ON e.location_id = l.id
+      GROUP BY l.name
+
+  - id: q08
+    question: How many vehicles are there in each category?
+    lang: en
+    category: aggregate
+    tables: [vehicles, vehicle_categories]
+    ordered: false
+    gold_sql: >
+      SELECT c.name, COUNT(*) AS vehicle_count
+      FROM vehicles v JOIN vehicle_categories c ON v.category_id = c.id
+      GROUP BY c.name
+
+  - id: q09
+    question: What is the total revenue from completed payments?
+    lang: en
+    category: aggregate
+    tables: [payments]
+    ordered: false
+    gold_sql: SELECT SUM(amount) AS total FROM payments WHERE status = 'completed'
+
+  - id: q10
+    question: Show total revenue by location.
+    lang: en
+    category: aggregate
+    tables: [payments, reservations, locations]
+    ordered: false
+    gold_sql: >
+      SELECT l.name, SUM(p.amount) AS revenue
+      FROM payments p
+      JOIN reservations r ON p.reservation_id = r.id
+      JOIN locations l ON r.pickup_location = l.id
+      GROUP BY l.name
+    note: Three-table join behind a question that names only one concept.
+
+  - id: q11
+    question: What is the average rating for each vehicle category?
+    lang: en
+    category: aggregate
+    tables: [reviews, reservations, vehicles, vehicle_categories]
+    ordered: false
+    gold_sql: >
+      SELECT c.name, AVG(rv.rating) AS avg_rating
+      FROM reviews rv
+      JOIN reservations r ON rv.reservation_id = r.id
+      JOIN vehicles v ON r.vehicle_id = v.id
+      JOIN vehicle_categories c ON v.category_id = c.id
+      GROUP BY c.name
+    note: Four-table join; the longest required join path in the schema.
+
+  - id: q12
+    question: Which vehicle categories have more than fifteen vehicles? Show the category name and the count.
+    lang: en
+    category: aggregate
+    tables: [vehicles, vehicle_categories]
+    ordered: false
+    gold_sql: >
+      SELECT c.name, COUNT(*) AS n
+      FROM vehicles v JOIN vehicle_categories c ON v.category_id = c.id
+      GROUP BY c.name HAVING COUNT(*) > 15
+    note: >
+      Requires HAVING rather than WHERE. Deliberately grouped by category, not
+      by branch: the seed distributes employees and vehicles perfectly evenly
+      across the ten locations (4 and 8 each), so any branch-level HAVING
+      threshold either returns everything or nothing and cannot discriminate a
+      correct query from a wrong one. Category counts are 12/16/16/18/18, so
+      this returns 4 of 5 rows.
+
+  - id: q13
+    question: How much have we spent on maintenance per maintenance type?
+    lang: en
+    category: aggregate
+    tables: [maintenance_records]
+    ordered: false
+    gold_sql: SELECT maintenance_type, SUM(cost) AS total FROM maintenance_records GROUP BY maintenance_type
+
+  - id: q14
+    question: Care este veniturile totale pe fiecare metodă de plată?
+    lang: ro
+    category: aggregate
+    tables: [payments]
+    ordered: false
+    gold_sql: SELECT payment_method, SUM(amount) AS total FROM payments GROUP BY payment_method
+
+  # ---- join: explicit multi-table questions --------------------------------
+  - id: q15
+    question: List the reservations picked up in Miami. Show reservation id, pickup date and return date.
+    lang: en
+    category: join
+    tables: [reservations, locations]
+    ordered: false
+    gold_sql: >
+      SELECT r.id, r.pickup_date, r.return_date
+      FROM reservations r JOIN locations l ON r.pickup_location = l.id
+      WHERE l.city = 'Miami'
+    note: The token Miami must link to locations.city via the value index.
+
+  - id: q16
+    question: Show each client's first name, last name and the number of reservations they made, including clients with none.
+    lang: en
+    category: join
+    tables: [clients, reservations]
+    ordered: false
+    gold_sql: >
+      SELECT c.first_name, c.last_name, COUNT(r.id) AS reservations
+      FROM clients c LEFT JOIN reservations r ON r.client_id = c.id
+      GROUP BY c.id, c.first_name, c.last_name
+    note: LEFT JOIN matters - clients with zero reservations must still appear.
+
+  - id: q17
+    question: Which employees work at the Downtown Hub? Show first name, last name and role.
+    lang: en
+    category: join
+    tables: [employees, locations]
+    ordered: false
+    gold_sql: >
+      SELECT e.first_name, e.last_name, e.role
+      FROM employees e JOIN locations l ON e.location_id = l.id
+      WHERE l.name = 'Downtown Hub'
+
+  - id: q18
+    question: Which reservations have no payment recorded against them? Show reservation id, pickup date and total cost.
+    lang: en
+    category: join
+    tables: [reservations, payments]
+    ordered: false
+    gold_sql: >
+      SELECT r.id, r.pickup_date, r.total_cost
+      FROM reservations r
+      WHERE NOT EXISTS (SELECT 1 FROM payments p WHERE p.reservation_id = r.id)
+    note: >
+      Anti-join; commonly generated incorrectly as an inner join. Not phrased as
+      "vehicles never reserved" because all 80 vehicles appear in reservations,
+      which would make the gold result empty — and an empty gold result set
+      scores any wrong query that also returns nothing as correct. This returns
+      309 rows.
+
+  - id: q19
+    question: Show all reviews with a rating of 1. Show the rating, the comment, and the make and model of the vehicle.
+    lang: en
+    category: join
+    tables: [reviews, reservations, vehicles]
+    ordered: false
+    gold_sql: >
+      SELECT rv.rating, rv.comment, v.make, v.model
+      FROM reviews rv
+      JOIN reservations r ON rv.reservation_id = r.id
+      JOIN vehicles v ON r.vehicle_id = v.id
+      WHERE rv.rating = 1
+
+  # ---- subquery: nesting, correlation, set comparison ----------------------
+  - id: q20
+    question: Which vehicles have a daily rate above the average daily rate? Show make, model and daily rate.
+    lang: en
+    category: subquery
+    tables: [vehicles]
+    ordered: false
+    gold_sql: SELECT make, model, daily_rate FROM vehicles WHERE daily_rate > (SELECT AVG(daily_rate) FROM vehicles)
+
+  - id: q21
+    question: Which clients spent the most money in total? Show the top ten as first name, last name and total spent.
+    lang: en
+    category: subquery
+    tables: [clients, reservations]
+    ordered: true
+    gold_sql: >
+      SELECT c.first_name, c.last_name, SUM(r.total_cost) AS spent
+      FROM clients c JOIN reservations r ON r.client_id = c.id
+      GROUP BY c.id, c.first_name, c.last_name
+      ORDER BY spent DESC NULLS LAST LIMIT 10
+
+  - id: q22
+    question: Find the branch with the highest total revenue. Show the branch name and its total revenue.
+    lang: en
+    category: subquery
+    tables: [payments, reservations, locations]
+    ordered: true
+    gold_sql: >
+      SELECT l.name, SUM(p.amount) AS revenue
+      FROM payments p
+      JOIN reservations r ON p.reservation_id = r.id
+      JOIN locations l ON r.pickup_location = l.id
+      GROUP BY l.name ORDER BY revenue DESC LIMIT 1
+
+  - id: q23
+    question: Which vehicles have had more than three maintenance records? Show make, model and license plate.
+    lang: en
+    category: subquery
+    tables: [vehicles, maintenance_records]
+    ordered: false
+    gold_sql: >
+      SELECT v.make, v.model, v.license_plate
+      FROM vehicles v
+      WHERE (SELECT COUNT(*) FROM maintenance_records m WHERE m.vehicle_id = v.id) > 3
+    note: Correlated subquery.
+
+  - id: q24
+    question: List clients who have never left a review. Show first and last name.
+    lang: en
+    category: subquery
+    tables: [clients, reservations, reviews]
+    ordered: false
+    gold_sql: >
+      SELECT c.first_name, c.last_name
+      FROM clients c
+      WHERE NOT EXISTS (
+        SELECT 1 FROM reservations r
+        JOIN reviews rv ON rv.reservation_id = r.id
+        WHERE r.client_id = c.id
+      )
+
+  # ---- window: ranking within groups ---------------------------------------
+  - id: q25
+    question: For each branch, show the highest paid employee as branch name, first name, last name and salary.
+    lang: en
+    category: window
+    tables: [employees, locations]
+    ordered: false
+    gold_sql: >
+      SELECT name, first_name, last_name, salary FROM (
+        SELECT l.name, e.first_name, e.last_name, e.salary,
+               ROW_NUMBER() OVER (PARTITION BY l.id ORDER BY e.salary DESC) AS rn
+        FROM employees e JOIN locations l ON e.location_id = l.id
+      ) t WHERE rn = 1
+
+  - id: q26
+    question: Show monthly reservation counts for 2024, as the first day of each month and the count.
+    lang: en
+    category: window
+    tables: [reservations]
+    ordered: true
+    gold_sql: >
+      SELECT DATE_TRUNC('month', pickup_date) AS month, COUNT(*) AS n
+      FROM reservations
+      WHERE pickup_date >= DATE '2024-01-01' AND pickup_date < DATE '2025-01-01'
+      GROUP BY 1 ORDER BY 1
+    note: Time-series shape; also exercises automatic line-chart selection.
+
+  # ---- ambiguous: no single correct answer ---------------------------------
+  # gold_sql is null. These are not scored for execution accuracy; they check
+  # that the system asks for clarification instead of silently guessing.
+  - id: q27
+    question: Care sunt cei mai buni clienți?
+    lang: ro
+    category: ambiguous
+    tables: [clients]
+    ordered: false
+    gold_sql: null
+    note: >
+      Raised in the thesis itself as the canonical ambiguity example - "best"
+      could mean spend, reservation count, or tenure.
+
+  - id: q28
+    question: Show me the good vehicles.
+    lang: en
+    category: ambiguous
+    tables: [vehicles]
+    ordered: false
+    gold_sql: null
+    note: The word good has no column to map to - rating, condition, and profitability all plausible.
+
+  - id: q29
+    question: How is the business doing?
+    lang: en
+    category: ambiguous
+    tables: []
+    ordered: false
+    gold_sql: null
+    note: No specific metric named; a correct system asks what to measure.
+
+  - id: q30
+    question: Hello, what can you do?
+    lang: en
+    category: ambiguous
+    tables: []
+    ordered: false
+    gold_sql: null
+    note: >
+      Requires no SQL at all. Guards the regression where the answering prompt
+      claimed live data access and fabricated figures.
