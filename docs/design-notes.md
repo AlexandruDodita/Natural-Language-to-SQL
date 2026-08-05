@@ -283,7 +283,7 @@ configuration.
 | row cap | `SQL_MAX_ROWS` | 200 | result size |
 | min score | `RETRIEVAL_MIN_SCORE` | 0.0 | rejecting weak matches |
 | dialect | `SQL_DIALECT` | postgres | postgres / oracle |
-| model | `GEMINI_MODEL` | gemini-2.0-flash | Gemini vs (later) a local model |
+| model | `GEMINI_MODEL` | gemini-2.5-flash | Gemini vs (later) a local model |
 
 ### Measured retrieval ablation
 
@@ -339,7 +339,7 @@ thesis and means the safety layers are essentially free.
 | Variable | Default | Purpose |
 |---|---|---|
 | `GEMINI_API_KEY` | — | from `VITE_GEMINI_API_KEY` |
-| `GEMINI_MODEL` | `gemini-2.0-flash` | note: 2.0-flash returns HTTP 404 (retired); use `gemini-3-flash-preview` |
+| `GEMINI_MODEL` | `gemini-2.5-flash` | 2.0-flash returns HTTP 404 (retired); default is a stable release, not a preview |
 | `SQL_BACKEND_URL` | `http://test_app_backend:8080` | Rust SQL executor |
 | `TARGET_DATABASE_URL` | — | **new**: introspection, value index, EXPLAIN, RLS mode |
 | `SQL_EXECUTOR` | `http` | `http` (unchanged path) or `direct` (psycopg + RLS) |

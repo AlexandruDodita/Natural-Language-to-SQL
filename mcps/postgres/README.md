@@ -69,7 +69,7 @@ Copy `.env.example` to `.env` (or export the vars directly):
 | `MAX_ROWS` | `100` | `db.py` |
 | `STATEMENT_TIMEOUT_MS` | `5000` | `db.py` |
 | `GEMINI_API_KEY` | — | `llm_gemini.py` (only for `client_harness.py`) |
-| `GEMINI_MODEL` | `gemini-2.0-flash` | `llm_gemini.py` |
+| `GEMINI_MODEL` | `gemini-2.5-flash` | `llm_gemini.py` |
 | `MCP_HARNESS_MAX_ROUNDS` | `8` | `client_harness.py` |
 
 `server.py` and `db.py` never import `google-generativeai` — the DB layer

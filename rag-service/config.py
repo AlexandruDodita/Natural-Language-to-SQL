@@ -54,7 +54,7 @@ def _env_opt_int(name: str) -> int | None:
 class Settings:
     # --- LLM -------------------------------------------------------------
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-2.0-flash"
+    gemini_model: str = "gemini-2.5-flash"
 
     # --- SQL execution ---------------------------------------------------
     sql_backend_url: str = "http://test_app_backend:8080"
@@ -105,7 +105,7 @@ class Settings:
     def from_env(cls) -> "Settings":
         return cls(
             gemini_api_key=_env_str("GEMINI_API_KEY", ""),
-            gemini_model=_env_str("GEMINI_MODEL", "gemini-2.0-flash"),
+            gemini_model=_env_str("GEMINI_MODEL", "gemini-2.5-flash"),
             sql_backend_url=_env_str("SQL_BACKEND_URL", "http://test_app_backend:8080"),
             target_database_url=_env_str("TARGET_DATABASE_URL", ""),
             executor=_env_str("SQL_EXECUTOR", "http").lower(),
