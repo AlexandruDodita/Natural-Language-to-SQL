@@ -1,0 +1,11 @@
+.env
+.mcp.json
+
+# Audit log records real SQL and row counts from the target database.
+logs/
+
+.venv/
+__pycache__/
+.pytest_cache/
+
+*:Zone.Identifier

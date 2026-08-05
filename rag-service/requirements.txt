@@ -1,7 +1,23 @@
+# Core service
 fastapi==0.115.0
 uvicorn==0.30.6
 google-generativeai==0.8.5
 pydantic==2.9.2
 httpx==0.27.2
-sqlparse==0.5.3
 openpyxl==3.1.5
+
+# SQL parsing, validation and AST rewriting.
+# Replaces sqlparse: sqlglot gives a real AST (and an Oracle dialect for later).
+sqlglot==30.15.0
+
+# Schema introspection, EXPLAIN dry-runs and the RLS session context
+psycopg[binary]==3.3.4
+
+# Authorization policy file
+PyYAML==6.0.3
+
+# Tests
+pytest==8.4.2
+
+# Local embeddings are optional: see requirements-embeddings.txt.
+# Without them the service falls back to the deterministic hashing embedder.

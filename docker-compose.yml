@@ -37,16 +37,42 @@ services:
     restart: unless-stopped
 
   rag-service:
-    build: ./rag-service
+    build:
+      context: ./rag-service
+      args:
+        WITH_EMBEDDINGS: "true"        # "false" -> small image, hashing embedder
     container_name: rag-service
     environment:
       GEMINI_API_KEY: ${VITE_GEMINI_API_KEY}
-      GEMINI_MODEL: ${VITE_MODEL:-gemini-2.0-flash}
+      # gemini-2.0-flash (the original default) now returns HTTP 404 "no longer
+      # available" from generateContent, even though it is still listed by the
+      # models endpoint. Defaulting to a STABLE release rather than a preview:
+      # preview models are withdrawn without notice, and results reported in the
+      # thesis must stay reproducible through the defense. Override with
+      # VITE_MODEL to run the comparison against another model.
+      GEMINI_MODEL: ${VITE_MODEL:-gemini-2.5-flash}
       SQL_BACKEND_URL: http://test_app_backend:8080
+      # Introspection, value index, EXPLAIN dry-run, RLS session context
+      TARGET_DATABASE_URL: postgresql://readonly_user:readonly_pass@test_app_db:5432/car_rental
+      SQL_EXECUTOR: ${SQL_EXECUTOR:-http}          # 'direct' enables the RLS demo
+      INDEX_DIR: /app/data/index
+      TELEMETRY_PATH: /app/data/telemetry.jsonl
+      POLICY_FILE: /app/policy.yaml
+      # Ablation knobs — these are the variables the evaluation chapter sweeps
+      RETRIEVAL_TOP_K: ${RETRIEVAL_TOP_K:-6}
+      RETRIEVAL_FALLBACK_MAX_TABLES: ${RETRIEVAL_FALLBACK_MAX_TABLES:-8}
+      MAX_REPAIR_ATTEMPTS: ${MAX_REPAIR_ATTEMPTS:-2}
+      DEFAULT_USER_ROLE: ${DEFAULT_USER_ROLE:-manager}
+      DEFAULT_USER_LOCATION_ID: ${DEFAULT_USER_LOCATION_ID:-}
+    volumes:
+      - rag_data:/app/data
     ports:
       - "8100:8100"
     depends_on:
-      - test_app_backend
+      test_app_backend:
+        condition: service_started
+      test_app_db:
+        condition: service_healthy
     restart: unless-stopped
 
   frontend:
@@ -106,6 +132,78 @@ services:
       - test_app_backend
     restart: unless-stopped
 
+  # --- Oracle arm -------------------------------------------------------
+  # Oracle Database 23ai Free, holding a port of the same car_rental schema
+  # so the Oracle and PostgreSQL arms are compared on identical data.
+  # First boot initialises the database and takes several minutes; the long
+  # start_period below exists for that, not for slowness afterwards.
+  oracle_db:
+    image: gvenzl/oracle-free:23-slim
+    container_name: oracle-db
+    environment:
+      ORACLE_PASSWORD: oracle
+      APP_USER: car_rental
+      APP_USER_PASSWORD: car_rental
+    volumes:
+      - oracle_db_data:/opt/oracle/oradata
+      - ./test_app_db_oracle/init:/container-entrypoint-initdb.d
+    ports:
+      - "1521:1521"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 15s
+      timeout: 10s
+      retries: 40
+      start_period: 120s
+    restart: unless-stopped
+
+  # Oracle MCP server. Unlike the Postgres one this speaks streamable HTTP,
+  # so it is a genuine long-running service. Host port 8200 because 8000 is
+  # already taken by `backend`.
+  oracle-mcp:
+    build: ./mcps/oracle
+    container_name: oracle-mcp
+    environment:
+      # No ORACLE_LIB_DIR: python-oracledb runs in thin mode, no Instant Client.
+      # Connects as the SELECT-only principal from 03_readonly_user.sql, not
+      # as the schema owner — ORACLE_TARGET_SCHEMA below points at the owner.
+      ORACLE_USER: mcp_readonly
+      ORACLE_PASSWORD: mcp_readonly_pass
+      ORACLE_HOST: oracle_db
+      ORACLE_PORT: 1521
+      ORACLE_SERVICE_NAME: FREEPDB1
+      ORACLE_TARGET_SCHEMA: CAR_RENTAL
+      MCP_AUTH_TOKEN: ${ORACLE_MCP_TOKEN:-dev-token-change-me}
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: 8000
+    ports:
+      - "8200:8000"
+    depends_on:
+      oracle_db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # --- MCP baseline (Postgres) -----------------------------------------
+  # Speaks MCP over stdio, so it has no long-running form: a client must own
+  # its stdin/stdout. Kept behind a profile so `docker compose up` ignores it.
+  # Build with:  docker compose build postgres-mcp
+  # Run with:    docker compose run --rm postgres-mcp
+  postgres-mcp:
+    build: ./mcps/postgres
+    container_name: postgres-mcp
+    profiles: ["mcp"]
+    environment:
+      DATABASE_URL: postgresql://readonly_user:readonly_pass@test_app_db:5432/car_rental
+      MAX_ROWS: 100
+      STATEMENT_TIMEOUT_MS: 5000
+    depends_on:
+      test_app_db:
+        condition: service_healthy
+    stdin_open: true
+    tty: false
+
 volumes:
   postgres_data:
   test_app_db_data:
+  oracle_db_data:
+  rag_data:          # schema catalog, embedding index, telemetry JSONL

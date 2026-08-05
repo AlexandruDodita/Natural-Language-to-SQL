@@ -1,0 +1,76 @@
+# ---------------------------------------------------------------------------
+# Authorization policy for the car_rental database.
+#
+# The RAG service parses the generated SQL into an AST and injects `row_filters`
+# as predicates before execution; `denied_columns` are enforced by blocking the
+# request (or by expanding `SELECT *` to the allowed columns only).
+#
+# `db_role` names the PostgreSQL role used when SQL_EXECUTOR=direct, so the same
+# rule is enforced a second time by row-level security (see 04_rls.sql).
+#
+# Placeholders (`:location_id`, `:user_id`) are replaced by literal AST nodes
+# taken from the request's user context — never by string concatenation.
+# ---------------------------------------------------------------------------
+version: 1
+default_role: manager
+
+roles:
+  manager:
+    description: Branch manager — sees everything, including salaries.
+    db_role: app_manager
+    row_filters: {}
+    denied_columns: []
+    max_rows: 500
+
+  agent:
+    description: >-
+      Rental agent — restricted to their own branch; salaries are not visible.
+    db_role: app_agent
+    requires: [location_id]
+    max_rows: 200
+    row_filters:
+      employees: "employees.location_id = :location_id"
+      vehicles: "vehicles.location_id = :location_id"
+      reservations: "reservations.pickup_location = :location_id"
+      payments: >-
+        payments.reservation_id IN (
+          SELECT r.id FROM reservations r WHERE r.pickup_location = :location_id
+        )
+      clients: >-
+        clients.id IN (
+          SELECT r.client_id FROM reservations r
+          WHERE r.pickup_location = :location_id
+        )
+      maintenance_records: >-
+        maintenance_records.vehicle_id IN (
+          SELECT v.id FROM vehicles v WHERE v.location_id = :location_id
+        )
+      reviews: >-
+        reviews.reservation_id IN (
+          SELECT r.id FROM reservations r WHERE r.pickup_location = :location_id
+        )
+    denied_columns:
+      - employees.salary
+
+  analyst:
+    description: >-
+      Business analyst — company-wide aggregates, but no personally
+      identifiable client data and no salaries.
+    db_role: app_analyst
+    max_rows: 500
+    row_filters: {}
+    denied_columns:
+      - employees.salary
+      - clients.email
+      - clients.phone
+      - clients.drivers_license
+      - clients.date_of_birth
+
+  auditor:
+    description: Read-only auditor — maintenance and payments only.
+    db_role: app_analyst
+    max_rows: 200
+    denied_tables:
+      - employees
+    denied_columns:
+      - clients.drivers_license

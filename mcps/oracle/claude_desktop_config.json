@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "oracle": {
+      "command": "C:\\Users\\Alex\\Documents\\test_mcp_oracle_amenzi\\.venv\\Scripts\\python.exe",
+      "args": [
+        "C:\\Users\\Alex\\Documents\\test_mcp_oracle_amenzi\\mcp_server.py"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "stdio"
+      }
+    }
+  }
+}
