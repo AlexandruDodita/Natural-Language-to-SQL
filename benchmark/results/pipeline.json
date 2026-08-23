@@ -1,0 +1,1015 @@
+{
+  "arm": "pipeline",
+  "model": "gemini-2.5-flash",
+  "summary": {
+    "n_scored": 26,
+    "n_correct": 21,
+    "execution_accuracy": 0.8077,
+    "by_category": {
+      "aggregate": {
+        "n": 8,
+        "correct": 7,
+        "accuracy": 0.875
+      },
+      "join": {
+        "n": 5,
+        "correct": 3,
+        "accuracy": 0.6
+      },
+      "simple": {
+        "n": 6,
+        "correct": 5,
+        "accuracy": 0.8333
+      },
+      "subquery": {
+        "n": 5,
+        "correct": 4,
+        "accuracy": 0.8
+      },
+      "window": {
+        "n": 2,
+        "correct": 2,
+        "accuracy": 1.0
+      }
+    },
+    "invalid_sql": 0,
+    "no_sql_produced": 0,
+    "ambiguous_total": 4,
+    "ambiguous_clarified": 3,
+    "latency_ms_median": 14415.7,
+    "latency_ms_mean": 13737.1
+  },
+  "results": [
+    {
+      "id": "q01",
+      "question": "How many vehicles are currently available?",
+      "category": "simple",
+      "lang": "en",
+      "sql": "SELECT COUNT(v.id) FROM vehicles AS v WHERE v.status = 'available' LIMIT 500",
+      "gold_sql": "SELECT COUNT(*) FROM vehicles WHERE status = 'available'",
+      "latency_ms": 7614.8,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "vehicles",
+            "vehicle_categories",
+            "reservations",
+            "payments",
+            "maintenance_records",
+            "employees",
+            "locations"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 1,
+      "pred_rows": 1
+    },
+    {
+      "id": "q02",
+      "question": "List all branch offices and the city they are in. Show the branch name and city.",
+      "category": "simple",
+      "lang": "en",
+      "sql": "SELECT name, city FROM locations LIMIT 500",
+      "gold_sql": "SELECT name, city FROM locations",
+      "latency_ms": 10278.0,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "locations",
+            "clients",
+            "employees",
+            "vehicle_categories",
+            "reservations",
+            "maintenance_records",
+            "vehicles"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 10,
+      "pred_rows": 10
+    },
+    {
+      "id": "q03",
+      "question": "How many Toyota cars do we own?",
+      "category": "simple",
+      "lang": "en",
+      "sql": "SELECT COUNT(*) FROM vehicles WHERE make = 'toyota' LIMIT 500",
+      "gold_sql": "SELECT COUNT(*) FROM vehicles WHERE make = 'Toyota'",
+      "latency_ms": 18356.5,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "vehicles",
+            "clients",
+            "payments",
+            "employees",
+            "reservations",
+            "locations"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": false,
+      "exec_error": null,
+      "gold_rows": 1,
+      "pred_rows": 1
+    },
+    {
+      "id": "q04",
+      "question": "Which vehicles are currently in maintenance? Show make, model and license plate.",
+      "category": "simple",
+      "lang": "en",
+      "sql": "SELECT make, model, license_plate FROM vehicles WHERE status = 'maintenance' LIMIT 500",
+      "gold_sql": "SELECT make, model, license_plate FROM vehicles WHERE status = 'maintenance'",
+      "latency_ms": 11469.2,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "vehicles",
+            "maintenance_records",
+            "vehicle_categories",
+            "clients",
+            "reservations",
+            "reviews",
+            "locations"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 8,
+      "pred_rows": 8
+    },
+    {
+      "id": "q05",
+      "question": "C\u00e2\u021bi clien\u021bi sunt \u00eenregistra\u021bi \u00een total?",
+      "category": "simple",
+      "lang": "ro",
+      "sql": "SELECT COUNT(*) FROM clients LIMIT 500",
+      "gold_sql": "SELECT COUNT(*) FROM clients",
+      "latency_ms": 15087.3,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "reservations",
+            "clients",
+            "vehicles",
+            "locations",
+            "employees",
+            "payments"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 1,
+      "pred_rows": 1
+    },
+    {
+      "id": "q06",
+      "question": "Show the five most expensive vehicles by daily rate. Show make, model and daily rate.",
+      "category": "simple",
+      "lang": "en",
+      "sql": "SELECT v.make, v.model, v.daily_rate FROM vehicles AS v ORDER BY v.daily_rate DESC LIMIT 5",
+      "gold_sql": "SELECT make, model, daily_rate FROM vehicles ORDER BY daily_rate DESC LIMIT 5",
+      "latency_ms": 15301.5,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "vehicle_categories",
+            "vehicles",
+            "reservations",
+            "reviews",
+            "payments",
+            "clients",
+            "locations"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 5,
+      "pred_rows": 5
+    },
+    {
+      "id": "q07",
+      "question": "What is the average salary of employees per branch?",
+      "category": "aggregate",
+      "lang": "en",
+      "sql": "SELECT l.name AS branch_name, AVG(e.salary) AS average_salary FROM employees AS e JOIN locations AS l ON e.location_id = l.id GROUP BY l.name ORDER BY l.name LIMIT 500",
+      "gold_sql": "SELECT l.name, AVG(e.salary) AS avg_salary FROM employees e JOIN locations l ON e.location_id = l.id GROUP BY l.name\n",
+      "latency_ms": 16900.1,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "employees",
+            "reviews",
+            "reservations",
+            "vehicle_categories",
+            "locations",
+            "clients",
+            "vehicles"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 10,
+      "pred_rows": 10
+    },
+    {
+      "id": "q08",
+      "question": "How many vehicles are there in each category?",
+      "category": "aggregate",
+      "lang": "en",
+      "sql": "SELECT vc.name AS category_name, COUNT(v.id) AS vehicle_count FROM vehicles AS v JOIN vehicle_categories AS vc ON v.category_id = vc.id GROUP BY vc.name ORDER BY vehicle_count DESC LIMIT 500",
+      "gold_sql": "SELECT c.name, COUNT(*) AS vehicle_count FROM vehicles v JOIN vehicle_categories c ON v.category_id = c.id GROUP BY c.name\n",
+      "latency_ms": 9728.8,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "vehicles",
+            "vehicle_categories",
+            "maintenance_records",
+            "reservations",
+            "employees",
+            "locations"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 5,
+      "pred_rows": 5
+    },
+    {
+      "id": "q09",
+      "question": "What is the total revenue from completed payments?",
+      "category": "aggregate",
+      "lang": "en",
+      "sql": "SELECT SUM(p.amount) FROM payments AS p WHERE p.status = 'completed' LIMIT 500",
+      "gold_sql": "SELECT SUM(amount) AS total FROM payments WHERE status = 'completed'",
+      "latency_ms": 5685.0,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "payments",
+            "reservations",
+            "maintenance_records",
+            "employees",
+            "clients",
+            "vehicle_categories",
+            "vehicles",
+            "locations"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 1,
+      "pred_rows": 1
+    },
+    {
+      "id": "q10",
+      "question": "Show total revenue by location.",
+      "category": "aggregate",
+      "lang": "en",
+      "sql": "SELECT l.name AS location_name, SUM(r.total_cost) AS total_revenue FROM reservations AS r JOIN locations AS l ON r.pickup_location = l.id GROUP BY l.id, l.name ORDER BY total_revenue DESC LIMIT 500",
+      "gold_sql": "SELECT l.name, SUM(p.amount) AS revenue FROM payments p JOIN reservations r ON p.reservation_id = r.id JOIN locations l ON r.pickup_location = l.id GROUP BY l.name\n",
+      "latency_ms": 26917.7,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "reservations",
+            "locations",
+            "employees",
+            "vehicles",
+            "clients",
+            "vehicle_categories"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 10,
+      "pred_rows": 10
+    },
+    {
+      "id": "q11",
+      "question": "What is the average rating for each vehicle category?",
+      "category": "aggregate",
+      "lang": "en",
+      "sql": "SELECT vc.name AS category_name, AVG(r.rating) AS average_rating FROM reviews AS r JOIN reservations AS res ON r.reservation_id = res.id JOIN vehicles AS v ON res.vehicle_id = v.id JOIN vehicle_categories AS vc ON v.category_id = vc.id GROUP BY vc.name ORDER BY vc.name LIMIT 500",
+      "gold_sql": "SELECT c.name, AVG(rv.rating) AS avg_rating FROM reviews rv JOIN reservations r ON rv.reservation_id = r.id JOIN vehicles v ON r.vehicle_id = v.id JOIN vehicle_categories c ON v.category_id = c.id GROUP BY c.name\n",
+      "latency_ms": 12014.6,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "vehicles",
+            "vehicle_categories",
+            "reviews",
+            "maintenance_records",
+            "reservations",
+            "clients",
+            "locations"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 5,
+      "pred_rows": 5
+    },
+    {
+      "id": "q12",
+      "question": "Which vehicle categories have more than fifteen vehicles? Show the category name and the count.",
+      "category": "aggregate",
+      "lang": "en",
+      "sql": "SELECT vc.name AS category_name, COUNT(v.id) AS vehicle_count FROM vehicles AS v JOIN vehicle_categories AS vc ON v.category_id = vc.id GROUP BY vc.name HAVING COUNT(v.id) > 15 LIMIT 500",
+      "gold_sql": "SELECT c.name, COUNT(*) AS n FROM vehicles v JOIN vehicle_categories c ON v.category_id = c.id GROUP BY c.name HAVING COUNT(*) > 15\n",
+      "latency_ms": 14958.2,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "vehicles",
+            "vehicle_categories",
+            "reservations",
+            "maintenance_records",
+            "locations",
+            "employees"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 4,
+      "pred_rows": 4
+    },
+    {
+      "id": "q13",
+      "question": "How much have we spent on maintenance per maintenance type?",
+      "category": "aggregate",
+      "lang": "en",
+      "sql": "SELECT maintenance_type, SUM(cost) AS total_spent FROM maintenance_records GROUP BY maintenance_type ORDER BY total_spent DESC LIMIT 500",
+      "gold_sql": "SELECT maintenance_type, SUM(cost) AS total FROM maintenance_records GROUP BY maintenance_type",
+      "latency_ms": 11215.7,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "maintenance_records",
+            "vehicles",
+            "reviews",
+            "payments",
+            "reservations",
+            "clients",
+            "locations"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 9,
+      "pred_rows": 9
+    },
+    {
+      "id": "q14",
+      "question": "Care este veniturile totale pe fiecare metod\u0103 de plat\u0103?",
+      "category": "aggregate",
+      "lang": "ro",
+      "sql": "SELECT p.payment_method, SUM(p.amount) AS total_revenue FROM payments AS p WHERE p.status = 'completed' GROUP BY p.payment_method ORDER BY total_revenue DESC LIMIT 500",
+      "gold_sql": "SELECT payment_method, SUM(amount) AS total FROM payments GROUP BY payment_method",
+      "latency_ms": 13250.5,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "vehicle_categories",
+            "reservations",
+            "payments",
+            "clients",
+            "employees",
+            "locations",
+            "vehicles"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": false,
+      "exec_error": null,
+      "gold_rows": 3,
+      "pred_rows": 3
+    },
+    {
+      "id": "q15",
+      "question": "List the reservations picked up in Miami. Show reservation id, pickup date and return date.",
+      "category": "join",
+      "lang": "en",
+      "sql": "SELECT r.id AS reservation_id, r.pickup_date, r.return_date FROM reservations AS r JOIN locations AS l ON r.pickup_location = l.id WHERE l.city = 'miami' LIMIT 500",
+      "gold_sql": "SELECT r.id, r.pickup_date, r.return_date FROM reservations r JOIN locations l ON r.pickup_location = l.id WHERE l.city = 'Miami'\n",
+      "latency_ms": 16470.6,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "reservations",
+            "reviews",
+            "locations",
+            "payments",
+            "clients",
+            "employees",
+            "vehicles"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": false,
+      "exec_error": null,
+      "gold_rows": 330,
+      "pred_rows": 0
+    },
+    {
+      "id": "q16",
+      "question": "Show each client's first name, last name and the number of reservations they made, including clients with none.",
+      "category": "join",
+      "lang": "en",
+      "sql": "SELECT c.first_name, c.last_name, COUNT(r.id) AS number_of_reservations FROM clients AS c LEFT JOIN reservations AS r ON c.id = r.client_id GROUP BY c.id, c.first_name, c.last_name ORDER BY number_of_reservations DESC LIMIT 500",
+      "gold_sql": "SELECT c.first_name, c.last_name, COUNT(r.id) AS reservations FROM clients c LEFT JOIN reservations r ON r.client_id = c.id GROUP BY c.id, c.first_name, c.last_name\n",
+      "latency_ms": 28256.4,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "clients",
+            "reservations",
+            "employees",
+            "vehicle_categories",
+            "locations",
+            "reviews",
+            "vehicles"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": false,
+      "exec_error": null,
+      "gold_rows": 600,
+      "pred_rows": 500
+    },
+    {
+      "id": "q17",
+      "question": "Which employees work at the Downtown Hub? Show first name, last name and role.",
+      "category": "join",
+      "lang": "en",
+      "sql": "SELECT e.first_name, e.last_name, e.role FROM employees AS e JOIN locations AS l ON e.location_id = l.id WHERE l.name = 'Downtown Hub' LIMIT 500",
+      "gold_sql": "SELECT e.first_name, e.last_name, e.role FROM employees e JOIN locations l ON e.location_id = l.id WHERE l.name = 'Downtown Hub'\n",
+      "latency_ms": 19208.5,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "locations",
+            "employees",
+            "clients",
+            "reviews",
+            "vehicle_categories",
+            "maintenance_records",
+            "reservations",
+            "vehicles"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 4,
+      "pred_rows": 4
+    },
+    {
+      "id": "q18",
+      "question": "Which reservations have no payment recorded against them? Show reservation id, pickup date and total cost.",
+      "category": "join",
+      "lang": "en",
+      "sql": "SELECT r.id AS reservation_id, r.pickup_date, r.total_cost FROM reservations AS r LEFT JOIN payments AS p ON r.id = p.reservation_id WHERE p.id IS NULL LIMIT 500",
+      "gold_sql": "SELECT r.id, r.pickup_date, r.total_cost FROM reservations r WHERE NOT EXISTS (SELECT 1 FROM payments p WHERE p.reservation_id = r.id)\n",
+      "latency_ms": 12708.5,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "payments",
+            "reservations",
+            "reviews",
+            "maintenance_records",
+            "employees",
+            "clients",
+            "locations",
+            "vehicles"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 309,
+      "pred_rows": 309
+    },
+    {
+      "id": "q19",
+      "question": "Show all reviews with a rating of 1. Show the rating, the comment, and the make and model of the vehicle.",
+      "category": "join",
+      "lang": "en",
+      "sql": "SELECT r.rating, r.comment, v.make, v.model FROM reviews AS r JOIN reservations AS res ON r.reservation_id = res.id JOIN vehicles AS v ON res.vehicle_id = v.id WHERE r.rating = 1 LIMIT 500",
+      "gold_sql": "SELECT rv.rating, rv.comment, v.make, v.model FROM reviews rv JOIN reservations r ON rv.reservation_id = r.id JOIN vehicles v ON r.vehicle_id = v.id WHERE rv.rating = 1\n",
+      "latency_ms": 12444.7,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "reviews",
+            "vehicles",
+            "vehicle_categories",
+            "maintenance_records",
+            "reservations",
+            "clients",
+            "locations"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 29,
+      "pred_rows": 29
+    },
+    {
+      "id": "q20",
+      "question": "Which vehicles have a daily rate above the average daily rate? Show make, model and daily rate.",
+      "category": "subquery",
+      "lang": "en",
+      "sql": "SELECT v.make, v.model, v.daily_rate FROM vehicles AS v WHERE v.daily_rate > (SELECT AVG(daily_rate) FROM vehicles) LIMIT 500",
+      "gold_sql": "SELECT make, model, daily_rate FROM vehicles WHERE daily_rate > (SELECT AVG(daily_rate) FROM vehicles)",
+      "latency_ms": 8764.6,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "vehicle_categories",
+            "vehicles",
+            "reservations",
+            "reviews",
+            "payments",
+            "employees",
+            "locations"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 35,
+      "pred_rows": 35
+    },
+    {
+      "id": "q21",
+      "question": "Which clients spent the most money in total? Show the top ten as first name, last name and total spent.",
+      "category": "subquery",
+      "lang": "en",
+      "sql": "SELECT c.first_name, c.last_name, SUM(p.amount) AS total_spent FROM clients AS c JOIN reservations AS r ON c.id = r.client_id JOIN payments AS p ON r.id = p.reservation_id WHERE p.status = 'completed' GROUP BY c.first_name, c.last_name ORDER BY SUM(p.amount) DESC LIMIT 10",
+      "gold_sql": "SELECT c.first_name, c.last_name, SUM(r.total_cost) AS spent FROM clients c JOIN reservations r ON r.client_id = c.id GROUP BY c.id, c.first_name, c.last_name ORDER BY spent DESC NULLS LAST LIMIT 10\n",
+      "latency_ms": 19899.6,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "clients",
+            "employees",
+            "vehicle_categories",
+            "locations",
+            "reservations",
+            "payments",
+            "vehicles"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": false,
+      "exec_error": null,
+      "gold_rows": 10,
+      "pred_rows": 10
+    },
+    {
+      "id": "q22",
+      "question": "Find the branch with the highest total revenue. Show the branch name and its total revenue.",
+      "category": "subquery",
+      "lang": "en",
+      "sql": "SELECT l.name AS branch_name, SUM(r.total_cost) AS total_revenue FROM reservations AS r JOIN locations AS l ON r.pickup_location = l.id GROUP BY l.name ORDER BY total_revenue DESC LIMIT 1",
+      "gold_sql": "SELECT l.name, SUM(p.amount) AS revenue FROM payments p JOIN reservations r ON p.reservation_id = r.id JOIN locations l ON r.pickup_location = l.id GROUP BY l.name ORDER BY revenue DESC LIMIT 1\n",
+      "latency_ms": 14415.7,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "clients",
+            "vehicle_categories",
+            "employees",
+            "reservations",
+            "locations",
+            "vehicles"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 1,
+      "pred_rows": 1
+    },
+    {
+      "id": "q23",
+      "question": "Which vehicles have had more than three maintenance records? Show make, model and license plate.",
+      "category": "subquery",
+      "lang": "en",
+      "sql": "SELECT v.make, v.model, v.license_plate FROM vehicles AS v JOIN maintenance_records AS mr ON v.id = mr.vehicle_id GROUP BY v.id, v.make, v.model, v.license_plate HAVING COUNT(mr.id) > 3 LIMIT 500",
+      "gold_sql": "SELECT v.make, v.model, v.license_plate FROM vehicles v WHERE (SELECT COUNT(*) FROM maintenance_records m WHERE m.vehicle_id = v.id) > 3\n",
+      "latency_ms": 18298.3,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "vehicles",
+            "maintenance_records",
+            "vehicle_categories",
+            "clients",
+            "reservations",
+            "reviews",
+            "locations"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 57,
+      "pred_rows": 57
+    },
+    {
+      "id": "q24",
+      "question": "List clients who have never left a review. Show first and last name.",
+      "category": "subquery",
+      "lang": "en",
+      "sql": "SELECT c.first_name, c.last_name FROM clients AS c WHERE NOT EXISTS(SELECT 1 FROM reservations AS r JOIN reviews AS rev ON r.id = rev.reservation_id WHERE r.client_id = c.id) LIMIT 500",
+      "gold_sql": "SELECT c.first_name, c.last_name FROM clients c WHERE NOT EXISTS (\n  SELECT 1 FROM reservations r\n  JOIN reviews rv ON rv.reservation_id = r.id\n  WHERE r.client_id = c.id\n)\n",
+      "latency_ms": 23030.4,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "clients",
+            "reviews",
+            "employees",
+            "vehicle_categories",
+            "locations",
+            "reservations",
+            "vehicles"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 84,
+      "pred_rows": 84
+    },
+    {
+      "id": "q25",
+      "question": "For each branch, show the highest paid employee as branch name, first name, last name and salary.",
+      "category": "window",
+      "lang": "en",
+      "sql": "SELECT DISTINCT ON (l.id) l.name AS branch_name, e.first_name, e.last_name, e.salary FROM employees AS e JOIN locations AS l ON e.location_id = l.id ORDER BY l.id, e.salary DESC, e.id LIMIT 500",
+      "gold_sql": "SELECT name, first_name, last_name, salary FROM (\n  SELECT l.name, e.first_name, e.last_name, e.salary,\n         ROW_NUMBER() OVER (PARTITION BY l.id ORDER BY e.salary DESC) AS rn\n  FROM employees e JOIN locations l ON e.location_id = l.id\n) t WHERE rn = 1\n",
+      "latency_ms": 24320.6,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "employees",
+            "clients",
+            "vehicle_categories",
+            "locations",
+            "maintenance_records",
+            "reservations",
+            "vehicles"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 10,
+      "pred_rows": 10
+    },
+    {
+      "id": "q26",
+      "question": "Show monthly reservation counts for 2024, as the first day of each month and the count.",
+      "category": "window",
+      "lang": "en",
+      "sql": "SELECT DATE_TRUNC('MONTH', r.pickup_date) AS month_start_date, COUNT(r.id) AS reservation_count FROM reservations AS r WHERE EXTRACT(YEAR FROM r.pickup_date) = 2024 GROUP BY month_start_date ORDER BY month_start_date LIMIT 500",
+      "gold_sql": "SELECT DATE_TRUNC('month', pickup_date) AS month, COUNT(*) AS n FROM reservations WHERE pickup_date >= DATE '2024-01-01' AND pickup_date < DATE '2025-01-01' GROUP BY 1 ORDER BY 1\n",
+      "latency_ms": 14782.7,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "reservations",
+            "reviews",
+            "payments",
+            "clients",
+            "employees",
+            "locations",
+            "vehicles"
+          ]
+        },
+        "attempts": 3,
+        "blocked": "role \"app_manager\" does not exist",
+        "outcome": "execution_failed"
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 12,
+      "pred_rows": 12
+    },
+    {
+      "id": "q27",
+      "question": "Care sunt cei mai buni clien\u021bi?",
+      "category": "ambiguous",
+      "lang": "ro",
+      "sql": null,
+      "gold_sql": null,
+      "latency_ms": 2398.7,
+      "arm_error": null,
+      "clarified": true,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "clients",
+            "employees",
+            "locations",
+            "maintenance_records",
+            "payments",
+            "reservations",
+            "vehicles"
+          ]
+        },
+        "attempts": 1,
+        "blocked": null,
+        "outcome": "clarification"
+      },
+      "scored": false
+    },
+    {
+      "id": "q28",
+      "question": "Show me the good vehicles.",
+      "category": "ambiguous",
+      "lang": "en",
+      "sql": null,
+      "gold_sql": null,
+      "latency_ms": 2660.2,
+      "arm_error": null,
+      "clarified": true,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "vehicles",
+            "vehicle_categories",
+            "reservations",
+            "maintenance_records",
+            "employees",
+            "locations"
+          ]
+        },
+        "attempts": 1,
+        "blocked": null,
+        "outcome": "clarification"
+      },
+      "scored": false
+    },
+    {
+      "id": "q29",
+      "question": "How is the business doing?",
+      "category": "ambiguous",
+      "lang": "en",
+      "sql": null,
+      "gold_sql": null,
+      "latency_ms": 2639.4,
+      "arm_error": null,
+      "clarified": true,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "vehicle_categories",
+            "maintenance_records",
+            "locations",
+            "reviews",
+            "clients",
+            "employees",
+            "reservations",
+            "vehicles"
+          ]
+        },
+        "attempts": 1,
+        "blocked": null,
+        "outcome": "clarification"
+      },
+      "scored": false
+    },
+    {
+      "id": "q30",
+      "question": "Hello, what can you do?",
+      "category": "ambiguous",
+      "lang": "en",
+      "sql": null,
+      "gold_sql": null,
+      "latency_ms": 3036.9,
+      "arm_error": null,
+      "clarified": false,
+      "extra": {
+        "retrieval": {
+          "mode": "topk",
+          "tables": [
+            "reservations",
+            "reviews",
+            "clients",
+            "employees",
+            "locations",
+            "maintenance_records",
+            "vehicles"
+          ]
+        },
+        "attempts": 1,
+        "blocked": null,
+        "outcome": "no_sql"
+      },
+      "scored": false
+    }
+  ]
+}
