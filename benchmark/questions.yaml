@@ -15,6 +15,12 @@
 #   gold_sql  reference query; null for questions with no single correct answer
 #   ordered   true when row order is part of correctness (gold SQL has ORDER BY
 #             and the question asks for a ranking or a "top N")
+#   expected_chart
+#             acceptable chart types for the automatic Excel report, as a list:
+#             the first is the most natural choice and the rest are defensible
+#             alternatives (a five-slice breakdown reads equally well as a bar
+#             chart or a pie chart). "none" means no chart should be drawn -
+#             scalars and text-only result sets. Used by report_score.py.
 #   note      why the question is here, when that is not obvious
 
 questions:
@@ -25,6 +31,7 @@ questions:
     category: simple
     tables: [vehicles]
     ordered: false
+    expected_chart: [none]
     gold_sql: SELECT COUNT(*) FROM vehicles WHERE status = 'available'
 
   - id: q02
@@ -33,6 +40,7 @@ questions:
     category: simple
     tables: [locations]
     ordered: false
+    expected_chart: [none]
     gold_sql: SELECT name, city FROM locations
 
   - id: q03
@@ -41,6 +49,7 @@ questions:
     category: simple
     tables: [vehicles]
     ordered: false
+    expected_chart: [none]
     gold_sql: SELECT COUNT(*) FROM vehicles WHERE make = 'Toyota'
     note: Value-index question - "Toyota" must link to vehicles.make, not a table name.
 
@@ -50,6 +59,7 @@ questions:
     category: simple
     tables: [vehicles]
     ordered: false
+    expected_chart: [none]
     gold_sql: SELECT make, model, license_plate FROM vehicles WHERE status = 'maintenance'
 
   - id: q05
@@ -58,6 +68,7 @@ questions:
     category: simple
     tables: [clients]
     ordered: false
+    expected_chart: [none]
     gold_sql: SELECT COUNT(*) FROM clients
     note: Romanian, per the bilingual requirement in the specification.
 
@@ -67,6 +78,7 @@ questions:
     category: simple
     tables: [vehicles]
     ordered: true
+    expected_chart: [bar]
     gold_sql: SELECT make, model, daily_rate FROM vehicles ORDER BY daily_rate DESC LIMIT 5
 
   # ---- aggregate: grouping, aggregation, having ----------------------------
@@ -76,6 +88,7 @@ questions:
     category: aggregate
     tables: [employees, locations]
     ordered: false
+    expected_chart: [bar]
     gold_sql: >
       SELECT l.name, AVG(e.salary) AS avg_salary
       FROM employees e JOIN locations l ON e.location_id = l.id
@@ -87,6 +100,7 @@ questions:
     category: aggregate
     tables: [vehicles, vehicle_categories]
     ordered: false
+    expected_chart: [bar, pie]
     gold_sql: >
       SELECT c.name, COUNT(*) AS vehicle_count
       FROM vehicles v JOIN vehicle_categories c ON v.category_id = c.id
@@ -98,6 +112,7 @@ questions:
     category: aggregate
     tables: [payments]
     ordered: false
+    expected_chart: [none]
     gold_sql: SELECT SUM(amount) AS total FROM payments WHERE status = 'completed'
 
   - id: q10
@@ -106,6 +121,7 @@ questions:
     category: aggregate
     tables: [payments, reservations, locations]
     ordered: false
+    expected_chart: [bar, pie]
     gold_sql: >
       SELECT l.name, SUM(p.amount) AS revenue
       FROM payments p
@@ -120,6 +136,7 @@ questions:
     category: aggregate
     tables: [reviews, reservations, vehicles, vehicle_categories]
     ordered: false
+    expected_chart: [bar]
     gold_sql: >
       SELECT c.name, AVG(rv.rating) AS avg_rating
       FROM reviews rv
@@ -135,6 +152,7 @@ questions:
     category: aggregate
     tables: [vehicles, vehicle_categories]
     ordered: false
+    expected_chart: [bar, pie]
     gold_sql: >
       SELECT c.name, COUNT(*) AS n
       FROM vehicles v JOIN vehicle_categories c ON v.category_id = c.id
@@ -153,6 +171,7 @@ questions:
     category: aggregate
     tables: [maintenance_records]
     ordered: false
+    expected_chart: [bar, pie]
     gold_sql: SELECT maintenance_type, SUM(cost) AS total FROM maintenance_records GROUP BY maintenance_type
 
   - id: q14
@@ -161,6 +180,7 @@ questions:
     category: aggregate
     tables: [payments]
     ordered: false
+    expected_chart: [bar, pie]
     gold_sql: SELECT payment_method, SUM(amount) AS total FROM payments GROUP BY payment_method
 
   # ---- join: explicit multi-table questions --------------------------------
@@ -170,6 +190,7 @@ questions:
     category: join
     tables: [reservations, locations]
     ordered: false
+    expected_chart: [none]
     gold_sql: >
       SELECT r.id, r.pickup_date, r.return_date
       FROM reservations r JOIN locations l ON r.pickup_location = l.id
@@ -182,6 +203,7 @@ questions:
     category: join
     tables: [clients, reservations]
     ordered: false
+    expected_chart: [bar, none]
     gold_sql: >
       SELECT c.first_name, c.last_name, COUNT(r.id) AS reservations
       FROM clients c LEFT JOIN reservations r ON r.client_id = c.id
@@ -194,6 +216,7 @@ questions:
     category: join
     tables: [employees, locations]
     ordered: false
+    expected_chart: [none]
     gold_sql: >
       SELECT e.first_name, e.last_name, e.role
       FROM employees e JOIN locations l ON e.location_id = l.id
@@ -205,6 +228,7 @@ questions:
     category: join
     tables: [reservations, payments]
     ordered: false
+    expected_chart: [none]
     gold_sql: >
       SELECT r.id, r.pickup_date, r.total_cost
       FROM reservations r
@@ -222,6 +246,7 @@ questions:
     category: join
     tables: [reviews, reservations, vehicles]
     ordered: false
+    expected_chart: [none]
     gold_sql: >
       SELECT rv.rating, rv.comment, v.make, v.model
       FROM reviews rv
@@ -236,6 +261,7 @@ questions:
     category: subquery
     tables: [vehicles]
     ordered: false
+    expected_chart: [bar]
     gold_sql: SELECT make, model, daily_rate FROM vehicles WHERE daily_rate > (SELECT AVG(daily_rate) FROM vehicles)
 
   - id: q21
@@ -244,6 +270,7 @@ questions:
     category: subquery
     tables: [clients, reservations]
     ordered: true
+    expected_chart: [bar]
     gold_sql: >
       SELECT c.first_name, c.last_name, SUM(r.total_cost) AS spent
       FROM clients c JOIN reservations r ON r.client_id = c.id
@@ -256,6 +283,7 @@ questions:
     category: subquery
     tables: [payments, reservations, locations]
     ordered: true
+    expected_chart: [none, bar]
     gold_sql: >
       SELECT l.name, SUM(p.amount) AS revenue
       FROM payments p
@@ -269,6 +297,7 @@ questions:
     category: subquery
     tables: [vehicles, maintenance_records]
     ordered: false
+    expected_chart: [none]
     gold_sql: >
       SELECT v.make, v.model, v.license_plate
       FROM vehicles v
@@ -281,6 +310,7 @@ questions:
     category: subquery
     tables: [clients, reservations, reviews]
     ordered: false
+    expected_chart: [none]
     gold_sql: >
       SELECT c.first_name, c.last_name
       FROM clients c
@@ -297,6 +327,7 @@ questions:
     category: window
     tables: [employees, locations]
     ordered: false
+    expected_chart: [bar]
     gold_sql: >
       SELECT name, first_name, last_name, salary FROM (
         SELECT l.name, e.first_name, e.last_name, e.salary,
@@ -310,6 +341,7 @@ questions:
     category: window
     tables: [reservations]
     ordered: true
+    expected_chart: [line, area]
     gold_sql: >
       SELECT DATE_TRUNC('month', pickup_date) AS month, COUNT(*) AS n
       FROM reservations

@@ -723,6 +723,409 @@ Modelul de limbaj a fost evaluat pe capacitatea de a selecta tipul de grafic pot
 \end{tabularx}
 \end{table}
 
+% === model comparison (generated from benchmark/results) ===
+\section{Compararea modelelor de limbaj}
+
+Rezultatele prezentate până acum au fost obținute cu un singur model. Întrebarea
+practică pentru o organizație care ar adopta sistemul este însă alta: cât din
+performanță ține de arhitectura propusă și cât ține de modelul ales, și ce se
+pierde dacă modelul rulează pe infrastructura proprie în locul unui API
+comercial. Pentru a răspunde, același set de 30 de întrebări a fost rulat prin
+aceeași ramură de referință -- schema completă într-un singur prompt, un singur
+apel, fără recuperare și fără reparare -- schimbând doar modelul care răspunde.
+Ramura pentru modele locale folosește exact același prompt și același contract,
+transmis unui server local compatibil cu API-ul OpenAI, astfel încât diferențele
+din tabele să provină din model și nu din metodă. Cifrele din această secțiune
+provin din harness-ul automat din \code{benchmark/} și sunt scorate prin
+acuratețe de execuție, comparând seturile de rezultate; ele nu sunt direct
+comparabile cu Tabelul~\ref{tab:eval_sql}, obținut anterior pe o clasificare
+diferită a acelorași întrebări.
+
+\subsection{Configurația hardware}
+
+Latența și debitul unui model local nu au sens fără mașina pe care rulează.
+Măsurătorile locale au fost efectuate pe configurația din
+Tabelul~\ref{tab:hardware}.
+
+\begin{table}[H]
+\centering
+\caption{Configurația hardware și software folosită pentru modelele locale}
+\label{tab:hardware}
+\begin{tabularx}{\textwidth}{l X}
+\toprule
+\textbf{Componentă} & \textbf{Specificație} \\
+\midrule
+Procesor & Intel Core i9-14900K, 24 nuclee / 32 fire de execuție \\
+Placă grafică & NVIDIA GeForce RTX 5070, 12 GiB VRAM, driver 610.57.04 \\
+Memorie RAM & 31 GiB \\
+Sistem de operare & CachyOS, nucleu Linux 6.18.42-1-cachyos-lts \\
+Motor de inferență & \code{llama.cpp} 2.25.2 (binarul livrat cu LM Studio 0.4.20), backend CUDA; Vulkan pentru comparație \\
+Cuantizare & GGUF Q4\_K\_M (Q1\_0 pentru Bonsai-27B) \\
+Parametri de servire & \code{-ngl 99} (model integral în VRAM), context 8192, temperatură 0 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Backend-ul contează pentru cifrele de debit, așa că este numit explicit în
+fiecare rând al tabelelor. Măsurătorile principale folosesc backend-ul CUDA;
+pentru unul dintre modele este raportată și varianta Vulkan, tocmai pentru a
+arăta cât din debit ține de alegerea backend-ului și nu de model. O observație
+practică merită consemnată: la prima utilizare backend-ul CUDA pare blocat --
+driverul compilează JIT codul PTX inclus în bibliotecă pentru arhitectura
+Blackwell a plăcii, iar comanda \code{llama-server -{}-list-devices} nu a
+returnat în 120 de secunde. Rezultatul compilării este memorat în
+\code{\textasciitilde/.nv/ComputeCache} (77 MB după prima rulare), iar
+pornirile ulterioare enumeră placa în sub o secundă.
+
+\subsection{Metodologia comparației}
+
+Pe lângă acuratețea de execuție, harness-ul înregistrează pentru fiecare
+întrebare numărul de tokeni de prompt, de completare și de raționament, latența
+apelului și debitul de generare. Debitul este raportat ca \emph{tokeni generați
+pe secundă}: tokenii produși de model (inclusiv cei de raționament, care sunt
+deopotrivă plătiți și așteptați) împărțiți la durata totală a apelului.
+Definiția este identică pentru modelele găzduite și pentru cele locale, ceea ce
+face cele două grupuri comparabile; pentru modelele locale este înregistrat
+suplimentar debitul intern al decodorului raportat de \code{llama.cpp}, care
+exclude prefill-ul și caracterizează hardware-ul mai degrabă decât întregul
+apel. Timpul până la primul token este disponibil doar pentru modelele locale,
+unde \code{llama.cpp} raportează durata prefill-ului; SDK-ul Gemini nu expune
+această valoare pentru apelurile ne-streaming, deci pentru modelele găzduite
+este raportată latența totală.
+
+Costul este extrapolat din consumul măsurat de tokeni la un cost pentru 100 de
+întrebări, folosind tarifele publicate de Google pentru nivelul plătit,
+consultate la 23 august 2026. Un model fără tarif verificabil nu primește
+estimare de cost, iar pentru modelele locale costul per token este zero prin
+definiție -- costul real fiind hardware-ul și energia, discutate separat.
+
+Trei precizări metodologice sunt necesare pentru ca cifrele să fie citite
+corect:
+
+\begin{itemize}[nosep]
+  \item \textbf{Eșantionare.} Modelele găzduite sunt apelate cu parametrii
+    impliciți ai API-ului, exact cum o face aplicația în producție, deci
+    generarea este nedeterministă. Pentru a cuantifica acest efect, rularea
+    \code{naive} cu \code{gemini-2.5-flash} a fost repetată de șase ori pe un
+    set de întrebări și o bază de date neschimbate, obținând 80.8\%, 84.6\%,
+    84.6\%, 88.5\%, 88.5\% și 92.3\% -- o medie de 86.5\% cu o abatere
+    standard de 4.0 puncte și o amplitudine de 11.5 puncte. Cum o singură
+    întrebare valorează 3.8 puncte din 26, rezultă o regulă de interpretare
+    aplicabilă tuturor tabelelor din acest capitol: \emph{diferențele mai mici
+    de aproximativ 8 puncte procentuale (două abateri standard) nu pot fi
+    distinse de zgomotul de eșantionare}. Instabilitatea este concentrată în
+    trei întrebări dintre cele 26 (q10, q21, q24), toate formulate în jurul
+    noțiunii de „venit'' sau „cheltuit'': modelul filtrează uneori după
+    \code{payments.status = 'completed'}, alteori nu, iar ambele lecturi sunt
+    apărabile. Celelalte 23 de întrebări au fost stabile la toate cele șase
+    rulări. Modelele locale rulează cu temperatura 0.
+  \item \textbf{Limita de rânduri.} Serviciul RAG trunchiază rezultatele la
+    \code{SQL\_MAX\_ROWS} rânduri, o măsură firească de prezentare, dar care în
+    lanțul de măsurare ar transforma interogări corecte în eșecuri pentru
+    întrebările cu rezultate mari. Măsurătorile au fost efectuate cu limita
+    ridicată, astfel încât trunchierea să nu fie confundată cu incorectitudinea.
+  \item \textbf{Etalonul de aur.} Comparația se face pe seturi de rezultate, nu
+    pe textul interogării, deci orice formulare echivalentă este acceptată. Rămân
+    însă cazurile în care interogarea generată este defensabilă, dar diferită de
+    etalon; ele sunt discutate în Secțiunea~\ref{subsec:model_discussion}.
+\end{itemize}
+
+\subsection{Acuratețea generării SQL pe modele}
+
+Tabelul~\ref{tab:model_accuracy} prezintă acuratețea de execuție pe cele 26 de
+întrebări cu etalon, defalcată pe categorii de complexitate, plus numărul de
+întrebări ambigue la care modelul a cerut clarificare în loc să ghicească.
+
+\begin{table}[H]
+\centering
+\caption{Acuratețea de execuție pe modele și categorii de complexitate}
+\label{tab:model_accuracy}
+\begin{tabular}{l c c c c c c c}
+\toprule
+\textbf{Model} & \textbf{Simple} & \textbf{Agreg.} & \textbf{JOIN} & \textbf{Subint.} & \textbf{Window} & \textbf{Total} & \textbf{Ambig.} \\
+ & (6) & (8) & (5) & (5) & (2) & (26) & (4) \\
+\midrule
+\multicolumn{8}{l}{\emph{Modele găzduite (Google Gemini)}} \\
+\code{gemini-2.5-flash} & 100.0\% & 75.0\% & 100.0\% & 40.0\% & 100.0\% & \textbf{80.8\%} & 2/4 \\
+\code{gemini-3-flash-preview} & 100.0\% & 100.0\% & 100.0\% & 60.0\% & 100.0\% & \textbf{92.3\%} & 1/4 \\
+\code{gemini-3.1-pro-preview} & 100.0\% & 100.0\% & 100.0\% & 80.0\% & 100.0\% & \textbf{96.2\%} & 4/4 \\
+\code{gemini-3.6-flash} & 100.0\% & 62.5\% & 100.0\% & 60.0\% & 100.0\% & \textbf{80.8\%} & 3/4 \\
+\code{gemini-3.7-flash} & 100.0\% & 62.5\% & 100.0\% & 60.0\% & 100.0\% & \textbf{80.8\%} & 3/4 \\
+\midrule
+\multicolumn{8}{l}{\emph{Modele locale (RTX 5070, llama.cpp; backend-ul este indicat pe fiecare rând)}} \\
+\code{bonsai-27b-q1\_0} (Vulkan) & 100.0\% & 75.0\% & 100.0\% & 40.0\% & 50.0\% & \textbf{76.9\%} & 3/4 \\
+\code{qwen3.5-9b} (CUDA) & 100.0\% & 62.5\% & 80.0\% & 60.0\% & 0.0\% & \textbf{69.2\%} & 2/4 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Debit, latență, tokeni și cost}
+
+Tabelul~\ref{tab:model_throughput} prezintă debitul de generare, latența mediană
+per întrebare, consumul mediu de tokeni și costul extrapolat pentru 100 de
+întrebări.
+
+\begin{table}[H]
+\centering
+\caption{Debit, latență, consum de tokeni și cost estimat}
+\label{tab:model_throughput}
+\begin{tabular}{l c c c c c}
+\toprule
+\textbf{Model} & \textbf{Tok/s} & \textbf{Latență} & \textbf{Tokeni} & \textbf{Tokeni} & \textbf{USD /} \\
+ & \textbf{(generare)} & \textbf{mediană (s)} & \textbf{prompt} & \textbf{generați} & \textbf{100 întreb.} \\
+\midrule
+\multicolumn{6}{l}{\emph{Modele găzduite (Google Gemini)}} \\
+\code{gemini-2.5-flash} & 135.0 & 1.12 & 1496 & 277 & 0.132 \\
+\code{gemini-3-flash-preview} & 173.2 & 2.36 & 1496 & 656 & 0.314 \\
+\code{gemini-3.1-pro-preview} & 66.9 & 4.79 & 1496 & 521 & 1.067 \\
+\code{gemini-3.6-flash} & 126.7 & 3.91 & 1496 & 595 & 0.387 \\
+\code{gemini-3.7-flash} & 163.3 & 1.87 & 1496 & 379 & 0.294 \\
+\midrule
+\multicolumn{6}{l}{\emph{Modele locale (RTX 5070, llama.cpp; backend-ul este indicat pe fiecare rând)}} \\
+\code{bonsai-27b-q1\_0} (Vulkan) & 57.6 & 20.08 & 1394 & 1173 & 0.000 \\
+\code{qwen3.5-9b} (CUDA) & 84.5 & 4.98 & 1394 & 684 & 0.000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Coloana \code{Tok/s} numără tokenii generați (inclusiv cei de raționament)
+raportați la durata totală a apelului, aceeași definiție pentru ambele grupuri.
+Pentru modelele locale, debitul intern al decodorului raportat de
+\code{llama.cpp} este cu circa 8\% mai mare decât cifra de mai sus, iar timpul
+median până la primul token este de 158 ms pentru \code{Qwen3.5-9B} și 702 ms
+pentru \code{Bonsai-27B}; pentru modelele găzduite SDK-ul nu expune această
+valoare, deci coloana de latență este singura măsură de reactivitate.
+
+\subsection{Efectul backend-ului de inferență}
+
+Debitul unui model local nu este o proprietate a modelului, ci a perechii
+model--motor de inferență, iar presupunerea uzuală este că pe o placă NVIDIA
+backend-ul CUDA este sensibil mai rapid decât cel Vulkan. Pentru a verifica,
+aceleași prime zece întrebări au fost rulate prin ambele backend-uri ale
+aceleiași versiuni de \code{llama.cpp}, pe același GPU și cu aceeași
+cuantizare (Tabelul~\ref{tab:backend}).
+
+Comparația se face pe rata decodorului și pe timpul până la primul token, nu pe
+latența totală: deși ambele rulări folosesc temperatura 0, diferențele numerice
+dintre backend-uri schimbă traiectoria generării, iar cele două rulări nu produc
+același număr de tokeni (4918 față de 8736 pentru cele zece întrebări). Latența
+totală ar măsura, așadar, cât a vorbit modelul, nu cât de repede a decodat.
+
+\begin{table}[H]
+\centering
+\caption{Același model sub cele două backend-uri (primele 10 întrebări)}
+\label{tab:backend}
+\begin{tabular}{l c c c}
+\toprule
+\textbf{Model / backend} & \textbf{Tok/s (decodor)} & \textbf{TTFT median} & \textbf{Tokeni generați} \\
+\midrule
+Qwen3.5-9B Q4\_K\_M -- CUDA & 88.3 & 158 ms & 4918 \\
+Qwen3.5-9B Q4\_K\_M -- Vulkan & 90.2 & 438 ms & 8736 \\
+\midrule
+Bonsai-27B Q1\_0 -- CUDA & 54.9 & 419 ms & 10024 \\
+Bonsai-27B Q1\_0 -- Vulkan & 61.8 & 700 ms & 7937 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Calitatea rapoartelor Excel}
+
+Afirmația că sistemul exportă un set de rezultate ca registru Excel cu grafic
+potrivit are două jumătăți care se strică diferit, așa că au fost măsurate
+separat. \emph{Acuratețea tipului de grafic} este o judecată a modelului:
+pentru fiecare dintre cele 26 de întrebări cu etalon, modelul primește
+rezultatul real al interogării etalon și regulile de vizualizare din promptul
+aplicației, iar tipul ales este comparat cu lista tipurilor acceptabile
+înregistrate în setul de întrebări. Lista conține toate variantele defensabile
+-- o defalcare pe cinci categorii se citește la fel de bine ca bară sau ca
+sector -- pentru a nu măsura gustul în locul capacității. \emph{Validitatea
+structurală} este o proprietate a fișierului: registrul este generat cu chiar
+componenta de raportare a aplicației și apoi recitit cu \code{openpyxl},
+verificând că ambele foi există, că foaia \code{Data} reproduce exact setul de
+rezultate, că un obiect grafic de clasa cerută este efectiv încorporat și că
+referințele lui de serie și de categorii indică exact coloanele și rândurile
+corecte.
+
+\begin{table}[H]
+\centering
+\caption{Calitatea raportului Excel generat automat}
+\label{tab:model_report}
+\begin{tabular}{l c c c c c}
+\toprule
+\textbf{Model} & \textbf{Corecte} & \textbf{Acuratețe} & \textbf{Rezultate} & \textbf{Rezultate} & \textbf{Validitate} \\
+ & & \textbf{tip grafic} & \textbf{grafice} & \textbf{scalare} & \textbf{structurală} \\
+\midrule
+\multicolumn{6}{l}{\emph{Modele găzduite (Google Gemini)}} \\
+\code{gemini-2.5-flash} & 26/26 & 100.0\% & 100.0\% & 100.0\% & 96.2\% \\
+\code{gemini-3-flash-preview} & 26/26 & 100.0\% & 100.0\% & 100.0\% & 96.2\% \\
+\code{gemini-3.1-pro-preview} & 25/26 & 96.2\% & 92.9\% & 100.0\% & 96.2\% \\
+\code{gemini-3.6-flash} & 26/26 & 100.0\% & 100.0\% & 100.0\% & 96.2\% \\
+\code{gemini-3.7-flash} & 26/26 & 100.0\% & 100.0\% & 100.0\% & 96.2\% \\
+\midrule
+\multicolumn{6}{l}{\emph{Modele locale (RTX 5070, llama.cpp, backend CUDA)}} \\
+\code{bonsai-27b-q1\_0} & 25/26 & 96.2\% & 100.0\% & 91.7\% & 96.2\% \\
+\code{qwen3.5-9b} & 4/26 & 15.4\% & 28.6\% & 0.0\% & 96.2\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Interpretarea rezultatelor}
+\label{subsec:model_discussion}
+
+Prima observație este că, pe această schemă, \emph{alegerea modelului contează
+mai mult decât alegerea arhitecturii}. Între cel mai bun și cel mai slab model
+găzduit, cu prompt identic și fără nicio diferență de metodă, sunt
+15.4 puncte procentuale de acuratețe. Prin comparație, cele trei
+abordări arhitecturale evaluate anterior pe același model se încadrează în mai
+puțin de patru puncte una de alta. Concluzia nu este că arhitectura nu contează,
+ci că pe o schemă de nouă tabele, care încape integral într-un prompt,
+recuperarea nu are ce câștig de acuratețe să producă -- exact rezultatul pe care
+capitolul îl anticipează. Diferențele pe care le aduce arhitectura sunt de altă
+natură: latență, gestionarea ambiguității și controlul accesului.
+
+A doua observație este că \emph{mai nou nu înseamnă mai bun} pentru această
+sarcină. Cele mai recente
+două modele flash, \code{gemini-3.7-flash} și \code{gemini-3.6-flash}, obțin
+exact aceeași acuratețe ca \code{gemini-2.5-flash} -- 80.8\% toate trei -- în
+timp ce \code{gemini-3-flash-preview}, un model din aceeași familie dar
+anterior lor, ajunge la 92.3\%. Diferența se vede în cost: pentru aceeași
+acuratețe, \code{gemini-3.7-flash} costă 0.294 USD la 100 de întrebări față de
+0.132 USD pentru \code{gemini-2.5-flash}, adică de peste două ori mai mult
+pentru un rezultat identic. Actualizarea automată la ``cel mai nou model'' nu
+este, așadar, o strategie: fiecare model candidat trebuie trecut prin setul de
+evaluare înainte de a fi pus în producție, iar acesta este motivul principal
+pentru care harness-ul face parte din livrabil.
+
+A treia observație privește ambiguitatea. Rata de clarificare variază
+independent de acuratețe: \code{gemini-3-flash-preview},
+cel mai precis dintre modelele flash, cere clarificare la o singură întrebare
+ambiguă din patru și ghicește la celelalte trei, în timp ce
+\code{gemini-3.6-flash} și \code{gemini-3.7-flash}, cu acuratețe sensibil mai
+mică, cer la trei din patru; \code{gemini-3.1-pro-preview} le acoperă pe toate
+patru. Pentru un sistem destinat unor
+utilizatori care nu scriu SQL, un model care ghicește sigur pe sine este mai
+periculos decât unul mai puțin precis care întreabă, iar cele două calități
+trebuie măsurate separat -- ceea ce justifică prezența celor patru întrebări
+ambigue în set.
+
+A patra observație este că o parte din erorile numărate nu sunt erori de SQL, ci
+dezacorduri de interpretare cu etalonul. La întrebările despre venituri și
+despre sumele cheltuite de clienți (q10, q14, q21), majoritatea modelelor adaugă
+filtrul \code{payments.status = 'completed'}, pe care interogarea etalon nu îl
+are; interogarea generată este defensabilă, uneori chiar preferabilă, dar
+produce alt set de rezultate. La q26, toate modelele, fără excepție, sunt
+marcate greșit pentru că \code{DATE\_TRUNC} peste o coloană \code{date} întoarce
+în PostgreSQL un \code{timestamptz}, iar modelele îl convertesc explicit la
+\code{date}: același răspuns, alt tip. Aceste cazuri afectează toate modelele în
+egală măsură, deci nu schimbă clasamentul, dar înseamnă că cifrele din
+Tabelul~\ref{tab:model_accuracy} subestimează competența reală a modelelor, iar
+categoria \emph{window} -- cu doar două întrebări, dintre care una este q26 --
+nu trebuie citită ca o măsură a capacității de a scrie funcții fereastră.
+
+A cincea observație, și cea mai relevantă pentru decizia de implementare,
+privește modelele locale. Rezultatul care surprinde este că
+\code{Bonsai-27B} cuantizat pe un singur bit (Q1\_0, 3.5 GiB pe disc) atinge
+76.9\%, adică sub acuratețea celor cinci modele găzduite, și
+cere clarificare la trei din cele patru întrebări ambigue -- mai bine decât
+\code{gemini-2.5-flash}. \code{Qwen3.5-9B} la Q4\_K\_M rămâne în urmă, cu
+69.2\%. Ambele obțin 100\% pe interogările simple și cedează pe categoriile
+grele, ceea ce descrie corect zona în care un model local este utilizabil.
+
+Prețul acestei competitivități este timpul. Latența mediană pentru o întrebare
+este de 5.0 s pentru \code{Qwen3.5-9B} și de 20.1 s pentru \code{Bonsai-27B},
+față de 1.1 s pentru \code{gemini-2.5-flash} -- de la de cinci ori până la de
+optsprezece ori mai lent, pe un GPU de generație curentă cu modelul încărcat
+integral în VRAM. Debitul brut nu este dezastruos (84.5, respectiv 57.6 tokeni
+generați pe secundă, față de 66.9 pentru \code{gemini-3.1-pro-preview}), dar
+modelele locale produc mult mai mulți tokeni pentru același răspuns -- 684 în
+medie pentru \code{Qwen3.5-9B} și 1173 pentru \code{Bonsai-27B}, față de 277
+pentru \code{gemini-2.5-flash} -- iar produsul dintre numărul de tokeni și
+debit este ceea ce simte utilizatorul. Un
+avantaj real al rulării locale se vede totuși în timpul până la primul token:
+158 ms pentru \code{Qwen3.5-9B}, adică fără latență de rețea și fără coadă la
+un serviciu partajat.
+
+A doua parte a prețului este fiabilitatea formatului. Ambele modele locale nu au
+produs niciun SQL la 4 dintre cele 26 de întrebări cu etalon: și-au epuizat
+bugetul de 2048 de tokeni raționând, fără să ajungă la un răspuns. Modelele
+găzduite nu au avut niciun astfel de caz. Pentru un sistem în care ieșirea
+modelului trebuie parsată automat, acest mod de eșec contează mai mult decât
+câteva puncte de acuratețe, și ar cere fie un buget mai mare de tokeni, fie
+constrângerea gramaticală a ieșirii -- pe care \code{llama.cpp} o oferă și pe
+care o implementare de producție ar trebui să o folosească.
+
+Un rezultat negativ merită și el consemnat, pentru că infirmă o presupunere
+răspândită: pe această configurație, backend-ul CUDA \emph{nu} decodează mai
+repede decât cel Vulkan. Pe aceleași zece întrebări, \code{Qwen3.5-9B} atinge
+88.3 tokeni pe secundă sub CUDA și 90.2 sub Vulkan, iar \code{Bonsai-27B} 54.9
+sub CUDA față de 61.8 sub Vulkan -- ambele diferențe în favoarea Vulkan, a doua
+cu 11\%. Singurul avantaj măsurabil al CUDA este prefill-ul: 158 ms față de
+438 ms, respectiv 419 ms față de 700 ms până la primul token. Pentru un prompt
+de circa 1400 de tokeni și răspunsuri de sute până la mii de tokeni, acest
+avantaj se pierde în timpul de generare. Concluzia practică este că, pe hardware
+de acest tip, alegerea backend-ului nu este pârghia care face un model local
+utilizabil; numărul de tokeni pe care modelul îi generează înainte de a se opri
+este.
+
+Concluzia practică: rularea locală este o opțiune reală acolo unde datele nu au
+voie să părăsească organizația și unde un timp de răspuns de ordinul secundelor
+până la zeci de secunde este acceptabil, dar nu este încă un înlocuitor pentru
+un API comercial într-o interfață conversațională, unde utilizatorul așteaptă
+răspunsul pe ecran.
+
+În privința costului, diferențele sunt mari și nu urmează acuratețea:
+cel mai precis model,
+\code{gemini-3.1-pro-preview}, costă 1.067 USD la 100 de întrebări, de opt ori
+mai mult decât \code{gemini-2.5-flash} (0.132 USD) pentru 15.4 puncte de
+acuratețe în plus, în timp ce \code{gemini-3-flash-preview} obține 92.3\% la
+0.314 USD. Costul este dominat de tokenii de raționament, invizibili în răspuns
+dar facturați integral: pentru \code{gemini-3-flash-preview}, din cei 656 de
+tokeni generați în medie pentru o întrebare, marea majoritate sunt tokeni de
+raționament, nu SQL. La un volum de câteva mii de întrebări pe lună, diferența
+dintre modele rămâne în ordinul zecilor de dolari, deci pentru acest sistem
+alegerea modelului este o decizie de acuratețe și de latență, nu una de buget.
+
+În privința rapoartelor Excel, selecția tipului de grafic este, practic, o
+problemă rezolvată pentru modelele găzduite: patru din cinci
+aleg tipul corect la toate cele 26 de întrebări, iar singura abatere
+este a modelului pro, care la q20 -- 35 de vehicule cu tarif peste medie --
+alege ``niciun grafic'' în loc de bară; alegerea este ea însăși defensabilă
+pentru o listă de 35 de rânduri, deci cifra de 96.2\% subestimează și ea
+performanța. Validitatea structurală spune însă altceva: toate cele cinci
+modele găzduite se opresc la 96.2\%, iar eșecul este exact același la toate --
+q26 -- și nu ține de model. Componenta de raportare ridică
+\code{TypeError: Excel does not support timezones in datetimes} atunci când
+setul de rezultate conține o valoare \code{timestamptz}, cum întoarce
+\code{DATE\_TRUNC}. Cu alte cuvinte, exportul Excel eșuează exact pe interogările
+de serie temporală, adică pe cazul pentru care selecția automată a graficului de
+tip linie a fost proiectată. Defectul nu ar fi fost vizibil dintr-un test care
+verifică doar că fișierul se generează -- a fost găsit pentru că verificarea
+recitește registrul și compară conținutul foii \code{Data} cu setul de rezultate
+al interogării. Este remediabil prin eliminarea fusului orar înainte de scriere.
+
+Pe partea de rapoarte, cele două modele locale se comportă radical diferit, iar
+diferența nu este între ``local'' și ``găzduit'', ci între modele.
+\code{Bonsai-27B}, deși cuantizat pe un bit, alege tipul corect la 25 din 26 de
+cazuri -- 100\% pe rezultatele care merită un grafic -- adică la nivelul
+modelelor găzduite. \code{Qwen3.5-9B} alege corect la doar 4 din 26, dar cauza
+nu este gustul: la 22 dintre cele 26 de întrebări nu a produs \emph{niciun}
+JSON, pentru că a atins limita de 2048 de tokeni raționând
+(\code{finish\_reason: length}), cu o medie de 1842 de tokeni generați per
+întrebare. Bugetul nu este vinovatul: reluat pe primele opt întrebări cu limita
+dublată la 4096 de tokeni, modelul a produs exact același rezultat -- 6 din 8
+răspunsuri fără JSON și 2 tipuri corecte -- consumând în medie 3219 de tokeni în
+loc de 1842. Nu îi lipsește spațiul, ci criteriul de oprire.
+
+Cifra de validitate structurală trebuie citită în această lumină: ea verifică
+dacă registrul corespunde cererii modelului, iar un model care nu cere niciun
+grafic o trece trivial -- de aceea \code{Qwen3.5-9B} apare cu 96.2\% deși nu a
+produs aproape nicio configurație de grafic. Concluzia corectă nu este că un
+model local este inapt pentru generarea de rapoarte -- \code{Bonsai-27B}
+demonstrează contrariul -- ci că un model care raționează fără criteriu de
+oprire nu poate fi folosit într-un lanț care depinde de JSON valid, și că
+remediul este ieșirea constrânsă gramatical, pe care \code{llama.cpp} o oferă.
+% === end model comparison ===
+
 \section{Testarea interfeței web}
 
 Testarea interfeței web a fost automatizată prin Playwright, verificând fluxul complet al utilizatorului:

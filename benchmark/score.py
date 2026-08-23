@@ -35,6 +35,18 @@ def _norm(v: Any) -> Any:
         f = round(float(v), ROUND_DP)
         return int(f) if f == int(f) else f
     if isinstance(v, datetime.datetime):
+        # Drop any offset first: PostgreSQL hands back TIMESTAMPTZ for some
+        # expressions and naive timestamps for others, and that is a storage
+        # detail, not a different answer.
+        if v.tzinfo is not None:
+            v = v.replace(tzinfo=None)
+        # A timestamp at exact midnight and the corresponding date are the same
+        # answer. DATE_TRUNC('month', ...) yields a timestamp while models
+        # routinely CAST(... AS DATE); scoring those as different penalised
+        # every model on the monthly-series question for a difference of
+        # representation rather than of result.
+        if (v.hour, v.minute, v.second, v.microsecond) == (0, 0, 0, 0):
+            return v.date().isoformat()
         return v.replace(microsecond=0).isoformat(sep=" ")
     if isinstance(v, datetime.date):
         return v.isoformat()
@@ -106,4 +118,56 @@ def summarise(results: list[dict]) -> dict:
         "ambiguous_clarified": sum(1 for r in ambiguous if r.get("clarified")),
         "latency_ms_median": latencies[len(latencies) // 2] if latencies else None,
         "latency_ms_mean": round(sum(latencies) / len(latencies), 1) if latencies else None,
+        "usage": _usage_summary(results),
+    }
+
+
+def _usage_summary(results: list[dict]) -> dict:
+    """Aggregate the per-question token/throughput records.
+
+    Derived from the per-question `usage` entries rather than accumulated during
+    the run, so a results file can be re-scored or re-aggregated later without
+    re-calling any model - which is what keeps a scorer change from being
+    entangled with fresh sampling noise.
+    """
+    us = [r["usage"] for r in results if r.get("usage")]
+    if not us:
+        return {}
+
+    def vals(key):
+        return [u[key] for u in us if u.get(key) is not None]
+
+    def mean(key):
+        v = vals(key)
+        return round(sum(v) / len(v), 2) if v else None
+
+    def total(key):
+        v = vals(key)
+        return sum(v) if v else None
+
+    def median(key):
+        v = sorted(vals(key))
+        return v[len(v) // 2] if v else None
+
+    # Gemini bills reasoning ("thinking") tokens at the output rate and does not
+    # include them in completion_tokens. Counting only completion_tokens
+    # understated the pro model's generated volume by ~15x and its cost by more
+    # than half, so billed output is completion + thinking.
+    billed = [
+        (u.get("completion_tokens") or 0) + (u.get("thinking_tokens") or 0)
+        for u in us
+    ]
+    billed = [b for b in billed if b]
+
+    return {
+        "n": len(us),
+        "tokens_per_sec_mean": mean("tokens_per_sec"),
+        "decode_tokens_per_sec_mean": mean("decode_tokens_per_sec"),
+        "ttft_ms_median": median("ttft_ms"),
+        "prompt_tokens_mean": mean("prompt_tokens"),
+        "output_tokens_mean": round(sum(billed) / len(billed), 2) if billed else None,
+        "completion_tokens_mean": mean("completion_tokens"),
+        "prompt_tokens_total": total("prompt_tokens"),
+        "output_tokens_total": sum(billed) if billed else None,
+        "thinking_tokens_total": total("thinking_tokens"),
     }

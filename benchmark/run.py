@@ -4,6 +4,14 @@
     # naive baseline, against a throwaway local PostgreSQL (no Docker needed)
     GEMINI_API_KEY=... python benchmark/run.py --arm naive
 
+    # the same baseline on another hosted model, into its own results file
+    GEMINI_MODEL=gemini-3.7-flash python benchmark/run.py --arm naive \
+        --out benchmark/results/naive-gemini-3.7-flash.json
+
+    # the same baseline on a model served locally over an OpenAI-compatible API
+    python benchmark/run.py --arm local --local-model qwen3.5-9b \
+        --local-base-url http://127.0.0.1:1234/v1
+
     # the project's pipeline, against the compose stack
     python benchmark/run.py --arm pipeline --base-url http://localhost:8100
 
@@ -31,6 +39,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 import arms as arms_mod  # noqa: E402
+import clients  # noqa: E402
 from score import result_sets_match, summarise  # noqa: E402
 
 STATEMENT_TIMEOUT_MS = 15_000
@@ -78,6 +87,36 @@ def schema_text(repo: pathlib.Path) -> str:
     return (repo / "test_app_db" / "init" / "01_schema.sql").read_text()
 
 
+def cost_block(model: str, usage: dict, n_questions: int, local: bool = False) -> dict:
+    """Extrapolate the measured token usage to a per-100-question API bill.
+
+    Only models with a price verified against the published rate card get a
+    number; anything else gets a note, because a fabricated cost is worse than
+    an absent one. A locally served model has no per-token bill at all, which
+    is reported as zero with the reason attached rather than left blank.
+    """
+    if not usage or not n_questions:
+        return {}
+    if local:
+        return {"model": model, "usd_per_100_questions": 0.0,
+                "note": "served locally: no per-token API charge; the cost is "
+                        "the hardware and the electricity to run it"}
+    price = clients.PRICING_USD_PER_MTOK.get(model)
+    if not price:
+        return {"model": model, "usd_per_100_questions": None,
+                "note": f"no verified published price for {model}"}
+    per_q_in = usage["prompt_tokens_total"] / n_questions
+    per_q_out = usage["output_tokens_total"] / n_questions
+    usd = clients.estimate_cost_usd(model, per_q_in * 100, per_q_out * 100)
+    return {
+        "model": model,
+        "usd_per_mtok_input": price["input"],
+        "usd_per_mtok_output": price["output"],
+        "prices_checked": clients.PRICING_CHECKED,
+        "usd_per_100_questions": round(usd, 6) if usd is not None else None,
+    }
+
+
 def execute(conn, sql: str):
     # statement_timeout is set once at session level in main(), not with SET
     # LOCAL here: the connection is in autocommit, so each execute is its own
@@ -93,6 +132,10 @@ def main() -> int:
     ap.add_argument("--questions", type=pathlib.Path, default=HERE / "questions.yaml")
     ap.add_argument("--database-url", default=os.environ.get("BENCHMARK_DATABASE_URL"))
     ap.add_argument("--base-url", default="http://localhost:8100", help="pipeline arm only")
+    ap.add_argument("--local-base-url", default=clients.DEFAULT_LOCAL_BASE_URL,
+                    help="local arm only: OpenAI-compatible endpoint")
+    ap.add_argument("--local-model", default=clients.DEFAULT_LOCAL_MODEL,
+                    help="local arm only: model id the endpoint serves")
     ap.add_argument("--limit", type=int, help="run only the first N questions")
     ap.add_argument("--out", type=pathlib.Path)
     args = ap.parse_args()
@@ -108,10 +151,16 @@ def main() -> int:
 
     if args.arm == "naive":
         arm = arms_mod.make_naive_arm(schema_text(repo))
+        model_label = clients.gemini_model_name()
+    elif args.arm == "local":
+        arm = arms_mod.make_local_arm(schema_text(repo), args.local_base_url, args.local_model)
+        model_label = args.local_model
     elif args.arm == "pipeline":
         arm = arms_mod.make_pipeline_arm(args.base_url)
+        model_label = clients.gemini_model_name()
     else:
         arm = arms_mod.make_mcp_postgres_arm()
+        model_label = clients.gemini_model_name()
 
     results: list[dict] = []
     # Read-only: model-generated SQL must not be able to change the fixture.
@@ -124,7 +173,8 @@ def main() -> int:
                 "id": q["id"], "question": q["question"], "category": q["category"],
                 "lang": q["lang"], "sql": out["sql"], "gold_sql": q["gold_sql"],
                 "latency_ms": out["latency_ms"], "arm_error": out["error"],
-                "clarified": out["clarified"], "extra": out.get("extra") or {},
+                "clarified": out["clarified"], "usage": out.get("usage"),
+                "extra": out.get("extra") or {},
             }
 
             if q["gold_sql"] is None:
@@ -150,11 +200,18 @@ def main() -> int:
             print(f"  [{i:>2}/{len(questions)}] {q['id']} {mark:<8} {q['question'][:52]}")
 
     summary = summarise(results)
+    summary["usage"] = clients.aggregate_usage([r.get("usage") for r in results])
+    summary["cost"] = cost_block(model_label, summary["usage"], len(results),
+                                 local=args.arm == "local")
+
     out_path = args.out or (HERE / "results" / f"{args.arm}.json")
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(
-        {"arm": args.arm, "model": os.environ.get("GEMINI_MODEL", "gemini-2.5-flash"),
-         "summary": summary, "results": results}, indent=2, default=str))
+    payload = {"arm": args.arm, "model": model_label, "summary": summary,
+               "results": results}
+    if args.arm == "local":
+        payload["backend"] = clients.LOCAL_BACKEND or "unspecified ($LOCAL_BACKEND not set)"
+        payload["endpoint"] = args.local_base_url
+    out_path.write_text(json.dumps(payload, indent=2, default=str))
 
     print(f"\n=== {args.arm} ===")
     print(f"execution accuracy : {summary['execution_accuracy']:.1%} "
@@ -165,7 +222,23 @@ def main() -> int:
     print(f"no SQL produced    : {summary['no_sql_produced']}")
     print(f"ambiguity handled  : {summary['ambiguous_clarified']}/{summary['ambiguous_total']}")
     print(f"latency median/mean: {summary['latency_ms_median']} / {summary['latency_ms_mean']} ms")
-    print(f"\nwrote {out_path.relative_to(repo)}")
+    u = summary["usage"]
+    if u:
+        print(f"tokens/s mean/median: {u['tokens_per_sec_mean']} / {u['tokens_per_sec_median']}")
+        if u.get("decode_tokens_per_sec_mean"):
+            print(f"  decode-only tok/s  : {u['decode_tokens_per_sec_mean']}")
+        if u.get("ttft_ms_median"):
+            print(f"  TTFT median        : {u['ttft_ms_median']} ms")
+        print(f"prompt/output tokens: {u['prompt_tokens_total']} / {u['output_tokens_total']} "
+              f"(of which {u['thinking_tokens_total']} reasoning)")
+    c = summary["cost"] or {}
+    if c.get("usd_per_100_questions") is not None:
+        suffix = (f"(prices checked {c['prices_checked']})" if c.get("prices_checked")
+                  else f"({c.get('note', '')})")
+        print(f"cost per 100 questions: ${c['usd_per_100_questions']:.4f} {suffix}")
+    elif c.get("note"):
+        print(f"cost per 100 questions: {c['note']}")
+    print(f"\nwrote {out_path}")
     return 0
 
 

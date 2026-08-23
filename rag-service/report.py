@@ -6,6 +6,7 @@ deliberately untouched: same request model, same two-sheet workbook.
 
 from __future__ import annotations
 
+import datetime
 import io
 from typing import Optional
 
@@ -37,6 +38,23 @@ CHART_BUILDERS = {
 }
 
 
+def _excel_safe(value):
+    """Coerce one cell value into something openpyxl can write.
+
+    PostgreSQL returns TIMESTAMPTZ as timezone-aware datetimes, and openpyxl
+    refuses those outright ("Excel does not support timezones in datetimes").
+    DATE_TRUNC over a timestamptz column is the normal way to build a monthly
+    series, so without this every time-series report - precisely the ones the
+    line chart exists for - failed with a TypeError.
+
+    The offset is dropped rather than converted to UTC so the spreadsheet shows
+    the same wall-clock values the user saw in the chat table.
+    """
+    if isinstance(value, (datetime.datetime, datetime.time)) and value.tzinfo is not None:
+        return value.replace(tzinfo=None)
+    return value
+
+
 def build_excel(req: ReportRequest) -> bytes:
     wb = Workbook()
     ws = wb.active
@@ -44,7 +62,7 @@ def build_excel(req: ReportRequest) -> bytes:
 
     ws.append(req.columns)
     for row in req.rows:
-        ws.append(row)
+        ws.append([_excel_safe(v) for v in row])
 
     for col_idx in range(1, len(req.columns) + 1):
         col_letter = get_column_letter(col_idx)

@@ -1,0 +1,24 @@
+{
+  "model": "gemini-2.5-flash",
+  "arm": "naive",
+  "runs": 6,
+  "accuracies": [
+    80.8,
+    84.6,
+    84.6,
+    88.5,
+    88.5,
+    92.3
+  ],
+  "mean": 86.5,
+  "stdev": 4.0,
+  "spread_points": 11.5,
+  "one_question_points": 3.8,
+  "unstable_questions": [
+    "q10",
+    "q21",
+    "q24"
+  ],
+  "always_correct": 21,
+  "always_wrong": 2
+}

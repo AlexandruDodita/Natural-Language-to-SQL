@@ -1,0 +1,1123 @@
+{
+  "model": "gemini-3-flash-preview",
+  "summary": {
+    "n": 26,
+    "chart_type_correct": 26,
+    "chart_type_accuracy": 1.0,
+    "chart_type_accuracy_chartable": 1.0,
+    "chart_type_accuracy_scalar": 1.0,
+    "structurally_valid": 25,
+    "structural_validity": 0.9615,
+    "unparseable_responses": 0,
+    "usage": {
+      "n": 26,
+      "prompt_tokens_total": 10488,
+      "prompt_tokens_mean": 403.38,
+      "completion_tokens_total": 761,
+      "thinking_tokens_total": 14858,
+      "output_tokens_total": 15619,
+      "output_tokens_mean": 600.73,
+      "total_tokens_total": 26107,
+      "tokens_per_sec_mean": 171.56,
+      "tokens_per_sec_median": 173.13,
+      "decode_tokens_per_sec_mean": null,
+      "ttft_ms_median": null
+    }
+  },
+  "results": [
+    {
+      "id": "q01",
+      "category": "simple",
+      "question": "How many vehicles are currently available?",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": "none",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "none",
+        "title": "Number of Available Vehicles",
+        "x": null,
+        "y": "count"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 272,
+        "completion_tokens": 26,
+        "thinking_tokens": 664,
+        "total_tokens": 962,
+        "latency_ms": 3412.5,
+        "ttft_ms": null,
+        "tokens_per_sec": 202.2,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 690
+      }
+    },
+    {
+      "id": "q02",
+      "category": "simple",
+      "question": "List all branch offices and the city they are in. Show the branch name and city.",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": "none",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "none",
+        "title": "Branch Offices and Cities",
+        "x": null,
+        "y": null
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 341,
+        "completion_tokens": 25,
+        "thinking_tokens": 370,
+        "total_tokens": 736,
+        "latency_ms": 2120.1,
+        "ttft_ms": null,
+        "tokens_per_sec": 186.31,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 395
+      }
+    },
+    {
+      "id": "q03",
+      "category": "simple",
+      "question": "How many Toyota cars do we own?",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": "none",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "none",
+        "title": "Total Toyota Cars",
+        "x": null,
+        "y": "count"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 273,
+        "completion_tokens": 25,
+        "thinking_tokens": 549,
+        "total_tokens": 847,
+        "latency_ms": 2865.0,
+        "ttft_ms": null,
+        "tokens_per_sec": 200.35,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 574
+      }
+    },
+    {
+      "id": "q04",
+      "category": "simple",
+      "question": "Which vehicles are currently in maintenance? Show make, model and license plate.",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": "none",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "none",
+        "title": "Vehicles Currently in Maintenance",
+        "x": null,
+        "y": null
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 418,
+        "completion_tokens": 26,
+        "thinking_tokens": 537,
+        "total_tokens": 981,
+        "latency_ms": 3046.0,
+        "ttft_ms": null,
+        "tokens_per_sec": 184.83,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 563
+      }
+    },
+    {
+      "id": "q05",
+      "category": "simple",
+      "question": "C\u00e2\u021bi clien\u021bi sunt \u00eenregistra\u021bi \u00een total?",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": "none",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "none",
+        "title": "Num\u0103r total de clien\u021bi",
+        "x": null,
+        "y": "count"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 274,
+        "completion_tokens": 29,
+        "thinking_tokens": 418,
+        "total_tokens": 721,
+        "latency_ms": 2499.5,
+        "ttft_ms": null,
+        "tokens_per_sec": 178.84,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 447
+      }
+    },
+    {
+      "id": "q06",
+      "category": "simple",
+      "question": "Show the five most expensive vehicles by daily rate. Show make, model and daily rate.",
+      "expected_chart": [
+        "bar"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Top 5 Most Expensive Vehicles by Daily Rate",
+        "x": "model",
+        "y": "daily_rate"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 372,
+        "completion_tokens": 34,
+        "thinking_tokens": 814,
+        "total_tokens": 1220,
+        "latency_ms": 3746.9,
+        "ttft_ms": null,
+        "tokens_per_sec": 226.32,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 848
+      }
+    },
+    {
+      "id": "q07",
+      "category": "aggregate",
+      "question": "What is the average salary of employees per branch?",
+      "expected_chart": [
+        "bar"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Average Salary per Branch",
+        "x": "name",
+        "y": "avg_salary"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 497,
+        "completion_tokens": 29,
+        "thinking_tokens": 321,
+        "total_tokens": 847,
+        "latency_ms": 1813.5,
+        "ttft_ms": null,
+        "tokens_per_sec": 193.0,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 350
+      }
+    },
+    {
+      "id": "q08",
+      "category": "aggregate",
+      "question": "How many vehicles are there in each category?",
+      "expected_chart": [
+        "bar",
+        "pie"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Vehicles by Category",
+        "x": "name",
+        "y": "vehicle_count"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 333,
+        "completion_tokens": 29,
+        "thinking_tokens": 500,
+        "total_tokens": 862,
+        "latency_ms": 2976.4,
+        "ttft_ms": null,
+        "tokens_per_sec": 177.73,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 529
+      }
+    },
+    {
+      "id": "q09",
+      "category": "aggregate",
+      "question": "What is the total revenue from completed payments?",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": "none",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "none",
+        "title": "Total Revenue from Completed Payments",
+        "x": null,
+        "y": "total"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 285,
+        "completion_tokens": 27,
+        "thinking_tokens": 241,
+        "total_tokens": 553,
+        "latency_ms": 2147.0,
+        "ttft_ms": null,
+        "tokens_per_sec": 124.82,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 268
+      }
+    },
+    {
+      "id": "q10",
+      "category": "aggregate",
+      "question": "Show total revenue by location.",
+      "expected_chart": [
+        "bar",
+        "pie"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Total Revenue by Location",
+        "x": "name",
+        "y": "revenue"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 425,
+        "completion_tokens": 27,
+        "thinking_tokens": 259,
+        "total_tokens": 711,
+        "latency_ms": 2060.3,
+        "ttft_ms": null,
+        "tokens_per_sec": 138.81,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 286
+      }
+    },
+    {
+      "id": "q11",
+      "category": "aggregate",
+      "question": "What is the average rating for each vehicle category?",
+      "expected_chart": [
+        "bar"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Average Rating by Vehicle Category",
+        "x": "name",
+        "y": "avg_rating"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 444,
+        "completion_tokens": 29,
+        "thinking_tokens": 390,
+        "total_tokens": 863,
+        "latency_ms": 2615.6,
+        "ttft_ms": null,
+        "tokens_per_sec": 160.19,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 419
+      }
+    },
+    {
+      "id": "q12",
+      "category": "aggregate",
+      "question": "Which vehicle categories have more than fifteen vehicles? Show the category name and the count.",
+      "expected_chart": [
+        "bar",
+        "pie"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Vehicle Categories with More than 15 Vehicles",
+        "x": "name",
+        "y": "n"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 337,
+        "completion_tokens": 32,
+        "thinking_tokens": 371,
+        "total_tokens": 740,
+        "latency_ms": 2632.8,
+        "ttft_ms": null,
+        "tokens_per_sec": 153.07,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 403
+      }
+    },
+    {
+      "id": "q13",
+      "category": "aggregate",
+      "question": "How much have we spent on maintenance per maintenance type?",
+      "expected_chart": [
+        "bar",
+        "pie"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Total Maintenance Cost by Maintenance Type",
+        "x": "maintenance_type",
+        "y": "total"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 399,
+        "completion_tokens": 31,
+        "thinking_tokens": 365,
+        "total_tokens": 795,
+        "latency_ms": 2752.3,
+        "ttft_ms": null,
+        "tokens_per_sec": 143.88,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 396
+      }
+    },
+    {
+      "id": "q14",
+      "category": "aggregate",
+      "question": "Care este veniturile totale pe fiecare metod\u0103 de plat\u0103?",
+      "expected_chart": [
+        "bar",
+        "pie"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Venituri totale pe metod\u0103 de plat\u0103",
+        "x": "payment_method",
+        "y": "total"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 332,
+        "completion_tokens": 35,
+        "thinking_tokens": 907,
+        "total_tokens": 1274,
+        "latency_ms": 5441.1,
+        "ttft_ms": null,
+        "tokens_per_sec": 173.13,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 942
+      }
+    },
+    {
+      "id": "q15",
+      "category": "join",
+      "question": "List the reservations picked up in Miami. Show reservation id, pickup date and return date.",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": "none",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "none",
+        "title": "Reservations Picked Up in Miami",
+        "x": null,
+        "y": null
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 544,
+        "completion_tokens": 28,
+        "thinking_tokens": 444,
+        "total_tokens": 1016,
+        "latency_ms": 3034.7,
+        "ttft_ms": null,
+        "tokens_per_sec": 155.53,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 472
+      }
+    },
+    {
+      "id": "q16",
+      "category": "join",
+      "question": "Show each client's first name, last name and the number of reservations they made, including clients with none.",
+      "expected_chart": [
+        "bar",
+        "none"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Number of Reservations per Client",
+        "x": "last_name",
+        "y": "reservations"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 416,
+        "completion_tokens": 31,
+        "thinking_tokens": 1554,
+        "total_tokens": 2001,
+        "latency_ms": 8086.9,
+        "ttft_ms": null,
+        "tokens_per_sec": 196.0,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 1585
+      }
+    },
+    {
+      "id": "q17",
+      "category": "join",
+      "question": "Which employees work at the Downtown Hub? Show first name, last name and role.",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": "none",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "none",
+        "title": "Employees at Downtown Hub",
+        "x": null,
+        "y": null
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 356,
+        "completion_tokens": 25,
+        "thinking_tokens": 272,
+        "total_tokens": 653,
+        "latency_ms": 2145.3,
+        "ttft_ms": null,
+        "tokens_per_sec": 138.44,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 297
+      }
+    },
+    {
+      "id": "q18",
+      "category": "join",
+      "question": "Which reservations have no payment recorded against them? Show reservation id, pickup date and total cost.",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": "none",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "none",
+        "title": "Reservations with No Recorded Payment",
+        "x": "pickup_date",
+        "y": "total_cost"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 495,
+        "completion_tokens": 33,
+        "thinking_tokens": 1213,
+        "total_tokens": 1741,
+        "latency_ms": 7596.6,
+        "ttft_ms": null,
+        "tokens_per_sec": 164.02,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 1246
+      }
+    },
+    {
+      "id": "q19",
+      "category": "join",
+      "question": "Show all reviews with a rating of 1. Show the rating, the comment, and the make and model of the vehicle.",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": "none",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "none",
+        "title": "1-Star Reviews and Comments",
+        "x": null,
+        "y": null
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 496,
+        "completion_tokens": 27,
+        "thinking_tokens": 574,
+        "total_tokens": 1097,
+        "latency_ms": 3502.4,
+        "ttft_ms": null,
+        "tokens_per_sec": 171.6,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 601
+      }
+    },
+    {
+      "id": "q20",
+      "category": "subquery",
+      "question": "Which vehicles have a daily rate above the average daily rate? Show make, model and daily rate.",
+      "expected_chart": [
+        "bar"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Vehicles with Above Average Daily Rate",
+        "x": "model",
+        "y": "daily_rate"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 421,
+        "completion_tokens": 32,
+        "thinking_tokens": 574,
+        "total_tokens": 1027,
+        "latency_ms": 3579.2,
+        "ttft_ms": null,
+        "tokens_per_sec": 169.31,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 606
+      }
+    },
+    {
+      "id": "q21",
+      "category": "subquery",
+      "question": "Which clients spent the most money in total? Show the top ten as first name, last name and total spent.",
+      "expected_chart": [
+        "bar"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Top 10 Clients by Total Spent",
+        "x": "last_name",
+        "y": "spent"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 474,
+        "completion_tokens": 33,
+        "thinking_tokens": 1142,
+        "total_tokens": 1649,
+        "latency_ms": 6206.2,
+        "ttft_ms": null,
+        "tokens_per_sec": 189.33,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 1175
+      }
+    },
+    {
+      "id": "q22",
+      "category": "subquery",
+      "question": "Find the branch with the highest total revenue. Show the branch name and its total revenue.",
+      "expected_chart": [
+        "none",
+        "bar"
+      ],
+      "predicted_chart": "none",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "none",
+        "title": "Branch with Highest Revenue",
+        "x": "name",
+        "y": "revenue"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 340,
+        "completion_tokens": 27,
+        "thinking_tokens": 545,
+        "total_tokens": 912,
+        "latency_ms": 3111.0,
+        "ttft_ms": null,
+        "tokens_per_sec": 183.86,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 572
+      }
+    },
+    {
+      "id": "q23",
+      "category": "subquery",
+      "question": "Which vehicles have had more than three maintenance records? Show make, model and license plate.",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": "none",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "none",
+        "title": "Vehicles with More Than Three Maintenance Records",
+        "x": null,
+        "y": null
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 439,
+        "completion_tokens": 29,
+        "thinking_tokens": 447,
+        "total_tokens": 915,
+        "latency_ms": 2578.3,
+        "ttft_ms": null,
+        "tokens_per_sec": 184.61,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 476
+      }
+    },
+    {
+      "id": "q24",
+      "category": "subquery",
+      "question": "List clients who have never left a review. Show first and last name.",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": "none",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "none",
+        "title": "Clients Who Have Never Left a Review",
+        "x": "first_name",
+        "y": null
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 379,
+        "completion_tokens": 31,
+        "thinking_tokens": 497,
+        "total_tokens": 907,
+        "latency_ms": 3176.5,
+        "ttft_ms": null,
+        "tokens_per_sec": 166.22,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 528
+      }
+    },
+    {
+      "id": "q25",
+      "category": "window",
+      "question": "For each branch, show the highest paid employee as branch name, first name, last name and salary.",
+      "expected_chart": [
+        "bar"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Highest Paid Employee Salary by Branch",
+        "x": "name",
+        "y": "salary"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 534,
+        "completion_tokens": 29,
+        "thinking_tokens": 423,
+        "total_tokens": 986,
+        "latency_ms": 3441.2,
+        "ttft_ms": null,
+        "tokens_per_sec": 131.35,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 452
+      }
+    },
+    {
+      "id": "q26",
+      "category": "window",
+      "question": "Show monthly reservation counts for 2024, as the first day of each month and the count.",
+      "expected_chart": [
+        "line",
+        "area"
+      ],
+      "predicted_chart": "line",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "line",
+        "title": "Monthly Reservation Counts for 2024",
+        "x": "month",
+        "y": "n"
+      },
+      "structurally_valid": false,
+      "checks": {
+        "opens": false,
+        "notes": [
+          "TypeError: Excel does not support timezones in datetimes. The tzinfo in the datetime/time object must be set to None."
+        ]
+      },
+      "error": "TypeError: Excel does not support timezones in datetimes. The tzinfo in the datetime/time object must be set to None.",
+      "usage": {
+        "prompt_tokens": 592,
+        "completion_tokens": 32,
+        "thinking_tokens": 467,
+        "total_tokens": 1091,
+        "latency_ms": 2993.2,
+        "ttft_ms": null,
+        "tokens_per_sec": 166.71,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 499
+      }
+    }
+  ]
+}

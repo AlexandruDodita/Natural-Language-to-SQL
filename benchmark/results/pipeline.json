@@ -37,7 +37,9 @@
     "ambiguous_total": 4,
     "ambiguous_clarified": 3,
     "latency_ms_median": 14415.7,
-    "latency_ms_mean": 13737.1
+    "latency_ms_mean": 13737.1,
+    "usage": {},
+    "cost": {}
   },
   "results": [
     {

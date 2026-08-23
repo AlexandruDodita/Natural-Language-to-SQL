@@ -1,0 +1,336 @@
+{
+  "model": "qwen3.5-9b",
+  "summary": {
+    "n": 8,
+    "chart_type_correct": 2,
+    "chart_type_accuracy": 0.25,
+    "chart_type_accuracy_chartable": 0.6667,
+    "chart_type_accuracy_scalar": 0.0,
+    "structurally_valid": 8,
+    "structural_validity": 1.0,
+    "unparseable_responses": 6,
+    "usage": {
+      "n": 8,
+      "prompt_tokens_total": 2771,
+      "prompt_tokens_mean": 346.38,
+      "completion_tokens_total": 25750,
+      "thinking_tokens_total": 0,
+      "output_tokens_total": 25750,
+      "output_tokens_mean": 3218.75,
+      "total_tokens_total": 28521,
+      "tokens_per_sec_mean": 89.97,
+      "tokens_per_sec_median": 90.77,
+      "decode_tokens_per_sec_mean": 91.41,
+      "ttft_ms_median": 112.7
+    }
+  },
+  "results": [
+    {
+      "id": "q01",
+      "category": "simple",
+      "question": "How many vehicles are currently available?",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": null,
+      "chart_type_correct": false,
+      "raw_chart": null,
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 272,
+        "completion_tokens": 4096,
+        "thinking_tokens": 0,
+        "total_tokens": 4368,
+        "latency_ms": 44008.5,
+        "ttft_ms": 155.4,
+        "tokens_per_sec": 93.07,
+        "decode_tokens_per_sec": 93.44,
+        "finish_reason": "length",
+        "output_tokens": 4096
+      }
+    },
+    {
+      "id": "q02",
+      "category": "simple",
+      "question": "List all branch offices and the city they are in. Show the branch name and city.",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": null,
+      "chart_type_correct": false,
+      "raw_chart": null,
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 344,
+        "completion_tokens": 4096,
+        "thinking_tokens": 0,
+        "total_tokens": 4440,
+        "latency_ms": 45969.1,
+        "ttft_ms": 110.1,
+        "tokens_per_sec": 89.1,
+        "decode_tokens_per_sec": 89.42,
+        "finish_reason": "length",
+        "output_tokens": 4096
+      }
+    },
+    {
+      "id": "q03",
+      "category": "simple",
+      "question": "How many Toyota cars do we own?",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": null,
+      "chart_type_correct": false,
+      "raw_chart": null,
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 273,
+        "completion_tokens": 4096,
+        "thinking_tokens": 0,
+        "total_tokens": 4369,
+        "latency_ms": 44916.9,
+        "ttft_ms": 95.7,
+        "tokens_per_sec": 91.19,
+        "decode_tokens_per_sec": 91.49,
+        "finish_reason": "length",
+        "output_tokens": 4096
+      }
+    },
+    {
+      "id": "q04",
+      "category": "simple",
+      "question": "Which vehicles are currently in maintenance? Show make, model and license plate.",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": null,
+      "chart_type_correct": false,
+      "raw_chart": null,
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 420,
+        "completion_tokens": 4096,
+        "thinking_tokens": 0,
+        "total_tokens": 4516,
+        "latency_ms": 44971.1,
+        "ttft_ms": 132.3,
+        "tokens_per_sec": 91.08,
+        "decode_tokens_per_sec": 91.45,
+        "finish_reason": "length",
+        "output_tokens": 4096
+      }
+    },
+    {
+      "id": "q05",
+      "category": "simple",
+      "question": "C\u00e2\u021bi clien\u021bi sunt \u00eenregistra\u021bi \u00een total?",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": null,
+      "chart_type_correct": false,
+      "raw_chart": null,
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 273,
+        "completion_tokens": 4096,
+        "thinking_tokens": 0,
+        "total_tokens": 4369,
+        "latency_ms": 45782.7,
+        "ttft_ms": 94.3,
+        "tokens_per_sec": 89.47,
+        "decode_tokens_per_sec": 89.76,
+        "finish_reason": "length",
+        "output_tokens": 4096
+      }
+    },
+    {
+      "id": "q06",
+      "category": "simple",
+      "question": "Show the five most expensive vehicles by daily rate. Show make, model and daily rate.",
+      "expected_chart": [
+        "bar"
+      ],
+      "predicted_chart": null,
+      "chart_type_correct": false,
+      "raw_chart": null,
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 369,
+        "completion_tokens": 4096,
+        "thinking_tokens": 0,
+        "total_tokens": 4465,
+        "latency_ms": 45123.7,
+        "ttft_ms": 112.7,
+        "tokens_per_sec": 90.77,
+        "decode_tokens_per_sec": 91.11,
+        "finish_reason": "length",
+        "output_tokens": 4096
+      }
+    },
+    {
+      "id": "q07",
+      "category": "aggregate",
+      "question": "What is the average salary of employees per branch?",
+      "expected_chart": [
+        "bar"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Average Salary of Employees per Branch",
+        "x": "name",
+        "y": "avg_salary"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 998,
+        "thinking_tokens": 0,
+        "total_tokens": 1490,
+        "latency_ms": 11099.7,
+        "ttft_ms": 146.5,
+        "tokens_per_sec": 89.91,
+        "decode_tokens_per_sec": 91.86,
+        "finish_reason": "stop",
+        "output_tokens": 998
+      }
+    },
+    {
+      "id": "q08",
+      "category": "aggregate",
+      "question": "How many vehicles are there in each category?",
+      "expected_chart": [
+        "bar",
+        "pie"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Vehicles by Category",
+        "x": "name",
+        "y": "vehicle_count"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 328,
+        "completion_tokens": 176,
+        "thinking_tokens": 0,
+        "total_tokens": 504,
+        "latency_ms": 2065.9,
+        "ttft_ms": 105.5,
+        "tokens_per_sec": 85.19,
+        "decode_tokens_per_sec": 92.74,
+        "finish_reason": "stop",
+        "output_tokens": 176
+      }
+    }
+  ]
+}

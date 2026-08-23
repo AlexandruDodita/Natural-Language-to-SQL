@@ -3,8 +3,8 @@
   "model": "gemini-2.5-flash",
   "summary": {
     "n_scored": 26,
-    "n_correct": 22,
-    "execution_accuracy": 0.8462,
+    "n_correct": 21,
+    "execution_accuracy": 0.8077,
     "by_category": {
       "aggregate": {
         "n": 8,
@@ -23,8 +23,8 @@
       },
       "subquery": {
         "n": 5,
-        "correct": 3,
-        "accuracy": 0.6
+        "correct": 2,
+        "accuracy": 0.4
       },
       "window": {
         "n": 2,
@@ -35,11 +35,28 @@
     "invalid_sql": 0,
     "no_sql_produced": 0,
     "ambiguous_total": 4,
-    "ambiguous_clarified": 1,
-    "latency_ms_median": 1534.2,
-    "latency_ms_mean": 1919.5,
-    "usage": {},
-    "cost": {}
+    "ambiguous_clarified": 2,
+    "latency_ms_median": 1116.8,
+    "latency_ms_mean": 1694.4,
+    "usage": {
+      "n": 30,
+      "tokens_per_sec_mean": 135.02,
+      "decode_tokens_per_sec_mean": null,
+      "ttft_ms_median": null,
+      "prompt_tokens_mean": 1496.47,
+      "output_tokens_mean": 277.97,
+      "completion_tokens_mean": 63.57,
+      "prompt_tokens_total": 44894,
+      "output_tokens_total": 8339,
+      "thinking_tokens_total": 6432
+    },
+    "cost": {
+      "model": "gemini-2.5-flash",
+      "usd_per_mtok_input": 0.3,
+      "usd_per_mtok_output": 2.5,
+      "prices_checked": "2026-08-23",
+      "usd_per_100_questions": 0.131983
+    }
   },
   "results": [
     {
@@ -47,11 +64,23 @@
       "question": "How many vehicles are currently available?",
       "category": "simple",
       "lang": "en",
-      "sql": "SELECT COUNT(id) FROM vehicles WHERE status = 'available';",
+      "sql": "SELECT COUNT(id)\nFROM vehicles\nWHERE status = 'available';",
       "gold_sql": "SELECT COUNT(*) FROM vehicles WHERE status = 'available'",
-      "latency_ms": 1058.2,
+      "latency_ms": 948.8,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1489,
+        "completion_tokens": 15,
+        "thinking_tokens": 44,
+        "total_tokens": 1548,
+        "latency_ms": 822.4,
+        "ttft_ms": null,
+        "tokens_per_sec": 71.74,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 59
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -68,9 +97,21 @@
       "lang": "en",
       "sql": "SELECT name, city FROM locations;",
       "gold_sql": "SELECT name, city FROM locations",
-      "latency_ms": 728.1,
+      "latency_ms": 747.6,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1500,
+        "completion_tokens": 7,
+        "thinking_tokens": 35,
+        "total_tokens": 1542,
+        "latency_ms": 747.4,
+        "ttft_ms": null,
+        "tokens_per_sec": 56.2,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 42
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -85,11 +126,23 @@
       "question": "How many Toyota cars do we own?",
       "category": "simple",
       "lang": "en",
-      "sql": "SELECT COUNT(*) FROM vehicles WHERE make = 'Toyota';",
+      "sql": "SELECT COUNT(*) FROM vehicles WHERE make = 'Toyota'",
       "gold_sql": "SELECT COUNT(*) FROM vehicles WHERE make = 'Toyota'",
-      "latency_ms": 1072.9,
+      "latency_ms": 1068.2,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1490,
+        "completion_tokens": 11,
+        "thinking_tokens": 43,
+        "total_tokens": 1544,
+        "latency_ms": 1068.1,
+        "ttft_ms": null,
+        "tokens_per_sec": 50.56,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 54
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -106,9 +159,21 @@
       "lang": "en",
       "sql": "SELECT make, model, license_plate\nFROM vehicles\nWHERE status = 'maintenance';",
       "gold_sql": "SELECT make, model, license_plate FROM vehicles WHERE status = 'maintenance'",
-      "latency_ms": 1265.8,
+      "latency_ms": 757.4,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1497,
+        "completion_tokens": 18,
+        "thinking_tokens": 51,
+        "total_tokens": 1566,
+        "latency_ms": 757.3,
+        "ttft_ms": null,
+        "tokens_per_sec": 91.12,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 69
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -125,9 +190,21 @@
       "lang": "ro",
       "sql": "SELECT COUNT(id) FROM clients;",
       "gold_sql": "SELECT COUNT(*) FROM clients",
-      "latency_ms": 803.7,
+      "latency_ms": 703.9,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1496,
+        "completion_tokens": 8,
+        "thinking_tokens": 26,
+        "total_tokens": 1530,
+        "latency_ms": 703.8,
+        "ttft_ms": null,
+        "tokens_per_sec": 48.31,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 34
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -142,11 +219,23 @@
       "question": "Show the five most expensive vehicles by daily rate. Show make, model and daily rate.",
       "category": "simple",
       "lang": "en",
-      "sql": "SELECT make, model, daily_rate\nFROM vehicles\nORDER BY daily_rate DESC\nLIMIT 5;",
+      "sql": "SELECT\n  make,\n  model,\n  daily_rate\nFROM vehicles\nORDER BY\n  daily_rate DESC\nLIMIT 5;",
       "gold_sql": "SELECT make, model, daily_rate FROM vehicles ORDER BY daily_rate DESC LIMIT 5",
-      "latency_ms": 869.3,
+      "latency_ms": 1027.0,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1500,
+        "completion_tokens": 36,
+        "thinking_tokens": 68,
+        "total_tokens": 1604,
+        "latency_ms": 1026.8,
+        "ttft_ms": null,
+        "tokens_per_sec": 101.28,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 104
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -161,11 +250,23 @@
       "question": "What is the average salary of employees per branch?",
       "category": "aggregate",
       "lang": "en",
-      "sql": "SELECT\n  l.name AS branch_name,\n  AVG(e.salary) AS average_salary\nFROM employees AS e\nJOIN locations AS l\n  ON e.location_id = l.id\nGROUP BY\n  l.name\nORDER BY\n  l.name;",
+      "sql": "SELECT\n  l.name AS branch_name,\n  AVG(e.salary) AS average_salary\nFROM employees AS e\nJOIN locations AS l\n  ON e.location_id = l.id\nGROUP BY\n  l.name;",
       "gold_sql": "SELECT l.name, AVG(e.salary) AS avg_salary FROM employees e JOIN locations l ON e.location_id = l.id GROUP BY l.name\n",
-      "latency_ms": 1136.8,
+      "latency_ms": 1244.6,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1492,
+        "completion_tokens": 59,
+        "thinking_tokens": 122,
+        "total_tokens": 1673,
+        "latency_ms": 1244.4,
+        "ttft_ms": null,
+        "tokens_per_sec": 145.45,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 181
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -180,11 +281,23 @@
       "question": "How many vehicles are there in each category?",
       "category": "aggregate",
       "lang": "en",
-      "sql": "SELECT\n  vc.name AS category_name,\n  COUNT(v.id) AS total_vehicles\nFROM vehicle_categories AS vc\nLEFT JOIN vehicles AS v\n  ON vc.id = v.category_id\nGROUP BY\n  vc.name\nORDER BY\n  category_name;",
+      "sql": "SELECT\n  vc.name AS category_name,\n  COUNT(v.id) AS total_vehicles\nFROM vehicles AS v\nJOIN vehicle_categories AS vc\n  ON v.category_id = vc.id\nGROUP BY\n  vc.name\nORDER BY\n  total_vehicles DESC;",
       "gold_sql": "SELECT c.name, COUNT(*) AS vehicle_count FROM vehicles v JOIN vehicle_categories c ON v.category_id = c.id GROUP BY c.name\n",
-      "latency_ms": 1124.8,
+      "latency_ms": 1064.4,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1491,
+        "completion_tokens": 70,
+        "thinking_tokens": 39,
+        "total_tokens": 1600,
+        "latency_ms": 1064.2,
+        "ttft_ms": null,
+        "tokens_per_sec": 102.42,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 109
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -199,11 +312,23 @@
       "question": "What is the total revenue from completed payments?",
       "category": "aggregate",
       "lang": "en",
-      "sql": "SELECT SUM(amount)\nFROM payments\nWHERE status = 'completed';",
+      "sql": "SELECT SUM(amount) FROM payments WHERE status = 'completed';",
       "gold_sql": "SELECT SUM(amount) AS total FROM payments WHERE status = 'completed'",
-      "latency_ms": 1138.8,
+      "latency_ms": 686.6,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1491,
+        "completion_tokens": 13,
+        "thinking_tokens": 36,
+        "total_tokens": 1540,
+        "latency_ms": 686.5,
+        "ttft_ms": null,
+        "tokens_per_sec": 71.38,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 49
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -218,11 +343,23 @@
       "question": "Show total revenue by location.",
       "category": "aggregate",
       "lang": "en",
-      "sql": "SELECT\n  l.name AS location_name,\n  SUM(p.amount) AS total_revenue\nFROM payments AS p\nJOIN reservations AS r\n  ON p.reservation_id = r.id\nJOIN locations AS l\n  ON r.pickup_location = l.id\nWHERE\n  p.status = 'completed'\nGROUP BY\n  l.name\nORDER BY\n  total_revenue DESC;",
+      "sql": "SELECT\n    l.name AS location_name,\n    SUM(p.amount) AS total_revenue\nFROM\n    locations l\nJOIN\n    reservations r ON l.id = r.pickup_location\nJOIN\n    payments p ON r.id = p.reservation_id\nWHERE\n    p.status = 'completed'\nGROUP BY\n    l.id, l.name\nORDER BY\n    total_revenue DESC;",
       "gold_sql": "SELECT l.name, SUM(p.amount) AS revenue FROM payments p JOIN reservations r ON p.reservation_id = r.id JOIN locations l ON r.pickup_location = l.id GROUP BY l.name\n",
-      "latency_ms": 1939.2,
+      "latency_ms": 4246.3,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1488,
+        "completion_tokens": 95,
+        "thinking_tokens": 767,
+        "total_tokens": 2350,
+        "latency_ms": 4246.2,
+        "ttft_ms": null,
+        "tokens_per_sec": 203.01,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 862
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -239,9 +376,21 @@
       "lang": "en",
       "sql": "SELECT\n  vc.name AS category_name,\n  AVG(r.rating) AS average_rating\nFROM vehicle_categories AS vc\nJOIN vehicles AS v\n  ON vc.id = v.category_id\nJOIN reservations AS res\n  ON v.id = res.vehicle_id\nJOIN reviews AS r\n  ON res.id = r.reservation_id\nGROUP BY\n  vc.name\nORDER BY\n  vc.name;",
       "gold_sql": "SELECT c.name, AVG(rv.rating) AS avg_rating FROM reviews rv JOIN reservations r ON rv.reservation_id = r.id JOIN vehicles v ON r.vehicle_id = v.id JOIN vehicle_categories c ON v.category_id = c.id GROUP BY c.name\n",
-      "latency_ms": 1604.2,
+      "latency_ms": 1624.7,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1492,
+        "completion_tokens": 98,
+        "thinking_tokens": 199,
+        "total_tokens": 1789,
+        "latency_ms": 1624.7,
+        "ttft_ms": null,
+        "tokens_per_sec": 182.81,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 297
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -258,9 +407,21 @@
       "lang": "en",
       "sql": "SELECT\n  vc.name AS category_name,\n  COUNT(v.id) AS vehicle_count\nFROM vehicle_categories AS vc\nJOIN vehicles AS v\n  ON vc.id = v.category_id\nGROUP BY\n  vc.name\nHAVING\n  COUNT(v.id) > 15;",
       "gold_sql": "SELECT c.name, COUNT(*) AS n FROM vehicles v JOIN vehicle_categories c ON v.category_id = c.id GROUP BY c.name HAVING COUNT(*) > 15\n",
-      "latency_ms": 1676.5,
+      "latency_ms": 1371.1,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1499,
+        "completion_tokens": 76,
+        "thinking_tokens": 158,
+        "total_tokens": 1733,
+        "latency_ms": 1371.0,
+        "ttft_ms": null,
+        "tokens_per_sec": 170.68,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 234
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -277,9 +438,21 @@
       "lang": "en",
       "sql": "SELECT\n  maintenance_type,\n  SUM(cost) AS total_spent\nFROM maintenance_records\nGROUP BY\n  maintenance_type\nORDER BY\n  total_spent DESC;",
       "gold_sql": "SELECT maintenance_type, SUM(cost) AS total FROM maintenance_records GROUP BY maintenance_type",
-      "latency_ms": 938.4,
+      "latency_ms": 995.6,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1493,
+        "completion_tokens": 40,
+        "thinking_tokens": 47,
+        "total_tokens": 1580,
+        "latency_ms": 995.5,
+        "ttft_ms": null,
+        "tokens_per_sec": 87.39,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 87
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -296,9 +469,21 @@
       "lang": "ro",
       "sql": "SELECT\n  payment_method,\n  SUM(amount) AS total_revenue\nFROM payments\nWHERE\n  status = 'completed'\nGROUP BY\n  payment_method;",
       "gold_sql": "SELECT payment_method, SUM(amount) AS total FROM payments GROUP BY payment_method",
-      "latency_ms": 932.8,
+      "latency_ms": 810.3,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1495,
+        "completion_tokens": 38,
+        "thinking_tokens": 42,
+        "total_tokens": 1575,
+        "latency_ms": 810.2,
+        "ttft_ms": null,
+        "tokens_per_sec": 98.74,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 80
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -315,9 +500,21 @@
       "lang": "en",
       "sql": "SELECT\n  r.id,\n  r.pickup_date,\n  r.return_date\nFROM reservations AS r\nJOIN locations AS l\n  ON r.pickup_location = l.id\nWHERE\n  l.city = 'Miami';",
       "gold_sql": "SELECT r.id, r.pickup_date, r.return_date FROM reservations r JOIN locations l ON r.pickup_location = l.id WHERE l.city = 'Miami'\n",
-      "latency_ms": 1534.2,
+      "latency_ms": 1113.9,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1500,
+        "completion_tokens": 55,
+        "thinking_tokens": 126,
+        "total_tokens": 1681,
+        "latency_ms": 1113.8,
+        "ttft_ms": null,
+        "tokens_per_sec": 162.51,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 181
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -334,9 +531,21 @@
       "lang": "en",
       "sql": "SELECT\n  c.first_name,\n  c.last_name,\n  COUNT(r.id) AS number_of_reservations\nFROM clients AS c\nLEFT JOIN reservations AS r\n  ON c.id = r.client_id\nGROUP BY\n  c.id,\n  c.first_name,\n  c.last_name\nORDER BY\n  c.first_name,\n  c.last_name;",
       "gold_sql": "SELECT c.first_name, c.last_name, COUNT(r.id) AS reservations FROM clients c LEFT JOIN reservations r ON r.client_id = c.id GROUP BY c.id, c.first_name, c.last_name\n",
-      "latency_ms": 1537.1,
+      "latency_ms": 1434.9,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1505,
+        "completion_tokens": 98,
+        "thinking_tokens": 130,
+        "total_tokens": 1733,
+        "latency_ms": 1434.8,
+        "ttft_ms": null,
+        "tokens_per_sec": 158.9,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 228
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -351,11 +560,23 @@
       "question": "Which employees work at the Downtown Hub? Show first name, last name and role.",
       "category": "join",
       "lang": "en",
-      "sql": "SELECT e.first_name, e.last_name, e.role\nFROM employees AS e\nJOIN locations AS l ON e.location_id = l.id\nWHERE l.name = 'Downtown Hub';",
+      "sql": "SELECT\n  e.first_name,\n  e.last_name,\n  e.role\nFROM employees AS e\nJOIN locations AS l\n  ON e.location_id = l.id\nWHERE\n  l.name = 'Downtown Hub';",
       "gold_sql": "SELECT e.first_name, e.last_name, e.role FROM employees e JOIN locations l ON e.location_id = l.id WHERE l.name = 'Downtown Hub'\n",
-      "latency_ms": 1403.0,
+      "latency_ms": 986.5,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1499,
+        "completion_tokens": 56,
+        "thinking_tokens": 90,
+        "total_tokens": 1645,
+        "latency_ms": 986.5,
+        "ttft_ms": null,
+        "tokens_per_sec": 148.0,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 146
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -370,11 +591,23 @@
       "question": "Which reservations have no payment recorded against them? Show reservation id, pickup date and total cost.",
       "category": "join",
       "lang": "en",
-      "sql": "SELECT\n  r.id,\n  r.pickup_date,\n  r.total_cost\nFROM reservations AS r\nLEFT JOIN payments AS p\n  ON r.id = p.reservation_id\nWHERE\n  p.id IS NULL;",
+      "sql": "SELECT\n  r.id AS reservation_id,\n  r.pickup_date,\n  r.total_cost\nFROM reservations AS r\nLEFT JOIN payments AS p\n  ON r.id = p.reservation_id\nWHERE\n  p.id IS NULL;",
       "gold_sql": "SELECT r.id, r.pickup_date, r.total_cost FROM reservations r WHERE NOT EXISTS (SELECT 1 FROM payments p WHERE p.reservation_id = r.id)\n",
-      "latency_ms": 1589.6,
+      "latency_ms": 1371.2,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1501,
+        "completion_tokens": 64,
+        "thinking_tokens": 165,
+        "total_tokens": 1730,
+        "latency_ms": 1371.0,
+        "ttft_ms": null,
+        "tokens_per_sec": 167.03,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 229
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -391,9 +624,21 @@
       "lang": "en",
       "sql": "SELECT\n  r.rating,\n  r.comment,\n  v.make,\n  v.model\nFROM reviews AS r\nJOIN reservations AS res\n  ON r.reservation_id = res.id\nJOIN vehicles AS v\n  ON res.vehicle_id = v.id\nWHERE\n  r.rating = 1;",
       "gold_sql": "SELECT rv.rating, rv.comment, v.make, v.model FROM reviews rv JOIN reservations r ON rv.reservation_id = r.id JOIN vehicles v ON r.vehicle_id = v.id WHERE rv.rating = 1\n",
-      "latency_ms": 1737.1,
+      "latency_ms": 1559.9,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1508,
+        "completion_tokens": 74,
+        "thinking_tokens": 196,
+        "total_tokens": 1778,
+        "latency_ms": 1559.8,
+        "ttft_ms": null,
+        "tokens_per_sec": 173.1,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 270
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -408,11 +653,23 @@
       "question": "Which vehicles have a daily rate above the average daily rate? Show make, model and daily rate.",
       "category": "subquery",
       "lang": "en",
-      "sql": "SELECT\n  make,\n  model,\n  daily_rate\nFROM vehicles\nWHERE\n  daily_rate > (\n    SELECT\n      AVG(daily_rate)\n    FROM vehicles\n  );",
+      "sql": "SELECT make, model, daily_rate\nFROM vehicles\nWHERE daily_rate > (SELECT AVG(daily_rate) FROM vehicles);",
       "gold_sql": "SELECT make, model, daily_rate FROM vehicles WHERE daily_rate > (SELECT AVG(daily_rate) FROM vehicles)",
-      "latency_ms": 1199.9,
+      "latency_ms": 1009.7,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1502,
+        "completion_tokens": 28,
+        "thinking_tokens": 107,
+        "total_tokens": 1637,
+        "latency_ms": 1009.6,
+        "ttft_ms": null,
+        "tokens_per_sec": 133.72,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 135
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -427,11 +684,23 @@
       "question": "Which clients spent the most money in total? Show the top ten as first name, last name and total spent.",
       "category": "subquery",
       "lang": "en",
-      "sql": "SELECT\n  c.first_name,\n  c.last_name,\n  SUM(p.amount) AS total_spent\nFROM clients AS c\nJOIN reservations AS r\n  ON c.id = r.client_id\nJOIN payments AS p\n  ON r.id = p.reservation_id\nWHERE\n  p.status = 'completed' -- Only consider completed payments\nGROUP BY\n  c.id,\n  c.first_name,\n  c.last_name\nORDER BY\n  total_spent DESC\nLIMIT 10;",
+      "sql": "SELECT\n  c.first_name,\n  c.last_name,\n  SUM(p.amount) AS total_spent\nFROM clients AS c\nJOIN reservations AS r\n  ON c.id = r.client_id\nJOIN payments AS p\n  ON r.id = p.reservation_id\nWHERE\n  p.status = 'completed'\nGROUP BY\n  c.id,\n  c.first_name,\n  c.last_name\nORDER BY\n  total_spent DESC\nLIMIT 10;",
       "gold_sql": "SELECT c.first_name, c.last_name, SUM(r.total_cost) AS spent FROM clients c JOIN reservations r ON r.client_id = c.id GROUP BY c.id, c.first_name, c.last_name ORDER BY spent DESC NULLS LAST LIMIT 10\n",
-      "latency_ms": 1728.8,
+      "latency_ms": 1386.1,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1505,
+        "completion_tokens": 123,
+        "thinking_tokens": 115,
+        "total_tokens": 1743,
+        "latency_ms": 1386.0,
+        "ttft_ms": null,
+        "tokens_per_sec": 171.72,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 238
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -446,11 +715,23 @@
       "question": "Find the branch with the highest total revenue. Show the branch name and its total revenue.",
       "category": "subquery",
       "lang": "en",
-      "sql": "SELECT\n  l.name AS branch_name,\n  SUM(r.total_cost) AS total_revenue\nFROM locations AS l\nJOIN reservations AS r\n  ON l.id = r.pickup_location\nWHERE\n  r.status IN ('completed', 'active') AND r.total_cost IS NOT NULL\nGROUP BY\n  l.id,\n  l.name\nORDER BY\n  total_revenue DESC\nLIMIT 1;",
+      "sql": "SELECT l.name, SUM(p.amount) AS total_revenue\nFROM locations l\nJOIN reservations r ON l.id = r.pickup_location\nJOIN payments p ON r.id = p.reservation_id\nWHERE p.status = 'completed'\nGROUP BY l.name\nORDER BY total_revenue DESC\nLIMIT 1;",
       "gold_sql": "SELECT l.name, SUM(p.amount) AS revenue FROM payments p JOIN reservations r ON p.reservation_id = r.id JOIN locations l ON r.pickup_location = l.id GROUP BY l.name ORDER BY revenue DESC LIMIT 1\n",
-      "latency_ms": 2064.9,
+      "latency_ms": 4665.1,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1500,
+        "completion_tokens": 74,
+        "thinking_tokens": 875,
+        "total_tokens": 2449,
+        "latency_ms": 4665.0,
+        "ttft_ms": null,
+        "tokens_per_sec": 203.43,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 949
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -467,9 +748,21 @@
       "lang": "en",
       "sql": "SELECT\n  v.make,\n  v.model,\n  v.license_plate\nFROM vehicles AS v\nJOIN maintenance_records AS mr\n  ON v.id = mr.vehicle_id\nGROUP BY\n  v.id,\n  v.make,\n  v.model,\n  v.license_plate\nHAVING\n  COUNT(mr.id) > 3;",
       "gold_sql": "SELECT v.make, v.model, v.license_plate FROM vehicles v WHERE (SELECT COUNT(*) FROM maintenance_records m WHERE m.vehicle_id = v.id) > 3\n",
-      "latency_ms": 1467.7,
+      "latency_ms": 1116.8,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1500,
+        "completion_tokens": 87,
+        "thinking_tokens": 75,
+        "total_tokens": 1662,
+        "latency_ms": 1116.7,
+        "ttft_ms": null,
+        "tokens_per_sec": 145.08,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 162
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -484,30 +777,54 @@
       "question": "List clients who have never left a review. Show first and last name.",
       "category": "subquery",
       "lang": "en",
-      "sql": "SELECT\n    c.first_name,\n    c.last_name\nFROM\n    clients c\nWHERE NOT EXISTS (\n    SELECT 1\n    FROM\n        reservations r\n    JOIN\n        reviews rev ON r.id = rev.reservation_id\n    WHERE\n        r.client_id = c.id\n);",
+      "sql": "SELECT\n  c.first_name,\n  c.last_name\nFROM clients AS c\nLEFT JOIN reservations AS r\n  ON c.id = r.client_id\nLEFT JOIN reviews AS rv\n  ON r.id = rv.reservation_id\nWHERE\n  rv.id IS NULL;",
       "gold_sql": "SELECT c.first_name, c.last_name FROM clients c WHERE NOT EXISTS (\n  SELECT 1 FROM reservations r\n  JOIN reviews rv ON rv.reservation_id = r.id\n  WHERE r.client_id = c.id\n)\n",
-      "latency_ms": 3940.2,
+      "latency_ms": 1073.2,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1497,
+        "completion_tokens": 72,
+        "thinking_tokens": 70,
+        "total_tokens": 1639,
+        "latency_ms": 1073.0,
+        "ttft_ms": null,
+        "tokens_per_sec": 132.34,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 142
+      },
       "extra": {
         "prompt_chars": 5951
       },
       "scored": true,
-      "correct": true,
+      "correct": false,
       "exec_error": null,
       "gold_rows": 84,
-      "pred_rows": 84
+      "pred_rows": 1808
     },
     {
       "id": "q25",
       "question": "For each branch, show the highest paid employee as branch name, first name, last name and salary.",
       "category": "window",
       "lang": "en",
-      "sql": "SELECT\n  l.name AS branch_name,\n  e.first_name,\n  e.last_name,\n  e.salary\nFROM employees AS e\nJOIN locations AS l\n  ON e.location_id = l.id\nWHERE\n  (e.location_id, e.salary) IN (\n    SELECT\n      location_id,\n      MAX(salary)\n    FROM employees\n    GROUP BY\n      location_id\n  );",
+      "sql": "WITH RankedEmployees AS (\n    SELECT\n        l.name AS branch_name,\n        e.first_name,\n        e.last_name,\n        e.salary,\n        ROW_NUMBER() OVER (PARTITION BY l.id ORDER BY e.salary DESC) as rn\n    FROM\n        employees AS e\n    JOIN\n        locations AS l\n    ON\n        e.location_id = l.id\n)\nSELECT\n    branch_name,\n    first_name,\n    last_name,\n    salary\nFROM\n    RankedEmployees\nWHERE\n    rn = 1;",
       "gold_sql": "SELECT name, first_name, last_name, salary FROM (\n  SELECT l.name, e.first_name, e.last_name, e.salary,\n         ROW_NUMBER() OVER (PARTITION BY l.id ORDER BY e.salary DESC) AS rn\n  FROM employees e JOIN locations l ON e.location_id = l.id\n) t WHERE rn = 1\n",
-      "latency_ms": 1872.0,
+      "latency_ms": 1867.3,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1503,
+        "completion_tokens": 139,
+        "thinking_tokens": 184,
+        "total_tokens": 1826,
+        "latency_ms": 1867.2,
+        "ttft_ms": null,
+        "tokens_per_sec": 172.99,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 323
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -522,11 +839,23 @@
       "question": "Show monthly reservation counts for 2024, as the first day of each month and the count.",
       "category": "window",
       "lang": "en",
-      "sql": "SELECT\n  DATE_TRUNC('month', pickup_date) AS month_start_date,\n  COUNT(id) AS reservation_count\nFROM reservations\nWHERE\n  EXTRACT(YEAR FROM pickup_date) = 2024\nGROUP BY\n  month_start_date\nORDER BY\n  month_start_date;",
+      "sql": "SELECT\n  DATE_TRUNC('month', pickup_date)::date AS month_start,\n  COUNT(id) AS reservation_count\nFROM\n  reservations\nWHERE\n  EXTRACT(YEAR FROM pickup_date) = 2024\nGROUP BY\n  month_start\nORDER BY\n  month_start;",
       "gold_sql": "SELECT DATE_TRUNC('month', pickup_date) AS month, COUNT(*) AS n FROM reservations WHERE pickup_date >= DATE '2024-01-01' AND pickup_date < DATE '2025-01-01' GROUP BY 1 ORDER BY 1\n",
-      "latency_ms": 1930.6,
+      "latency_ms": 1741.3,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1504,
+        "completion_tokens": 73,
+        "thinking_tokens": 217,
+        "total_tokens": 1794,
+        "latency_ms": 1741.2,
+        "ttft_ms": null,
+        "tokens_per_sec": 166.55,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 290
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -541,11 +870,23 @@
       "question": "Care sunt cei mai buni clien\u021bi?",
       "category": "ambiguous",
       "lang": "ro",
-      "sql": "SELECT\n  c.id,\n  c.first_name,\n  c.last_name,\n  c.email,\n  SUM(r.total_cost) AS total_spending\nFROM clients AS c\nJOIN reservations AS r\n  ON c.id = r.client_id\nWHERE\n  r.status IN ('completed', 'active') -- Only consider completed or active reservations for spending\nGROUP BY\n  c.id,\n  c.first_name,\n  c.last_name,\n  c.email\nORDER BY\n  total_spending DESC;",
+      "sql": "SELECT\n  c.id,\n  c.first_name,\n  c.last_name,\n  c.email,\n  SUM(p.amount) AS total_spent\nFROM clients AS c\nJOIN reservations AS r\n  ON c.id = r.client_id\nJOIN payments AS p\n  ON r.id = p.reservation_id\nWHERE\n  p.status = 'completed'\nGROUP BY\n  c.id,\n  c.first_name,\n  c.last_name,\n  c.email\nORDER BY\n  total_spent DESC;",
       "gold_sql": null,
-      "latency_ms": 2474.9,
+      "latency_ms": 1808.9,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1492,
+        "completion_tokens": 136,
+        "thinking_tokens": 191,
+        "total_tokens": 1819,
+        "latency_ms": 1808.8,
+        "ttft_ms": null,
+        "tokens_per_sec": 180.79,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 327
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -556,11 +897,23 @@
       "question": "Show me the good vehicles.",
       "category": "ambiguous",
       "lang": "en",
-      "sql": "SELECT\n  v.make,\n  v.model,\n  v.license_plate,\n  AVG(r.rating) AS average_rating\nFROM vehicles AS v\nJOIN reservations AS res\n  ON v.id = res.vehicle_id\nJOIN reviews AS r\n  ON res.id = r.reservation_id\nGROUP BY\n  v.id,\n  v.make,\n  v.model,\n  v.license_plate\nHAVING\n  AVG(r.rating) >= 4 -- Defining \"good\" as having an average rating of 4 or higher\nORDER BY\n  average_rating DESC;",
+      "sql": null,
       "gold_sql": null,
-      "latency_ms": 5958.4,
+      "latency_ms": 2010.9,
       "arm_error": null,
-      "clarified": false,
+      "clarified": true,
+      "usage": {
+        "prompt_tokens": 1488,
+        "completion_tokens": 3,
+        "thinking_tokens": 318,
+        "total_tokens": 1809,
+        "latency_ms": 2010.8,
+        "ttft_ms": null,
+        "tokens_per_sec": 159.64,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 321
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -571,11 +924,23 @@
       "question": "How is the business doing?",
       "category": "ambiguous",
       "lang": "en",
-      "sql": "SELECT\n    (SELECT SUM(amount) FROM payments WHERE status = 'completed') AS total_completed_revenue,\n    (SELECT COUNT(id) FROM reservations) AS total_reservations,\n    (SELECT COUNT(id) FILTER (WHERE status = 'completed') FROM reservations) AS completed_reservations,\n    (SELECT AVG(total_cost) FROM reservations WHERE status = 'completed') AS avg_completed_reservation_cost,\n    (SELECT AVG(rating) FROM reviews) AS average_customer_rating,\n    (SELECT SUM(cost) FROM maintenance_records) AS total_maintenance_expenses,\n    (SELECT COUNT(id) FROM vehicles WHERE status = 'available') AS current_available_vehicles,\n    (SELECT COUNT(id) FROM vehicles WHERE status = 'rented') AS current_rented_vehicles,\n    (SELECT COUNT(id) FROM clients) AS total_registered_clients,\n    (SELECT COUNT(DISTINCT location_id) FROM employees) AS active_locations_with_employees;",
+      "sql": "SELECT\n    (SELECT SUM(amount) FROM payments WHERE status = 'completed') AS total_revenue_collected,\n    (SELECT SUM(cost) FROM maintenance_records) AS total_maintenance_cost,\n    (SELECT SUM(salary) FROM employees) AS total_employee_salaries,\n    (SELECT COUNT(id) FROM reservations WHERE status = 'completed') AS completed_reservations_count,\n    (SELECT COUNT(id) FROM reservations WHERE status = 'cancelled') AS cancelled_reservations_count,\n    (SELECT COUNT(id) FROM vehicles WHERE status = 'rented') AS vehicles_currently_rented,\n    (SELECT COUNT(id) FROM vehicles WHERE status = 'available') AS vehicles_currently_available,\n    (SELECT AVG(rating) FROM reviews) AS average_customer_rating,\n    (SELECT COUNT(DISTINCT client_id) FROM reservations) AS unique_clients_with_reservations,\n    (SELECT COUNT(id) FROM locations) AS total_locations,\n    (SELECT COUNT(id) FROM vehicles) AS total_vehicles_in_fleet;",
       "gold_sql": null,
-      "latency_ms": 9922.9,
+      "latency_ms": 9573.0,
       "arm_error": null,
       "clarified": false,
+      "usage": {
+        "prompt_tokens": 1488,
+        "completion_tokens": 238,
+        "thinking_tokens": 1836,
+        "total_tokens": 3562,
+        "latency_ms": 9572.9,
+        "ttft_ms": null,
+        "tokens_per_sec": 216.65,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 2074
+      },
       "extra": {
         "prompt_chars": 5951
       },
@@ -588,9 +953,21 @@
       "lang": "en",
       "sql": null,
       "gold_sql": null,
-      "latency_ms": 935.4,
+      "latency_ms": 816.4,
       "arm_error": null,
       "clarified": true,
+      "usage": {
+        "prompt_tokens": 1489,
+        "completion_tokens": 3,
+        "thinking_tokens": 60,
+        "total_tokens": 1552,
+        "latency_ms": 816.3,
+        "ttft_ms": null,
+        "tokens_per_sec": 77.18,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 63
+      },
       "extra": {
         "prompt_chars": 5951
       },

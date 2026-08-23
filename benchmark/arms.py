@@ -12,21 +12,31 @@ Arms:
                 to beat to justify the rest of the system.
   pipeline      The project's own rag-service pipeline over HTTP.
   mcp-postgres  The Postgres MCP server driven agentically, via its harness.
+  local         The naive arm's prompt and contract, sent to a locally served
+                model over an OpenAI-compatible API. Deliberately identical to
+                `naive` in everything except which model answers, so the
+                hosted-versus-local rows of the results table differ only in
+                the model.
 
-Model access is confined to `_gemini_sql()` so a local model can be substituted
-in one place for the local-vs-hosted comparison.
+Model access is confined to `clients.py` so a local model can be substituted in
+one place for the local-vs-hosted comparison, and so both back ends report the
+same token and throughput record.
 """
 
 from __future__ import annotations
 
 import json
-import os
 import pathlib
 import re
+import sys
 import time
-from typing import Callable
+from typing import Callable, Optional
 
-REPO = pathlib.Path(__file__).resolve().parent.parent
+HERE = pathlib.Path(__file__).resolve().parent
+REPO = HERE.parent
+sys.path.insert(0, str(HERE))
+
+import clients  # noqa: E402
 
 NAIVE_PROMPT = """You are a SQL expert for a car rental company database.
 
@@ -46,25 +56,22 @@ def _strip_fences(text: str) -> str:
     return t
 
 
-def _gemini_sql(prompt: str, question: str) -> str:
-    """Single-shot completion. The only place a hosted model is called."""
-    import google.generativeai as genai
+def _single_shot_arm(prompt: str, complete) -> Callable[[dict], dict]:
+    """The naive contract, parameterised only by which model answers.
 
-    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-    model = genai.GenerativeModel(os.environ.get("GEMINI_MODEL", "gemini-2.5-flash"))
-    resp = model.generate_content(f"{prompt}\n\nQuestion: {question}")
-    return _strip_fences(resp.text or "")
-
-
-def make_naive_arm(schema_text: str) -> Callable[[dict], dict]:
-    prompt = NAIVE_PROMPT.format(schema=schema_text)
+    `complete` is a `prompt -> (text, Usage)` callable from clients.py. Both the
+    hosted and the local arm are built from this function, which is what
+    guarantees the two are comparable: same prompt, same one call, same
+    interpretation of a refusal.
+    """
 
     def run(q: dict) -> dict:
         t0 = time.perf_counter()
+        usage: Optional[clients.Usage] = None
         try:
-            sql = _gemini_sql(prompt, q["question"])
-            err = None
-        except Exception as e:  # network, quota, safety block
+            text, usage = complete(f"{prompt}\n\nQuestion: {q['question']}")
+            sql, err = _strip_fences(text), None
+        except Exception as e:  # network, quota, safety block, local server down
             sql, err = "", f"{type(e).__name__}: {e}"
         dt = (time.perf_counter() - t0) * 1000
         no_sql = sql.strip().upper() == "NO_SQL" or not sql
@@ -76,10 +83,31 @@ def make_naive_arm(schema_text: str) -> Callable[[dict], dict]:
             "clarified": no_sql and not err,
             "latency_ms": round(dt, 1),
             "error": err,
+            "usage": usage.as_dict() if usage else None,
             "extra": {"prompt_chars": len(prompt)},
         }
 
     return run
+
+
+def make_naive_arm(schema_text: str) -> Callable[[dict], dict]:
+    prompt = NAIVE_PROMPT.format(schema=schema_text)
+    return _single_shot_arm(prompt, clients.gemini_complete)
+
+
+def make_local_arm(
+    schema_text: str,
+    base_url: str = clients.DEFAULT_LOCAL_BASE_URL,
+    model: str = clients.DEFAULT_LOCAL_MODEL,
+) -> Callable[[dict], dict]:
+    """The naive arm, answered by a model running on this machine.
+
+    Any OpenAI-compatible server will do (llama.cpp's llama-server, LM Studio,
+    vLLM, Ollama); the arm only needs `POST {base_url}/chat/completions`.
+    """
+    prompt = NAIVE_PROMPT.format(schema=schema_text)
+    return _single_shot_arm(
+        prompt, lambda p: clients.local_complete(p, base_url=base_url, model=model))
 
 
 def make_pipeline_arm(base_url: str) -> Callable[[dict], dict]:
@@ -117,6 +145,9 @@ def make_pipeline_arm(base_url: str) -> Callable[[dict], dict]:
             "clarified": clarified,
             "latency_ms": round((time.perf_counter() - t0) * 1000, 1),
             "error": err,
+            # The pipeline makes several model calls per question and does not
+            # report their token usage over the wire, so it has no usage record.
+            "usage": meta.get("usage"),
             "extra": {k: meta.get(k) for k in ("retrieval", "attempts", "blocked", "outcome") if k in meta},
         }
 
@@ -139,13 +170,14 @@ def make_mcp_postgres_arm() -> Callable[[dict], dict]:
                 "clarified": not r.get("final_sql") and not r.get("error"),
                 "latency_ms": r.get("latency_ms") or round((time.perf_counter() - t0) * 1000, 1),
                 "error": r.get("error"),
+                "usage": r.get("usage"),
                 "extra": {"tool_calls": len(r.get("tool_calls") or [])},
             }
         except Exception as e:
             return {
                 "sql": None, "clarified": False,
                 "latency_ms": round((time.perf_counter() - t0) * 1000, 1),
-                "error": f"{type(e).__name__}: {e}", "extra": {},
+                "error": f"{type(e).__name__}: {e}", "usage": None, "extra": {},
             }
 
     return run
@@ -153,6 +185,7 @@ def make_mcp_postgres_arm() -> Callable[[dict], dict]:
 
 REGISTRY = {
     "naive": make_naive_arm,
+    "local": make_local_arm,
     "pipeline": make_pipeline_arm,
     "mcp-postgres": make_mcp_postgres_arm,
 }

@@ -1,0 +1,356 @@
+{
+  "arm": "local",
+  "model": "qwen3.5-9b",
+  "summary": {
+    "n_scored": 10,
+    "n_correct": 8,
+    "execution_accuracy": 0.8,
+    "by_category": {
+      "aggregate": {
+        "n": 4,
+        "correct": 2,
+        "accuracy": 0.5
+      },
+      "simple": {
+        "n": 6,
+        "correct": 6,
+        "accuracy": 1.0
+      }
+    },
+    "invalid_sql": 0,
+    "no_sql_produced": 1,
+    "ambiguous_total": 0,
+    "ambiguous_clarified": 0,
+    "latency_ms_median": 10297.1,
+    "latency_ms_mean": 10407.4,
+    "usage": {
+      "n": 10,
+      "tokens_per_sec_mean": 83.52,
+      "decode_tokens_per_sec_mean": 90.16,
+      "ttft_ms_median": 437.6,
+      "prompt_tokens_mean": 1391.3,
+      "output_tokens_mean": 873.6,
+      "completion_tokens_mean": 873.6,
+      "prompt_tokens_total": 13913,
+      "output_tokens_total": 8736,
+      "thinking_tokens_total": 0
+    },
+    "cost": {
+      "model": "qwen3.5-9b",
+      "usd_per_100_questions": 0.0,
+      "note": "served locally: no per-token API charge; the cost is the hardware and the electricity to run it"
+    }
+  },
+  "results": [
+    {
+      "id": "q01",
+      "question": "How many vehicles are currently available?",
+      "category": "simple",
+      "lang": "en",
+      "sql": "SELECT COUNT(*) FROM vehicles WHERE status = 'available';",
+      "gold_sql": "SELECT COUNT(*) FROM vehicles WHERE status = 'available'",
+      "latency_ms": 11624.6,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 1387,
+        "completion_tokens": 831,
+        "thinking_tokens": 0,
+        "total_tokens": 2218,
+        "latency_ms": 11591.3,
+        "ttft_ms": 2001.0,
+        "tokens_per_sec": 71.69,
+        "decode_tokens_per_sec": 86.78,
+        "finish_reason": "stop",
+        "output_tokens": 831
+      },
+      "extra": {
+        "prompt_chars": 5951
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 1,
+      "pred_rows": 1
+    },
+    {
+      "id": "q02",
+      "question": "List all branch offices and the city they are in. Show the branch name and city.",
+      "category": "simple",
+      "lang": "en",
+      "sql": "SELECT name, city FROM locations;",
+      "gold_sql": "SELECT name, city FROM locations",
+      "latency_ms": 10297.1,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 1398,
+        "completion_tokens": 877,
+        "thinking_tokens": 0,
+        "total_tokens": 2275,
+        "latency_ms": 10297.1,
+        "ttft_ms": 437.6,
+        "tokens_per_sec": 85.17,
+        "decode_tokens_per_sec": 89.11,
+        "finish_reason": "stop",
+        "output_tokens": 877
+      },
+      "extra": {
+        "prompt_chars": 5951
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 10,
+      "pred_rows": 10
+    },
+    {
+      "id": "q03",
+      "question": "How many Toyota cars do we own?",
+      "category": "simple",
+      "lang": "en",
+      "sql": "SELECT COUNT(*) FROM vehicles WHERE make = 'Toyota';",
+      "gold_sql": "SELECT COUNT(*) FROM vehicles WHERE make = 'Toyota'",
+      "latency_ms": 8397.3,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 1388,
+        "completion_tokens": 743,
+        "thinking_tokens": 0,
+        "total_tokens": 2131,
+        "latency_ms": 8397.3,
+        "ttft_ms": 215.0,
+        "tokens_per_sec": 88.48,
+        "decode_tokens_per_sec": 91.0,
+        "finish_reason": "stop",
+        "output_tokens": 743
+      },
+      "extra": {
+        "prompt_chars": 5951
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 1,
+      "pred_rows": 1
+    },
+    {
+      "id": "q04",
+      "question": "Which vehicles are currently in maintenance? Show make, model and license plate.",
+      "category": "simple",
+      "lang": "en",
+      "sql": "SELECT make, model, license_plate\nFROM vehicles\nWHERE status = 'maintenance'",
+      "gold_sql": "SELECT make, model, license_plate FROM vehicles WHERE status = 'maintenance'",
+      "latency_ms": 9823.3,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 1395,
+        "completion_tokens": 788,
+        "thinking_tokens": 0,
+        "total_tokens": 2183,
+        "latency_ms": 9823.3,
+        "ttft_ms": 1224.4,
+        "tokens_per_sec": 80.22,
+        "decode_tokens_per_sec": 91.79,
+        "finish_reason": "stop",
+        "output_tokens": 788
+      },
+      "extra": {
+        "prompt_chars": 5951
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 8,
+      "pred_rows": 8
+    },
+    {
+      "id": "q05",
+      "question": "C\u00e2\u021bi clien\u021bi sunt \u00eenregistra\u021bi \u00een total?",
+      "category": "simple",
+      "lang": "ro",
+      "sql": "SELECT COUNT(*) FROM clients;",
+      "gold_sql": "SELECT COUNT(*) FROM clients",
+      "latency_ms": 6880.4,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 1393,
+        "completion_tokens": 539,
+        "thinking_tokens": 0,
+        "total_tokens": 1932,
+        "latency_ms": 6880.4,
+        "ttft_ms": 1025.1,
+        "tokens_per_sec": 78.34,
+        "decode_tokens_per_sec": 92.3,
+        "finish_reason": "stop",
+        "output_tokens": 539
+      },
+      "extra": {
+        "prompt_chars": 5951
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 1,
+      "pred_rows": 1
+    },
+    {
+      "id": "q06",
+      "question": "Show the five most expensive vehicles by daily rate. Show make, model and daily rate.",
+      "category": "simple",
+      "lang": "en",
+      "sql": "SELECT make, model, daily_rate\nFROM vehicles\nORDER BY daily_rate DESC\nLIMIT 5;",
+      "gold_sql": "SELECT make, model, daily_rate FROM vehicles ORDER BY daily_rate DESC LIMIT 5",
+      "latency_ms": 10577.2,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 1398,
+        "completion_tokens": 942,
+        "thinking_tokens": 0,
+        "total_tokens": 2340,
+        "latency_ms": 10577.1,
+        "ttft_ms": 243.8,
+        "tokens_per_sec": 89.06,
+        "decode_tokens_per_sec": 91.28,
+        "finish_reason": "stop",
+        "output_tokens": 942
+      },
+      "extra": {
+        "prompt_chars": 5951
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 5,
+      "pred_rows": 5
+    },
+    {
+      "id": "q07",
+      "question": "What is the average salary of employees per branch?",
+      "category": "aggregate",
+      "lang": "en",
+      "sql": null,
+      "gold_sql": "SELECT l.name, AVG(e.salary) AS avg_salary FROM employees e JOIN locations l ON e.location_id = l.id GROUP BY l.name\n",
+      "latency_ms": 23748.5,
+      "arm_error": null,
+      "clarified": true,
+      "usage": {
+        "prompt_tokens": 1390,
+        "completion_tokens": 2048,
+        "thinking_tokens": 0,
+        "total_tokens": 3438,
+        "latency_ms": 23748.5,
+        "ttft_ms": 630.0,
+        "tokens_per_sec": 86.24,
+        "decode_tokens_per_sec": 88.65,
+        "finish_reason": "length",
+        "output_tokens": 2048
+      },
+      "extra": {
+        "prompt_chars": 5951
+      },
+      "scored": true,
+      "correct": false,
+      "exec_error": null
+    },
+    {
+      "id": "q08",
+      "question": "How many vehicles are there in each category?",
+      "category": "aggregate",
+      "lang": "en",
+      "sql": "SELECT vc.name, COUNT(v.id) AS vehicle_count\nFROM vehicles v\nJOIN vehicle_categories vc ON v.category_id = vc.id\nGROUP BY vc.name\nORDER BY vc.name",
+      "gold_sql": "SELECT c.name, COUNT(*) AS vehicle_count FROM vehicles v JOIN vehicle_categories c ON v.category_id = c.id GROUP BY c.name\n",
+      "latency_ms": 13778.2,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 1389,
+        "completion_tokens": 1199,
+        "thinking_tokens": 0,
+        "total_tokens": 2588,
+        "latency_ms": 13778.2,
+        "ttft_ms": 232.5,
+        "tokens_per_sec": 87.02,
+        "decode_tokens_per_sec": 88.87,
+        "finish_reason": "stop",
+        "output_tokens": 1199
+      },
+      "extra": {
+        "prompt_chars": 5951
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 5,
+      "pred_rows": 5
+    },
+    {
+      "id": "q09",
+      "question": "What is the total revenue from completed payments?",
+      "category": "aggregate",
+      "lang": "en",
+      "sql": "SELECT SUM(amount) AS total_revenue FROM payments WHERE status = 'completed';",
+      "gold_sql": "SELECT SUM(amount) AS total FROM payments WHERE status = 'completed'",
+      "latency_ms": 2321.3,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 1389,
+        "completion_tokens": 189,
+        "thinking_tokens": 0,
+        "total_tokens": 1578,
+        "latency_ms": 2321.3,
+        "ttft_ms": 233.3,
+        "tokens_per_sec": 81.42,
+        "decode_tokens_per_sec": 91.24,
+        "finish_reason": "stop",
+        "output_tokens": 189
+      },
+      "extra": {
+        "prompt_chars": 5951
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 1,
+      "pred_rows": 1
+    },
+    {
+      "id": "q10",
+      "question": "Show total revenue by location.",
+      "category": "aggregate",
+      "lang": "en",
+      "sql": "SELECT \n    l.id,\n    l.name,\n    l.city,\n    SUM(p.amount) AS total_revenue\nFROM payments p\nJOIN reservations r ON p.reservation_id = r.id\nJOIN locations l ON r.pickup_location = l.id\nWHERE p.status = 'completed'\nGROUP BY l.id, l.name, l.city\nORDER BY total_revenue DESC;",
+      "gold_sql": "SELECT l.name, SUM(p.amount) AS revenue FROM payments p JOIN reservations r ON p.reservation_id = r.id JOIN locations l ON r.pickup_location = l.id GROUP BY l.name\n",
+      "latency_ms": 6625.7,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 1386,
+        "completion_tokens": 580,
+        "thinking_tokens": 0,
+        "total_tokens": 1966,
+        "latency_ms": 6625.7,
+        "ttft_ms": 208.0,
+        "tokens_per_sec": 87.54,
+        "decode_tokens_per_sec": 90.58,
+        "finish_reason": "stop",
+        "output_tokens": 580
+      },
+      "extra": {
+        "prompt_chars": 5951
+      },
+      "scored": true,
+      "correct": false,
+      "exec_error": null,
+      "gold_rows": 10,
+      "pred_rows": 10
+    }
+  ],
+  "backend": "llama.cpp 2.25.2, Vulkan backend, RTX 5070",
+  "endpoint": "http://127.0.0.1:1234/v1"
+}
