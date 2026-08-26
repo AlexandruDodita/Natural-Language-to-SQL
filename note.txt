@@ -1,0 +1,4 @@
+Cat de complexe pot fi bazele de date pentru metrici?
+Stiintific/ingineric - raportare la complexitatea use caseurilor posibile?
+
+1. Concluzii ingineresti, pas cu pas. Concluzii trase din rezultate, alte experimentari.

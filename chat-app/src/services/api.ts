@@ -1,6 +1,7 @@
-import type { Message, SqlMeta, ArtifactData } from '../types';
+import type { Message, SqlMeta, ArtifactData, QueryEngine } from '../types';
 
 const RAG_URL = import.meta.env.VITE_RAG_URL || 'http://localhost:8100';
+const MCP_URL = import.meta.env.VITE_MCP_URL || 'http://localhost:8300';
 
 export interface StreamResponse {
   chunk: string;
@@ -9,9 +10,55 @@ export interface StreamResponse {
   artifact?: ArtifactData;
 }
 
+async function* streamMcp(messages: Message[]): AsyncGenerator<StreamResponse, void, undefined> {
+  const question = [...messages].reverse().find(m => m.role === 'user')?.content.trim();
+  if (!question) throw new Error('No user question provided');
+
+  const response = await fetch(`${MCP_URL}/ask`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question }),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload.error || `MCP gateway error: ${response.status}`);
+  }
+  if (payload.error && !payload.answer_text) {
+    throw new Error(payload.error);
+  }
+
+  const sqlMeta: SqlMeta = {
+    sql: payload.final_sql ?? null,
+    row_count: payload.final_sql ? payload.row_count ?? 0 : null,
+    duration_ms: payload.final_sql ? payload.latency_ms ?? null : null,
+    blocked: payload.error ?? null,
+  };
+  yield { chunk: '', done: false, sqlMeta };
+
+  if (payload.columns?.length) {
+    yield {
+      chunk: '',
+      done: false,
+      artifact: { columns: payload.columns, rows: payload.rows || [], chart: payload.chart ?? null },
+    };
+  }
+
+  if (payload.answer_text) {
+    yield { chunk: payload.answer_text, done: false };
+  }
+  yield { chunk: '', done: true };
+}
+
 export async function* streamChat(
-  messages: Message[]
+  messages: Message[],
+  engine: QueryEngine = 'rag',
 ): AsyncGenerator<StreamResponse, void, undefined> {
+  if (engine === 'mcp') {
+    yield* streamMcp(messages);
+    return;
+  }
+
   const body = {
     messages: messages
       .filter(m => m.content.trim() !== '')
@@ -92,9 +139,9 @@ export async function* streamChat(
   yield { chunk: '', done: true };
 }
 
-export async function sendMessage(messages: Message[]): Promise<string> {
+export async function sendMessage(messages: Message[], engine: QueryEngine = 'rag'): Promise<string> {
   let result = '';
-  for await (const { chunk, done } of streamChat(messages)) {
+  for await (const { chunk, done } of streamChat(messages, engine)) {
     if (done) break;
     result += chunk;
   }

@@ -3,11 +3,12 @@ import { Sidebar } from '../Sidebar/Sidebar';
 import { ChatArea } from '../Chat/ChatArea';
 import { ArtifactPanel } from '../Artifact/ArtifactPanel';
 import { useChat } from '../../hooks/useChat';
-import type { ArtifactData } from '../../types';
+import type { ArtifactData, QueryEngine } from '../../types';
 
 export function AppLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [openArtifact, setOpenArtifact] = useState<ArtifactData | null>(null);
+  const [engine, setEngine] = useState<QueryEngine>('rag');
   const {
     conversations,
     currentConversation,
@@ -52,10 +53,12 @@ export function AppLayout() {
       <ChatArea
         messages={currentConversation?.messages || []}
         isStreaming={isStreaming}
-        onSendMessage={sendMessage}
-        onRetry={retryLastMessage}
+        onSendMessage={(content) => sendMessage(content, engine)}
+        onRetry={() => retryLastMessage(engine)}
         onToggleSidebar={handleToggleSidebar}
         onOpenArtifact={setOpenArtifact}
+        engine={engine}
+        onEngineChange={setEngine}
       />
 
       {openArtifact && (

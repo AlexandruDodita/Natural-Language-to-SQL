@@ -82,6 +82,7 @@ services:
       args:
         VITE_API_BASE_URL: http://localhost:8000
         VITE_RAG_URL: http://localhost:8100
+        VITE_MCP_URL: http://localhost:8300
         VITE_DEBUG: ${VITE_DEBUG:-false}
     container_name: chat-app-frontend
     ports:
@@ -201,6 +202,27 @@ services:
         condition: service_healthy
     stdin_open: true
     tty: false
+
+  # Browser adapter for the stdio MCP baseline. The MCP server itself remains
+  # stdio; this service runs the existing client harness per HTTP request.
+  mcp-gateway:
+    build: ./mcps/postgres
+    container_name: postgres-mcp-gateway
+    entrypoint: ["python", "gateway.py"]
+    environment:
+      DATABASE_URL: postgresql://readonly_user:readonly_pass@test_app_db:5432/car_rental
+      MAX_ROWS: 100
+      STATEMENT_TIMEOUT_MS: 5000
+      GEMINI_API_KEY: ${VITE_GEMINI_API_KEY}
+      GEMINI_MODEL: ${VITE_MODEL:-gemini-2.5-flash}
+      MCP_GATEWAY_HOST: 0.0.0.0
+      MCP_GATEWAY_PORT: 8300
+    ports:
+      - "8300:8300"
+    depends_on:
+      test_app_db:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   postgres_data:

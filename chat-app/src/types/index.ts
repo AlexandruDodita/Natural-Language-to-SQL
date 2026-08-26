@@ -43,3 +43,5 @@ export interface ChatState {
   isStreaming: boolean;
   isSidebarOpen: boolean;
 }
+
+export type QueryEngine = 'rag' | 'mcp';

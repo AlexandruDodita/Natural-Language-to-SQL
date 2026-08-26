@@ -5,7 +5,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
-COPY db.py server.py llm_gemini.py client_harness.py ./
+COPY db.py server.py llm_gemini.py client_harness.py gateway.py ./
 
 # Defaults; override at `docker run`/compose time. See .env.example.
 ENV DATABASE_URL=postgresql://readonly_user:readonly_pass@test_app_db:5432/car_rental \

@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { Message, Conversation } from '../types';
+import type { Message, Conversation, QueryEngine } from '../types';
 import { streamChat } from '../services/api';
 import { backendApi } from '../services/backend-api';
 
@@ -49,7 +49,7 @@ export function useChat() {
   }, []);
 
   const sendMessage = useCallback(
-    async (content: string) => {
+    async (content: string, engine: QueryEngine = 'rag') => {
       if (!content.trim() || isStreaming) return;
 
       let conversationId = currentConversationId;
@@ -111,7 +111,7 @@ export function useChat() {
         let accumulatedContent = '';
 
         // Stream the response
-        for await (const { chunk, done, sqlMeta, artifact } of streamChat(messagesToSend)) {
+        for await (const { chunk, done, sqlMeta, artifact } of streamChat(messagesToSend, engine)) {
           if (done) break;
 
           if (sqlMeta !== undefined) {
@@ -233,7 +233,7 @@ export function useChat() {
     [currentConversationId, isStreaming, conversations, createNewConversation, updateConversationTitle]
   );
 
-  const retryLastMessage = useCallback(async () => {
+  const retryLastMessage = useCallback(async (engine: QueryEngine = 'rag') => {
     if (!currentConversationId || isStreaming) return;
 
     const conversation = conversations.find(c => c.id === currentConversationId);
@@ -275,7 +275,7 @@ export function useChat() {
     let capturedSqlMeta: Message['sqlMeta'] = undefined;
 
     try {
-      for await (const { chunk, done, sqlMeta, artifact } of streamChat(messagesToSend)) {
+      for await (const { chunk, done, sqlMeta, artifact } of streamChat(messagesToSend, engine)) {
         if (done) break;
 
         if (sqlMeta !== undefined) {
