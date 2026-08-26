@@ -31,3 +31,19 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# LaTeX build artifacts (diploma.tex and the built diploma.pdf are tracked)
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# Playwright
+test-results/
+playwright-report/
+
+# Local Claude Code settings
+.claude/settings.local.json

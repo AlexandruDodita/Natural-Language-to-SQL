@@ -1,0 +1,105 @@
+{
+  "description": "Gold schema-linking set for the car_rental database. `tables` lists the tables a correct SQL answer must reference. Used by tests/test_retrieval.py and by eval/run_eval.py to score retrieval recall.",
+  "questions": [
+    {
+      "id": "q01",
+      "question": "How many vehicles are currently available?",
+      "tables": ["vehicles"]
+    },
+    {
+      "id": "q02",
+      "question": "What is the average salary of employees per branch?",
+      "tables": ["employees", "locations"]
+    },
+    {
+      "id": "q03",
+      "question": "Which clients spent the most money in total?",
+      "tables": ["clients", "reservations"]
+    },
+    {
+      "id": "q04",
+      "question": "How many Toyota cars do we own?",
+      "tables": ["vehicles"]
+    },
+    {
+      "id": "q05",
+      "question": "List the reservations picked up in Miami",
+      "tables": ["reservations", "locations"]
+    },
+    {
+      "id": "q06",
+      "question": "What is the total maintenance cost per vehicle?",
+      "tables": ["maintenance_records", "vehicles"]
+    },
+    {
+      "id": "q07",
+      "question": "What is the average review rating per month?",
+      "tables": ["reviews"]
+    },
+    {
+      "id": "q08",
+      "question": "Which payment method is used most often?",
+      "tables": ["payments"]
+    },
+    {
+      "id": "q09",
+      "question": "Show the daily rate range of every vehicle category",
+      "tables": ["vehicle_categories"]
+    },
+    {
+      "id": "q10",
+      "question": "Which employees were hired in 2023?",
+      "tables": ["employees"]
+    },
+    {
+      "id": "q11",
+      "question": "Care sunt cele mai inchiriate masini?",
+      "tables": ["vehicles", "reservations"]
+    },
+    {
+      "id": "q12",
+      "question": "Total revenue collected per city",
+      "tables": ["payments", "reservations", "locations"]
+    },
+    {
+      "id": "q13",
+      "question": "Which cars had an oil change last year?",
+      "tables": ["maintenance_records", "vehicles"]
+    },
+    {
+      "id": "q14",
+      "question": "How many clients registered in 2024?",
+      "tables": ["clients"]
+    },
+    {
+      "id": "q15",
+      "question": "How many reservations were cancelled?",
+      "tables": ["reservations"]
+    },
+    {
+      "id": "q16",
+      "question": "Average daily rate by vehicle category",
+      "tables": ["vehicles", "vehicle_categories"]
+    },
+    {
+      "id": "q17",
+      "question": "Which branch has the largest fleet?",
+      "tables": ["vehicles", "locations"]
+    },
+    {
+      "id": "q18",
+      "question": "Show the mechanics working in Chicago",
+      "tables": ["employees", "locations"]
+    },
+    {
+      "id": "q19",
+      "question": "What comments did customers leave with a rating of 1?",
+      "tables": ["reviews"]
+    },
+    {
+      "id": "q20",
+      "question": "Which vehicles are in maintenance right now?",
+      "tables": ["vehicles"]
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+mcp==1.29.0
+sqlglot==30.15.0
+psycopg[binary]==3.3.4
+python-dotenv==1.2.2
+
+# Only needed for client_harness.py (the evaluation-harness LLM driver).
+# server.py / db.py do not import this.
+google-generativeai==0.8.5

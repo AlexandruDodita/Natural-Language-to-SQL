@@ -1,0 +1,1006 @@
+{
+  "database": "car_rental",
+  "fingerprint": "38972a293da1a681",
+  "tables": [
+    {
+      "schema": "public",
+      "name": "clients",
+      "kind": "r",
+      "comment": "Customers who rent vehicles",
+      "row_estimate": 600,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "default": "nextval('clients_id_seq'::regclass)",
+          "comment": null,
+          "is_primary_key": true,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "first_name",
+          "data_type": "character varying(50)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "last_name",
+          "data_type": "character varying(50)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "email",
+          "data_type": "character varying(150)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": true,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "phone",
+          "data_type": "character varying(20)",
+          "nullable": true,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "drivers_license",
+          "data_type": "character varying(30)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "date_of_birth",
+          "data_type": "date",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "registration_date",
+          "data_type": "date",
+          "nullable": false,
+          "default": "CURRENT_DATE",
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "nullable": true,
+          "default": "now()",
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        }
+      ],
+      "foreign_keys": []
+    },
+    {
+      "schema": "public",
+      "name": "employees",
+      "kind": "r",
+      "comment": "Staff assigned to a branch; salary is restricted data",
+      "row_estimate": 40,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "default": "nextval('employees_id_seq'::regclass)",
+          "comment": null,
+          "is_primary_key": true,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "location_id",
+          "data_type": "integer",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": "locations.id"
+        },
+        {
+          "name": "first_name",
+          "data_type": "character varying(50)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "last_name",
+          "data_type": "character varying(50)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "role",
+          "data_type": "character varying(30)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": "CHECK(role IN ('manager', 'agent', 'mechanic', 'receptionist'))",
+          "references": null
+        },
+        {
+          "name": "salary",
+          "data_type": "numeric(10,2)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "hire_date",
+          "data_type": "date",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "email",
+          "data_type": "character varying(150)",
+          "nullable": true,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "phone",
+          "data_type": "character varying(20)",
+          "nullable": true,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "nullable": true,
+          "default": "now()",
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "location_id"
+          ],
+          "ref_table": "locations",
+          "ref_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "locations",
+      "kind": "r",
+      "comment": "Branch offices of the rental company",
+      "row_estimate": 10,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "default": "nextval('locations_id_seq'::regclass)",
+          "comment": null,
+          "is_primary_key": true,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying(100)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "city",
+          "data_type": "character varying(100)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "address",
+          "data_type": "character varying(255)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "phone",
+          "data_type": "character varying(20)",
+          "nullable": true,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "nullable": true,
+          "default": "now()",
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        }
+      ],
+      "foreign_keys": []
+    },
+    {
+      "schema": "public",
+      "name": "maintenance_records",
+      "kind": "r",
+      "comment": "Service and repair history per vehicle, with cost",
+      "row_estimate": 400,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "default": "nextval('maintenance_records_id_seq'::regclass)",
+          "comment": null,
+          "is_primary_key": true,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "vehicle_id",
+          "data_type": "integer",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": "vehicles.id"
+        },
+        {
+          "name": "maintenance_type",
+          "data_type": "character varying(30)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": "CHECK(maintenance_type IN ('oil_change', 'tire_rotation', 'brake_service', 'general_inspection', 'engine_repair', 'body_repair', 'transmission', 'ac_service', 'battery_replacement'))",
+          "references": null
+        },
+        {
+          "name": "description",
+          "data_type": "text",
+          "nullable": true,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "cost",
+          "data_type": "numeric(10,2)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "maintenance_date",
+          "data_type": "date",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "mileage_at_service",
+          "data_type": "integer",
+          "nullable": true,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "completed",
+          "data_type": "boolean",
+          "nullable": true,
+          "default": "true",
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "nullable": true,
+          "default": "now()",
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "vehicle_id"
+          ],
+          "ref_table": "vehicles",
+          "ref_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "payments",
+      "kind": "r",
+      "comment": "Payments settled against reservations",
+      "row_estimate": 2691,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "default": "nextval('payments_id_seq'::regclass)",
+          "comment": null,
+          "is_primary_key": true,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "reservation_id",
+          "data_type": "integer",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": "reservations.id"
+        },
+        {
+          "name": "amount",
+          "data_type": "numeric(10,2)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "payment_method",
+          "data_type": "character varying(20)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": "CHECK(payment_method IN ('credit_card', 'debit_card', 'cash'))",
+          "references": null
+        },
+        {
+          "name": "payment_date",
+          "data_type": "date",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "status",
+          "data_type": "character varying(20)",
+          "nullable": false,
+          "default": "'completed'::character varying",
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": "CHECK(status IN ('completed', 'pending', 'refunded', 'failed'))",
+          "references": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "nullable": true,
+          "default": "now()",
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "reservation_id"
+          ],
+          "ref_table": "reservations",
+          "ref_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "reservations",
+      "kind": "r",
+      "comment": "Rental bookings: client, vehicle, pickup and return branch, dates and total cost",
+      "row_estimate": 3000,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "default": "nextval('reservations_id_seq'::regclass)",
+          "comment": null,
+          "is_primary_key": true,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "client_id",
+          "data_type": "integer",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": "clients.id"
+        },
+        {
+          "name": "vehicle_id",
+          "data_type": "integer",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": "vehicles.id"
+        },
+        {
+          "name": "pickup_location",
+          "data_type": "integer",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": "locations.id"
+        },
+        {
+          "name": "return_location",
+          "data_type": "integer",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": "locations.id"
+        },
+        {
+          "name": "pickup_date",
+          "data_type": "date",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "return_date",
+          "data_type": "date",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "status",
+          "data_type": "character varying(20)",
+          "nullable": false,
+          "default": "'confirmed'::character varying",
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": "CHECK(status IN ('confirmed', 'active', 'completed', 'cancelled', 'no_show'))",
+          "references": null
+        },
+        {
+          "name": "total_cost",
+          "data_type": "numeric(10,2)",
+          "nullable": true,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "nullable": true,
+          "default": "now()",
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "client_id"
+          ],
+          "ref_table": "clients",
+          "ref_columns": [
+            "id"
+          ]
+        },
+        {
+          "columns": [
+            "vehicle_id"
+          ],
+          "ref_table": "vehicles",
+          "ref_columns": [
+            "id"
+          ]
+        },
+        {
+          "columns": [
+            "pickup_location"
+          ],
+          "ref_table": "locations",
+          "ref_columns": [
+            "id"
+          ]
+        },
+        {
+          "columns": [
+            "return_location"
+          ],
+          "ref_table": "locations",
+          "ref_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "reviews",
+      "kind": "r",
+      "comment": "Customer ratings (1-5) and comments left after a rental",
+      "row_estimate": 1200,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "default": "nextval('reviews_id_seq'::regclass)",
+          "comment": null,
+          "is_primary_key": true,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "reservation_id",
+          "data_type": "integer",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": "reservations.id"
+        },
+        {
+          "name": "rating",
+          "data_type": "integer",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": "CHECK((rating >= 1) AND (rating <= 5))",
+          "references": null
+        },
+        {
+          "name": "comment",
+          "data_type": "text",
+          "nullable": true,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "review_date",
+          "data_type": "date",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "nullable": true,
+          "default": "now()",
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "reservation_id"
+          ],
+          "ref_table": "reservations",
+          "ref_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "vehicle_categories",
+      "kind": "r",
+      "comment": "Vehicle classes with their daily rate range",
+      "row_estimate": 5,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "default": "nextval('vehicle_categories_id_seq'::regclass)",
+          "comment": null,
+          "is_primary_key": true,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying(50)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": true,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "description",
+          "data_type": "text",
+          "nullable": true,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "daily_rate_min",
+          "data_type": "numeric(10,2)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "daily_rate_max",
+          "data_type": "numeric(10,2)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        }
+      ],
+      "foreign_keys": []
+    },
+    {
+      "schema": "public",
+      "name": "vehicles",
+      "kind": "r",
+      "comment": "Fleet: make, model, year, daily rate, mileage and availability status",
+      "row_estimate": 80,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "default": "nextval('vehicles_id_seq'::regclass)",
+          "comment": null,
+          "is_primary_key": true,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "category_id",
+          "data_type": "integer",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": "vehicle_categories.id"
+        },
+        {
+          "name": "location_id",
+          "data_type": "integer",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": "locations.id"
+        },
+        {
+          "name": "make",
+          "data_type": "character varying(50)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "model",
+          "data_type": "character varying(50)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "year",
+          "data_type": "integer",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": "CHECK((year >= 2015) AND (year <= 2025))",
+          "references": null
+        },
+        {
+          "name": "license_plate",
+          "data_type": "character varying(20)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": true,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "color",
+          "data_type": "character varying(30)",
+          "nullable": true,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "daily_rate",
+          "data_type": "numeric(10,2)",
+          "nullable": false,
+          "default": null,
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "mileage",
+          "data_type": "integer",
+          "nullable": false,
+          "default": "0",
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        },
+        {
+          "name": "status",
+          "data_type": "character varying(20)",
+          "nullable": false,
+          "default": "'available'::character varying",
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": "CHECK(status IN ('available', 'rented', 'maintenance', 'retired'))",
+          "references": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "nullable": true,
+          "default": "now()",
+          "comment": null,
+          "is_primary_key": false,
+          "is_unique": false,
+          "check": null,
+          "references": null
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "category_id"
+          ],
+          "ref_table": "vehicle_categories",
+          "ref_columns": [
+            "id"
+          ]
+        },
+        {
+          "columns": [
+            "location_id"
+          ],
+          "ref_table": "locations",
+          "ref_columns": [
+            "id"
+          ]
+        }
+      ]
+    }
+  ]
+}

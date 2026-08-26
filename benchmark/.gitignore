@@ -1,0 +1,2 @@
+# Throwaway PostgreSQL instance created by run.py when no --database-url is given
+.pgdata/

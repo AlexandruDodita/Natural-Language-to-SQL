@@ -1,0 +1,473 @@
+{
+  "entries": {
+    "emily": [
+      "employees.first_name"
+    ],
+    "mark": [
+      "employees.first_name"
+    ],
+    "nancy": [
+      "employees.first_name"
+    ],
+    "robert": [
+      "employees.first_name"
+    ],
+    "linda": [
+      "employees.first_name"
+    ],
+    "steven": [
+      "employees.first_name"
+    ],
+    "john": [
+      "employees.first_name"
+    ],
+    "dorothy": [
+      "employees.first_name"
+    ],
+    "donald": [
+      "employees.first_name"
+    ],
+    "joshua": [
+      "employees.first_name"
+    ],
+    "patricia": [
+      "employees.first_name"
+    ],
+    "matthew": [
+      "employees.first_name"
+    ],
+    "richard": [
+      "employees.first_name"
+    ],
+    "sarah": [
+      "employees.first_name"
+    ],
+    "donna": [
+      "employees.first_name"
+    ],
+    "betty": [
+      "employees.first_name"
+    ],
+    "daniel": [
+      "employees.first_name"
+    ],
+    "sandra": [
+      "employees.first_name"
+    ],
+    "paul": [
+      "employees.first_name"
+    ],
+    "david": [
+      "employees.first_name"
+    ],
+    "lisa": [
+      "employees.first_name"
+    ],
+    "michael": [
+      "employees.first_name"
+    ],
+    "christopher": [
+      "employees.first_name"
+    ],
+    "mary": [
+      "employees.first_name"
+    ],
+    "william": [
+      "employees.first_name"
+    ],
+    "barbara": [
+      "employees.first_name"
+    ],
+    "jennifer": [
+      "employees.first_name"
+    ],
+    "johnson": [
+      "employees.last_name"
+    ],
+    "jackson": [
+      "employees.last_name"
+    ],
+    "harris": [
+      "employees.last_name"
+    ],
+    "lewis": [
+      "employees.last_name"
+    ],
+    "jones": [
+      "employees.last_name"
+    ],
+    "thompson": [
+      "employees.last_name"
+    ],
+    "moore": [
+      "employees.last_name"
+    ],
+    "lopez": [
+      "employees.last_name"
+    ],
+    "wright": [
+      "employees.last_name"
+    ],
+    "lee": [
+      "employees.last_name"
+    ],
+    "flores": [
+      "employees.last_name"
+    ],
+    "allen": [
+      "employees.last_name"
+    ],
+    "walker": [
+      "employees.last_name"
+    ],
+    "nguyen": [
+      "employees.last_name"
+    ],
+    "taylor": [
+      "employees.last_name"
+    ],
+    "miller": [
+      "employees.last_name"
+    ],
+    "clark": [
+      "employees.last_name"
+    ],
+    "gonzalez": [
+      "employees.last_name"
+    ],
+    "brown": [
+      "employees.last_name"
+    ],
+    "martinez": [
+      "employees.last_name"
+    ],
+    "rodriguez": [
+      "employees.last_name"
+    ],
+    "hill": [
+      "employees.last_name"
+    ],
+    "martin": [
+      "employees.last_name"
+    ],
+    "manager": [
+      "employees.role"
+    ],
+    "agent": [
+      "employees.role"
+    ],
+    "lakeside office": [
+      "locations.name"
+    ],
+    "tech district": [
+      "locations.name"
+    ],
+    "capitol branch": [
+      "locations.name"
+    ],
+    "historic quarter": [
+      "locations.name"
+    ],
+    "desert gateway": [
+      "locations.name"
+    ],
+    "central station": [
+      "locations.name"
+    ],
+    "airport terminal": [
+      "locations.name"
+    ],
+    "harbor point": [
+      "locations.name"
+    ],
+    "downtown hub": [
+      "locations.name"
+    ],
+    "peachtree center": [
+      "locations.name"
+    ],
+    "phoenix": [
+      "locations.city"
+    ],
+    "seattle": [
+      "locations.city"
+    ],
+    "miami": [
+      "locations.city"
+    ],
+    "san francisco": [
+      "locations.city"
+    ],
+    "washington dc": [
+      "locations.city"
+    ],
+    "atlanta": [
+      "locations.city"
+    ],
+    "boston": [
+      "locations.city"
+    ],
+    "los angeles": [
+      "locations.city"
+    ],
+    "chicago": [
+      "locations.city"
+    ],
+    "new york": [
+      "locations.city"
+    ],
+    "ac_service": [
+      "maintenance_records.maintenance_type"
+    ],
+    "tire_rotation": [
+      "maintenance_records.maintenance_type"
+    ],
+    "brake_service": [
+      "maintenance_records.maintenance_type"
+    ],
+    "engine_repair": [
+      "maintenance_records.maintenance_type"
+    ],
+    "general_inspection": [
+      "maintenance_records.maintenance_type"
+    ],
+    "transmission": [
+      "maintenance_records.maintenance_type"
+    ],
+    "oil_change": [
+      "maintenance_records.maintenance_type"
+    ],
+    "battery_replacement": [
+      "maintenance_records.maintenance_type"
+    ],
+    "body_repair": [
+      "maintenance_records.maintenance_type"
+    ],
+    "debit_card": [
+      "payments.payment_method"
+    ],
+    "credit_card": [
+      "payments.payment_method"
+    ],
+    "cash": [
+      "payments.payment_method"
+    ],
+    "completed": [
+      "payments.status",
+      "reservations.status"
+    ],
+    "pending": [
+      "payments.status"
+    ],
+    "refunded": [
+      "payments.status"
+    ],
+    "confirmed": [
+      "reservations.status"
+    ],
+    "cancelled": [
+      "reservations.status"
+    ],
+    "no_show": [
+      "reservations.status"
+    ],
+    "compact": [
+      "vehicle_categories.name"
+    ],
+    "economy": [
+      "vehicle_categories.name"
+    ],
+    "luxury": [
+      "vehicle_categories.name"
+    ],
+    "suv": [
+      "vehicle_categories.name"
+    ],
+    "van": [
+      "vehicle_categories.name"
+    ],
+    "honda": [
+      "vehicles.make"
+    ],
+    "jeep": [
+      "vehicles.make"
+    ],
+    "ford": [
+      "vehicles.make"
+    ],
+    "cadillac": [
+      "vehicles.make"
+    ],
+    "nissan": [
+      "vehicles.make"
+    ],
+    "chevrolet": [
+      "vehicles.make"
+    ],
+    "hyundai": [
+      "vehicles.make"
+    ],
+    "mazda": [
+      "vehicles.make"
+    ],
+    "bmw": [
+      "vehicles.make"
+    ],
+    "volkswagen": [
+      "vehicles.make"
+    ],
+    "chrysler": [
+      "vehicles.make"
+    ],
+    "audi": [
+      "vehicles.make"
+    ],
+    "mercedes": [
+      "vehicles.make"
+    ],
+    "tesla": [
+      "vehicles.make"
+    ],
+    "toyota": [
+      "vehicles.make"
+    ],
+    "lexus": [
+      "vehicles.make"
+    ],
+    "kia": [
+      "vehicles.make"
+    ],
+    "sprinter": [
+      "vehicles.model"
+    ],
+    "ct5": [
+      "vehicles.model"
+    ],
+    "sienna": [
+      "vehicles.model"
+    ],
+    "cherokee": [
+      "vehicles.model"
+    ],
+    "accent": [
+      "vehicles.model"
+    ],
+    "a4": [
+      "vehicles.model"
+    ],
+    "carnival": [
+      "vehicles.model"
+    ],
+    "cr-v": [
+      "vehicles.model"
+    ],
+    "transit": [
+      "vehicles.model"
+    ],
+    "c-class": [
+      "vehicles.model"
+    ],
+    "equinox": [
+      "vehicles.model"
+    ],
+    "yaris": [
+      "vehicles.model"
+    ],
+    "pacifica": [
+      "vehicles.model"
+    ],
+    "rav4": [
+      "vehicles.model"
+    ],
+    "versa": [
+      "vehicles.model"
+    ],
+    "civic": [
+      "vehicles.model"
+    ],
+    "elantra": [
+      "vehicles.model"
+    ],
+    "model 3": [
+      "vehicles.model"
+    ],
+    "sentra": [
+      "vehicles.model"
+    ],
+    "corolla": [
+      "vehicles.model"
+    ],
+    "odyssey": [
+      "vehicles.model"
+    ],
+    "es": [
+      "vehicles.model"
+    ],
+    "rio": [
+      "vehicles.model"
+    ],
+    "jetta": [
+      "vehicles.model"
+    ],
+    "3": [
+      "vehicles.model"
+    ],
+    "fit": [
+      "vehicles.model"
+    ],
+    "tucson": [
+      "vehicles.model"
+    ],
+    "3 series": [
+      "vehicles.model"
+    ],
+    "escape": [
+      "vehicles.model"
+    ],
+    "spark": [
+      "vehicles.model"
+    ],
+    "silver": [
+      "vehicles.color"
+    ],
+    "red": [
+      "vehicles.color"
+    ],
+    "green": [
+      "vehicles.color"
+    ],
+    "midnight blue": [
+      "vehicles.color"
+    ],
+    "burgundy": [
+      "vehicles.color"
+    ],
+    "white": [
+      "vehicles.color"
+    ],
+    "gray": [
+      "vehicles.color"
+    ],
+    "black": [
+      "vehicles.color"
+    ],
+    "blue": [
+      "vehicles.color"
+    ],
+    "pearl white": [
+      "vehicles.color"
+    ],
+    "rented": [
+      "vehicles.status"
+    ],
+    "retired": [
+      "vehicles.status"
+    ],
+    "available": [
+      "vehicles.status"
+    ],
+    "maintenance": [
+      "vehicles.status"
+    ]
+  }
+}
