@@ -4,13 +4,64 @@ One question set, one database, several ways of answering it. Every arm is
 scored the same way, so the numbers in the thesis differ because the approaches
 and the models differ and for no other reason.
 
+## Databases
+
+There are two, selected with `--dataset`. They share the arms, the scorer and
+the results format, so a number moving between them is attributable to the
+schema and nothing else.
+
+| dataset | tables | columns | FKs | rows | schema in prompt |
+| --- | --- | --- | --- | --- | --- |
+| `car_rental` (default) | 9 | ~70 | 9 | 8,026 | ~1k tokens |
+| `adventureworks` | 68 | 1,099 | 91 | ~761k | ~9k tokens |
+
+`car_rental` is the controlled fixture: the whole schema fits in one prompt with
+room to spare, so the naive arm sees every table it could possibly need and
+retrieval has little to prove. That is what makes it a fair floor, and also what
+limits it.
+
+`adventureworks` is Microsoft's sample OLTP database, five schemas wide. At 68
+tables the schema is ~9x larger and selecting the right three or four tables
+stops being free, which is the part the pipeline exists to do. The question set
+is written against that: several questions sit next to a decoy table with
+overlapping vocabulary (`salesorderheader` vs `purchaseorderheader`,
+`product` vs `productmodel` vs `productsubcategory` vs `productcategory`).
+
+Build it once with:
+
+```sh
+python benchmark_data/adventureworks/setup.py
+```
+
+That fetches a pinned upstream commit, applies four documented patches needed by
+the extension-free `pgserver` build, loads the database and regenerates
+`benchmark_data/adventureworks_schema.sql` (the file the naive arm puts in its
+prompt). `run.py --dataset adventureworks` runs it automatically if the database
+is missing. The CSVs are 102 MB and are fetched rather than committed; the
+commit pin is what keeps the build reproducible. See the script's docstring for
+what each patch changes and why.
+
+Its evaluation connection sets `search_path` across the five schemas. No table
+name is ambiguous between them, so a query that is right in every respect except
+for omitting `sales.` still executes -- schema qualification is not what this
+benchmark is measuring.
+
 ## What is measured
 
 **Execution accuracy** (`score.py`). The generated query and the gold query are
 both executed and their result sets compared. Semantically equivalent SQL
-counts as correct; this is the metric Spider and BIRD report. 26 of the 30
-questions carry gold SQL. The other 4 are deliberately ambiguous and are scored
-on whether the system asked for clarification instead of guessing.
+counts as correct; this is the metric Spider and BIRD report. `car_rental` has
+30 questions of which 26 carry gold SQL; `adventureworks` has 38 of which 34 do.
+The remaining 4 in each are deliberately ambiguous and are scored on whether the
+system asked for clarification instead of guessing.
+
+Both sets name their output columns in the question ("Show the territory name
+and the revenue"). That is not decoration: the scorer compares result sets and
+counts an extra or missing column as a different answer, so a question that
+leaves the projection open measures whether the model guessed the same columns
+rather than whether it found the right tables. The first draft of the
+AdventureWorks set left them open and scored gemini-2.5-flash at 69%, where
+every single miss was a projection mismatch and not one was a wrong join.
 
 **Throughput and tokens** (`clients.py`). Per question: prompt tokens,
 completion tokens, reasoning tokens, latency, and two throughput figures --
@@ -50,10 +101,17 @@ calls.
 
 ## Running
 
+Results go to `results/<arm>.json` for `car_rental` and
+`results/<dataset>/<arm>.json` for anything else.
+
 ```sh
 # hosted, one model per results file
 GEMINI_API_KEY=... GEMINI_MODEL=gemini-3.7-flash \
   python benchmark/run.py --arm naive --out benchmark/results/naive-gemini-3.7-flash.json
+
+# the same arm and model against the 68-table schema
+GEMINI_API_KEY=... GEMINI_MODEL=gemini-3.7-flash \
+  python benchmark/run.py --arm naive --dataset adventureworks
 
 # local: start any OpenAI-compatible server first, then point the arm at it
 python benchmark/run.py --arm local \
@@ -106,7 +164,9 @@ backend is broken.
 
 ## Files
 
-- `questions.yaml` -- the question set, with gold SQL and `expected_chart`
+- `datasets.py` -- the evaluation databases; adding one needs no arm changes
+- `questions.yaml` -- the car_rental question set, with gold SQL and `expected_chart`
+- `questions_adventureworks.yaml` -- the same contract, 68-table schema
 - `run.py` -- runs one arm over the set and scores it
 - `arms.py` -- the systems under comparison
 - `clients.py` -- model access, token accounting, throughput, pricing

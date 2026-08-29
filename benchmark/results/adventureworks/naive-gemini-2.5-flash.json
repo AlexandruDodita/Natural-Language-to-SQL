@@ -1,0 +1,1228 @@
+{
+  "arm": "naive",
+  "dataset": "adventureworks",
+  "model": "gemini-2.5-flash",
+  "summary": {
+    "n_scored": 34,
+    "n_correct": 33,
+    "execution_accuracy": 0.9706,
+    "by_category": {
+      "aggregate": {
+        "n": 8,
+        "correct": 8,
+        "accuracy": 1.0
+      },
+      "join": {
+        "n": 10,
+        "correct": 10,
+        "accuracy": 1.0
+      },
+      "simple": {
+        "n": 5,
+        "correct": 5,
+        "accuracy": 1.0
+      },
+      "subquery": {
+        "n": 7,
+        "correct": 7,
+        "accuracy": 1.0
+      },
+      "window": {
+        "n": 4,
+        "correct": 3,
+        "accuracy": 0.75
+      }
+    },
+    "invalid_sql": 0,
+    "no_sql_produced": 0,
+    "ambiguous_total": 4,
+    "ambiguous_clarified": 0,
+    "latency_ms_median": 1834.7,
+    "latency_ms_mean": 2580.1,
+    "usage": {
+      "n": 38,
+      "prompt_tokens_total": 300162,
+      "prompt_tokens_mean": 7899.0,
+      "completion_tokens_total": 3510,
+      "thinking_tokens_total": 12937,
+      "output_tokens_total": 16447,
+      "output_tokens_mean": 432.82,
+      "total_tokens_total": 316609,
+      "tokens_per_sec_mean": 139.19,
+      "tokens_per_sec_median": 147.83,
+      "decode_tokens_per_sec_mean": null,
+      "ttft_ms_median": null
+    },
+    "cost": {
+      "model": "gemini-2.5-flash",
+      "usd_per_mtok_input": 0.3,
+      "usd_per_mtok_output": 2.5,
+      "prices_checked": "2026-08-23",
+      "usd_per_100_questions": 0.345174
+    }
+  },
+  "results": [
+    {
+      "id": "q01",
+      "question": "How many products are in the product catalogue?",
+      "category": "simple",
+      "lang": "en",
+      "sql": "SELECT count(productid) FROM production.product",
+      "gold_sql": "SELECT COUNT(*) FROM production.product",
+      "latency_ms": 1183.6,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7887,
+        "completion_tokens": 10,
+        "thinking_tokens": 44,
+        "total_tokens": 7941,
+        "latency_ms": 1050.8,
+        "ttft_ms": null,
+        "tokens_per_sec": 51.39,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 54
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 1,
+      "pred_rows": 1
+    },
+    {
+      "id": "q02",
+      "question": "List the names of all departments.",
+      "category": "simple",
+      "lang": "en",
+      "sql": "SELECT name FROM humanresources.department;",
+      "gold_sql": "SELECT name FROM humanresources.department",
+      "latency_ms": 869.9,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7885,
+        "completion_tokens": 8,
+        "thinking_tokens": 32,
+        "total_tokens": 7925,
+        "latency_ms": 869.8,
+        "ttft_ms": null,
+        "tokens_per_sec": 45.99,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 40
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 16,
+      "pred_rows": 16
+    },
+    {
+      "id": "q03",
+      "question": "Ce produse sunt de culoare ro\u0219ie? Arat\u0103 numele \u0219i pre\u021bul de list\u0103.",
+      "category": "simple",
+      "lang": "ro",
+      "sql": "SELECT\n  name,\n  listprice\nFROM production.product\nWHERE\n  color = 'Red';",
+      "gold_sql": "SELECT name, listprice FROM production.product WHERE color = 'Red'",
+      "latency_ms": 927.7,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7897,
+        "completion_tokens": 28,
+        "thinking_tokens": 55,
+        "total_tokens": 7980,
+        "latency_ms": 927.5,
+        "ttft_ms": null,
+        "tokens_per_sec": 89.49,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 83
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 38,
+      "pred_rows": 38
+    },
+    {
+      "id": "q04",
+      "question": "How many employees are currently employed?",
+      "category": "simple",
+      "lang": "en",
+      "sql": "SELECT\n  COUNT(businessentityid)\nFROM humanresources.employee\nWHERE\n  currentflag = TRUE;",
+      "gold_sql": "SELECT COUNT(*) FROM humanresources.employee WHERE currentflag = true",
+      "latency_ms": 1063.5,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7885,
+        "completion_tokens": 29,
+        "thinking_tokens": 61,
+        "total_tokens": 7975,
+        "latency_ms": 1063.3,
+        "ttft_ms": null,
+        "tokens_per_sec": 84.64,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 90
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 1,
+      "pred_rows": 1
+    },
+    {
+      "id": "q05",
+      "question": "What credit card types do we accept?",
+      "category": "simple",
+      "lang": "en",
+      "sql": "SELECT DISTINCT cardtype FROM sales.creditcard;",
+      "gold_sql": "SELECT DISTINCT cardtype FROM sales.creditcard",
+      "latency_ms": 1061.8,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7886,
+        "completion_tokens": 10,
+        "thinking_tokens": 65,
+        "total_tokens": 7961,
+        "latency_ms": 1061.7,
+        "ttft_ms": null,
+        "tokens_per_sec": 70.64,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 75
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 4,
+      "pred_rows": 4
+    },
+    {
+      "id": "q06",
+      "question": "What is the total amount due across all sales orders?",
+      "category": "aggregate",
+      "lang": "en",
+      "sql": "SELECT SUM(totaldue) FROM sales.salesorderheader;",
+      "gold_sql": "SELECT SUM(totaldue) FROM sales.salesorderheader",
+      "latency_ms": 929.6,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7889,
+        "completion_tokens": 13,
+        "thinking_tokens": 45,
+        "total_tokens": 7947,
+        "latency_ms": 929.5,
+        "ttft_ms": null,
+        "tokens_per_sec": 62.4,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 58
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 1,
+      "pred_rows": 1
+    },
+    {
+      "id": "q07",
+      "question": "How many sales orders were placed in each calendar year? Show the year and the number of orders.",
+      "category": "aggregate",
+      "lang": "en",
+      "sql": "SELECT\n  EXTRACT(YEAR FROM orderdate) AS calendar_year,\n  COUNT(salesorderid) AS number_of_orders\nFROM sales.salesorderheader\nGROUP BY\n  calendar_year\nORDER BY\n  calendar_year;",
+      "gold_sql": "SELECT EXTRACT(YEAR FROM orderdate)::int AS yr, COUNT(*) AS orders FROM sales.salesorderheader GROUP BY yr ORDER BY yr\n",
+      "latency_ms": 1323.1,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7898,
+        "completion_tokens": 59,
+        "thinking_tokens": 101,
+        "total_tokens": 8058,
+        "latency_ms": 1323.0,
+        "ttft_ms": null,
+        "tokens_per_sec": 120.94,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 160
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 4,
+      "pred_rows": 4
+    },
+    {
+      "id": "q08",
+      "question": "What is the average list price of products that have a list price above zero?",
+      "category": "aggregate",
+      "lang": "en",
+      "sql": "SELECT\n  AVG(listprice)\nFROM production.product\nWHERE\n  listprice > 0;",
+      "gold_sql": "SELECT AVG(listprice) FROM production.product WHERE listprice > 0",
+      "latency_ms": 999.7,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7894,
+        "completion_tokens": 28,
+        "thinking_tokens": 59,
+        "total_tokens": 7981,
+        "latency_ms": 999.5,
+        "ttft_ms": null,
+        "tokens_per_sec": 87.04,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 87
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 1,
+      "pred_rows": 1
+    },
+    {
+      "id": "q09",
+      "question": "C\u00e2te comenzi de achizi\u021bie are fiecare furnizor care are cel pu\u021bin o comand\u0103? Arat\u0103 numele furnizorului \u0219i num\u0103rul de comenzi.",
+      "category": "aggregate",
+      "lang": "ro",
+      "sql": "SELECT\n  T1.name,\n  COUNT(T2.purchaseorderid) AS number_of_orders\nFROM purchasing.vendor AS T1\nINNER JOIN purchasing.purchaseorderheader AS T2\n  ON T1.businessentityid = T2.vendorid\nGROUP BY\n  T1.name;",
+      "gold_sql": "SELECT v.name, COUNT(*) AS orders FROM purchasing.purchaseorderheader h JOIN purchasing.vendor v ON v.businessentityid = h.vendorid GROUP BY v.name\n",
+      "latency_ms": 1664.3,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7913,
+        "completion_tokens": 74,
+        "thinking_tokens": 172,
+        "total_tokens": 8159,
+        "latency_ms": 1664.1,
+        "ttft_ms": null,
+        "tokens_per_sec": 147.83,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 246
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 86,
+      "pred_rows": 86
+    },
+    {
+      "id": "q10",
+      "question": "How many products are there in each product line, including the products with no product line assigned? Show the product line and the number of products.",
+      "category": "aggregate",
+      "lang": "en",
+      "sql": "SELECT\n  p.productline,\n  COUNT(p.productid) AS number_of_products\nFROM production.product AS p\nGROUP BY\n  p.productline\nORDER BY\n  p.productline;",
+      "gold_sql": "SELECT productline, COUNT(*) AS n FROM production.product GROUP BY productline",
+      "latency_ms": 1338.6,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7907,
+        "completion_tokens": 54,
+        "thinking_tokens": 118,
+        "total_tokens": 8079,
+        "latency_ms": 1338.5,
+        "ttft_ms": null,
+        "tokens_per_sec": 128.5,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 172
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 5,
+      "pred_rows": 5
+    },
+    {
+      "id": "q11",
+      "question": "What are the highest and lowest list prices in the catalogue?",
+      "category": "aggregate",
+      "lang": "en",
+      "sql": "SELECT\n  MAX(listprice) AS highest_list_price,\n  MIN(listprice) AS lowest_list_price\nFROM production.product;",
+      "gold_sql": "SELECT MAX(listprice) AS highest, MIN(listprice) AS lowest FROM production.product",
+      "latency_ms": 1001.5,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7890,
+        "completion_tokens": 39,
+        "thinking_tokens": 59,
+        "total_tokens": 7988,
+        "latency_ms": 1001.3,
+        "ttft_ms": null,
+        "tokens_per_sec": 97.87,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 98
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 1,
+      "pred_rows": 1
+    },
+    {
+      "id": "q12",
+      "question": "What are the top 10 products by total sales revenue? Show the product name and the revenue.",
+      "category": "join",
+      "lang": "en",
+      "sql": "SELECT\n  p.name,\n  SUM(sod.orderqty * sod.unitprice * (1 - sod.unitpricediscount)) AS total_revenue\nFROM sales.salesorderdetail AS sod\nJOIN production.product AS p\n  ON sod.productid = p.productid\nGROUP BY\n  p.name\nORDER BY\n  total_revenue DESC\nLIMIT 10;",
+      "gold_sql": "SELECT p.name,\n       SUM(d.unitprice * (1 - d.unitpricediscount) * d.orderqty) AS revenue\nFROM sales.salesorderdetail d JOIN production.product p ON p.productid = d.productid GROUP BY p.name ORDER BY revenue DESC, p.name LIMIT 10\n",
+      "latency_ms": 1792.8,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7899,
+        "completion_tokens": 92,
+        "thinking_tokens": 189,
+        "total_tokens": 8180,
+        "latency_ms": 1792.6,
+        "ttft_ms": null,
+        "tokens_per_sec": 156.75,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 281
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 10,
+      "pred_rows": 10
+    },
+    {
+      "id": "q13",
+      "question": "Which sales territory generated the most revenue from sales orders, counting the total due on each order? Show the territory name and the revenue.",
+      "category": "join",
+      "lang": "en",
+      "sql": "SELECT\n  st.name,\n  SUM(soh.totaldue) AS total_revenue\nFROM sales.salesorderheader AS soh\nJOIN sales.salesterritory AS st\n  ON soh.territoryid = st.territoryid\nGROUP BY\n  st.name\nORDER BY\n  total_revenue DESC\nLIMIT 1;",
+      "gold_sql": "SELECT t.name, SUM(h.totaldue) AS revenue FROM sales.salesorderheader h JOIN sales.salesterritory t ON t.territoryid = h.territoryid GROUP BY t.name ORDER BY revenue DESC LIMIT 1\n",
+      "latency_ms": 1834.7,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7905,
+        "completion_tokens": 80,
+        "thinking_tokens": 199,
+        "total_tokens": 8184,
+        "latency_ms": 1834.4,
+        "ttft_ms": null,
+        "tokens_per_sec": 152.09,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 279
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 1,
+      "pred_rows": 1
+    },
+    {
+      "id": "q14",
+      "question": "Show the first name, last name and job title of every sales person.",
+      "category": "join",
+      "lang": "en",
+      "sql": "SELECT\n  P.firstname,\n  P.lastname,\n  E.jobtitle\nFROM person.person AS P\nJOIN humanresources.employee AS E\n  ON P.businessentityid = E.businessentityid\nJOIN sales.salesperson AS SP\n  ON E.businessentityid = SP.businessentityid;",
+      "gold_sql": "SELECT pe.firstname, pe.lastname, e.jobtitle FROM sales.salesperson sp JOIN humanresources.employee e ON e.businessentityid = sp.businessentityid JOIN person.person pe ON pe.businessentityid = sp.businessentityid\n",
+      "latency_ms": 1708.2,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7893,
+        "completion_tokens": 76,
+        "thinking_tokens": 169,
+        "total_tokens": 8138,
+        "latency_ms": 1708.0,
+        "ttft_ms": null,
+        "tokens_per_sec": 143.44,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 245
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 17,
+      "pred_rows": 17
+    },
+    {
+      "id": "q15",
+      "question": "Which products does the vendor 'Mountain Works' supply? Show the product names.",
+      "category": "join",
+      "lang": "en",
+      "sql": "SELECT\n  T3.name\nFROM purchasing.vendor AS T1\nINNER JOIN purchasing.productvendor AS T2\n  ON T1.businessentityid = T2.businessentityid\nINNER JOIN production.product AS T3\n  ON T2.productid = T3.productid\nWHERE\n  T1.name = 'Mountain Works';",
+      "gold_sql": "SELECT p.name FROM purchasing.productvendor pv JOIN purchasing.vendor v ON v.businessentityid = pv.businessentityid JOIN production.product p ON p.productid = pv.productid WHERE v.name = 'Mountain Works'\n",
+      "latency_ms": 1605.9,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7894,
+        "completion_tokens": 77,
+        "thinking_tokens": 140,
+        "total_tokens": 8111,
+        "latency_ms": 1605.7,
+        "ttft_ms": null,
+        "tokens_per_sec": 135.14,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 217
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 30,
+      "pred_rows": 30
+    },
+    {
+      "id": "q16",
+      "question": "What is the total sales revenue for each product category? Show the category name and the revenue.",
+      "category": "join",
+      "lang": "en",
+      "sql": "SELECT\n  pc.name,\n  SUM(sod.orderqty * sod.unitprice * (\n    1 - sod.unitpricediscount\n  )) AS total_revenue\nFROM sales.salesorderdetail AS sod\nJOIN production.product AS p\n  ON sod.productid = p.productid\nJOIN production.productsubcategory AS psc\n  ON p.productsubcategoryid = psc.productsubcategoryid\nJOIN production.productcategory AS pc\n  ON psc.productcategoryid = pc.productcategoryid\nGROUP BY\n  pc.name\nORDER BY\n  pc.name;",
+      "gold_sql": "SELECT c.name AS category,\n       SUM(d.unitprice * (1 - d.unitpricediscount) * d.orderqty) AS revenue\nFROM sales.salesorderdetail d JOIN production.product p ON p.productid = d.productid JOIN production.productsubcategory s ON s.productsubcategoryid = p.productsubcategoryid JOIN production.productcategory c ON c.productcategoryid = s.productcategoryid GROUP BY c.name\n",
+      "latency_ms": 2481.3,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7897,
+        "completion_tokens": 137,
+        "thinking_tokens": 315,
+        "total_tokens": 8349,
+        "latency_ms": 2481.2,
+        "ttft_ms": null,
+        "tokens_per_sec": 182.17,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 452
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 4,
+      "pred_rows": 4
+    },
+    {
+      "id": "q17",
+      "question": "List the name and the group of each sales territory.",
+      "category": "join",
+      "lang": "en",
+      "sql": "SELECT\n  name,\n  \"group\"\nFROM sales.salesterritory;",
+      "gold_sql": "SELECT name, \"group\" FROM sales.salesterritory",
+      "latency_ms": 1062.6,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7889,
+        "completion_tokens": 23,
+        "thinking_tokens": 37,
+        "total_tokens": 7949,
+        "latency_ms": 1062.5,
+        "ttft_ms": null,
+        "tokens_per_sec": 56.47,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 60
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 10,
+      "pred_rows": 10
+    },
+    {
+      "id": "q18",
+      "question": "How many sales orders were shipped to each country? Show the country name and the count.",
+      "category": "join",
+      "lang": "en",
+      "sql": "SELECT\n  T3.name,\n  COUNT(T1.salesorderid)\nFROM sales.salesorderheader AS T1\nINNER JOIN person.address AS T2\n  ON T1.shiptoaddressid = T2.addressid\nINNER JOIN person.stateprovince AS T4\n  ON T2.stateprovinceid = T4.stateprovinceid\nINNER JOIN person.countryregion AS T3\n  ON T4.countryregioncode = T3.countryregioncode\nGROUP BY\n  T3.name;",
+      "gold_sql": "SELECT cr.name AS country, COUNT(*) AS orders FROM sales.salesorderheader h JOIN person.address a ON a.addressid = h.shiptoaddressid JOIN person.stateprovince sp ON sp.stateprovinceid = a.stateprovinceid JOIN person.countryregion cr ON cr.countryregioncode = sp.countryregioncode GROUP BY cr.name\n",
+      "latency_ms": 2264.0,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7896,
+        "completion_tokens": 117,
+        "thinking_tokens": 196,
+        "total_tokens": 8209,
+        "latency_ms": 2263.9,
+        "ttft_ms": null,
+        "tokens_per_sec": 138.26,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 313
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 6,
+      "pred_rows": 6
+    },
+    {
+      "id": "q19",
+      "question": "Which shipping method is used on the most sales orders? Show the method name and the number of orders.",
+      "category": "join",
+      "lang": "en",
+      "sql": "SELECT\n  T2.name,\n  COUNT(T1.salesorderid) AS number_of_orders\nFROM sales.salesorderheader AS T1\nINNER JOIN purchasing.shipmethod AS T2\n  ON T1.shipmethodid = T2.shipmethodid\nGROUP BY\n  T2.name\nORDER BY\n  number_of_orders DESC\nLIMIT 1;",
+      "gold_sql": "SELECT sm.name, COUNT(*) AS orders FROM sales.salesorderheader h JOIN purchasing.shipmethod sm ON sm.shipmethodid = h.shipmethodid GROUP BY sm.name ORDER BY orders DESC LIMIT 1\n",
+      "latency_ms": 1714.4,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7899,
+        "completion_tokens": 91,
+        "thinking_tokens": 152,
+        "total_tokens": 8142,
+        "latency_ms": 1714.3,
+        "ttft_ms": null,
+        "tokens_per_sec": 141.75,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 243
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 1,
+      "pred_rows": 1
+    },
+    {
+      "id": "q20",
+      "question": "Which products have never been ordered? Show their names.",
+      "category": "subquery",
+      "lang": "en",
+      "sql": "SELECT\n  T1.name\nFROM production.product AS T1\nWHERE\n  NOT EXISTS(\n    SELECT\n      1\n    FROM sales.salesorderdetail AS T2\n    WHERE\n      T2.productid = T1.productid\n  );",
+      "gold_sql": "SELECT p.name FROM production.product p WHERE NOT EXISTS (SELECT 1 FROM sales.salesorderdetail d\n                  WHERE d.productid = p.productid)\n",
+      "latency_ms": 2481.5,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7889,
+        "completion_tokens": 63,
+        "thinking_tokens": 339,
+        "total_tokens": 8291,
+        "latency_ms": 2481.4,
+        "ttft_ms": null,
+        "tokens_per_sec": 162.01,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 402
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 238,
+      "pred_rows": 238
+    },
+    {
+      "id": "q21",
+      "question": "Which products have a list price higher than the average list price of their own subcategory? Show the product name and its list price.",
+      "category": "subquery",
+      "lang": "en",
+      "sql": "SELECT\n  p.name,\n  p.listprice\nFROM production.product AS p\nJOIN (\n  SELECT\n    productsubcategoryid,\n    AVG(listprice) AS average_subcategory_listprice\n  FROM production.product\n  WHERE\n    productsubcategoryid IS NOT NULL\n  GROUP BY\n    productsubcategoryid\n) AS subcategory_avg\n  ON p.productsubcategoryid = subcategory_avg.productsubcategoryid\nWHERE\n  p.listprice > subcategory_avg.average_subcategory_listprice;",
+      "gold_sql": "SELECT p.name, p.listprice FROM production.product p WHERE p.productsubcategoryid IS NOT NULL\n  AND p.listprice > (SELECT AVG(p2.listprice) FROM production.product p2\n                     WHERE p2.productsubcategoryid = p.productsubcategoryid)\n",
+      "latency_ms": 3586.2,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7905,
+        "completion_tokens": 122,
+        "thinking_tokens": 541,
+        "total_tokens": 8568,
+        "latency_ms": 3586.0,
+        "ttft_ms": null,
+        "tokens_per_sec": 184.89,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 663
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 116,
+      "pred_rows": 116
+    },
+    {
+      "id": "q22",
+      "question": "Which vendors have never had a purchase order? Show the vendor names.",
+      "category": "subquery",
+      "lang": "en",
+      "sql": "SELECT\n  T1.name\nFROM purchasing.vendor AS T1\nLEFT JOIN purchasing.purchaseorderheader AS T2\n  ON T1.businessentityid = T2.vendorid\nWHERE\n  T2.vendorid IS NULL;",
+      "gold_sql": "SELECT v.name FROM purchasing.vendor v WHERE NOT EXISTS (SELECT 1 FROM purchasing.purchaseorderheader h\n                  WHERE h.vendorid = v.businessentityid)\n",
+      "latency_ms": 1593.7,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7892,
+        "completion_tokens": 58,
+        "thinking_tokens": 84,
+        "total_tokens": 8034,
+        "latency_ms": 1593.6,
+        "ttft_ms": null,
+        "tokens_per_sec": 89.11,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 142
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 18,
+      "pred_rows": 18
+    },
+    {
+      "id": "q23",
+      "question": "Which employees have a current pay rate above the average current pay rate? Show the first name, last name and the rate.",
+      "category": "subquery",
+      "lang": "en",
+      "sql": "WITH EmployeeCurrentPayRate AS (\n    SELECT\n        businessentityid,\n        rate,\n        ROW_NUMBER() OVER (PARTITION BY businessentityid ORDER BY ratechangedate DESC) as rn\n    FROM\n        humanresources.employeepayhistory\n),\nAverageCurrentRate AS (\n    SELECT\n        AVG(rate) AS avg_rate\n    FROM\n        EmployeeCurrentPayRate\n    WHERE\n        rn = 1\n)\nSELECT\n    p.firstname,\n    p.lastname,\n    ecpr.rate\nFROM\n    person.person AS p\nJOIN\n    EmployeeCurrentPayRate AS ecpr\n    ON p.businessentityid = ecpr.businessentityid\nWHERE\n    ecpr.rn = 1\n    AND ecpr.rate > (SELECT avg_rate FROM AverageCurrentRate);",
+      "gold_sql": "WITH current_rate AS (\n  SELECT DISTINCT ON (businessentityid) businessentityid, rate\n  FROM humanresources.employeepayhistory\n  ORDER BY businessentityid, ratechangedate DESC)\nSELECT pe.firstname, pe.lastname, cr.rate FROM current_rate cr JOIN person.person pe ON pe.businessentityid = cr.businessentityid WHERE cr.rate > (SELECT AVG(rate) FROM current_rate)\n",
+      "latency_ms": 3824.3,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7903,
+        "completion_tokens": 180,
+        "thinking_tokens": 627,
+        "total_tokens": 8710,
+        "latency_ms": 3824.1,
+        "ttft_ms": null,
+        "tokens_per_sec": 211.03,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 807
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 96,
+      "pred_rows": 96
+    },
+    {
+      "id": "q24",
+      "question": "For each product category, show the top 3 products by sales revenue. Show the category name, the product name and the revenue.",
+      "category": "window",
+      "lang": "en",
+      "sql": "WITH ProductRevenue AS (\n  SELECT\n    pc.name AS category_name,\n    p.name AS product_name,\n    SUM(sod.orderqty * sod.unitprice) AS revenue,\n    pc.productcategoryid\n  FROM sales.salesorderdetail AS sod\n  JOIN production.product AS p\n    ON sod.productid = p.productid\n  JOIN production.productsubcategory AS ps\n    ON p.productsubcategoryid = ps.productsubcategoryid\n  JOIN production.productcategory AS pc\n    ON ps.productcategoryid = pc.productcategoryid\n  GROUP BY\n    pc.productcategoryid,\n    pc.name,\n    p.productid,\n    p.name\n), RankedProductRevenue AS (\n  SELECT\n    category_name,\n    product_name,\n    revenue,\n    ROW_NUMBER() OVER (PARTITION BY productcategoryid ORDER BY revenue DESC) AS rn\n  FROM ProductRevenue\n)\nSELECT\n  category_name,\n  product_name,\n  revenue\nFROM RankedProductRevenue\nWHERE\n  rn <= 3\nORDER BY\n  category_name,\n  revenue DESC;",
+      "gold_sql": "WITH rev AS (\n  SELECT c.name AS category, p.name AS product,\n         SUM(d.unitprice * (1 - d.unitpricediscount) * d.orderqty) AS revenue\n  FROM sales.salesorderdetail d\n  JOIN production.product p ON p.productid = d.productid\n  JOIN production.productsubcategory s ON s.productsubcategoryid = p.productsubcategoryid\n  JOIN production.productcategory c ON c.productcategoryid = s.productcategoryid\n  GROUP BY c.name, p.name),\nranked AS (\n  SELECT category, product, revenue,\n         ROW_NUMBER() OVER (PARTITION BY category ORDER BY revenue DESC, product) AS rn\n  FROM rev)\nSELECT category, product, revenue FROM ranked WHERE rn <= 3\n",
+      "latency_ms": 3418.8,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7905,
+        "completion_tokens": 262,
+        "thinking_tokens": 414,
+        "total_tokens": 8581,
+        "latency_ms": 3418.7,
+        "ttft_ms": null,
+        "tokens_per_sec": 197.73,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 676
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": false,
+      "exec_error": null,
+      "gold_rows": 12,
+      "pred_rows": 12
+    },
+    {
+      "id": "q25",
+      "question": "Rank the sales people by their year-to-date sales, highest first. Show the first name, last name, the year-to-date sales and the rank.",
+      "category": "window",
+      "lang": "en",
+      "sql": "SELECT\n  T2.firstname,\n  T2.lastname,\n  T1.salesytd,\n  RANK() OVER (ORDER BY T1.salesytd DESC) AS sales_rank\nFROM sales.salesperson AS T1\nINNER JOIN person.person AS T2\n  ON T1.businessentityid = T2.businessentityid;",
+      "gold_sql": "SELECT pe.firstname, pe.lastname, sp.salesytd,\n       RANK() OVER (ORDER BY sp.salesytd DESC) AS rnk\nFROM sales.salesperson sp JOIN person.person pe ON pe.businessentityid = sp.businessentityid ORDER BY sp.salesytd DESC\n",
+      "latency_ms": 2438.7,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7913,
+        "completion_tokens": 84,
+        "thinking_tokens": 351,
+        "total_tokens": 8348,
+        "latency_ms": 2438.6,
+        "ttft_ms": null,
+        "tokens_per_sec": 178.38,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 435
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 17,
+      "pred_rows": 17
+    },
+    {
+      "id": "q26",
+      "question": "For each sales territory, show the revenue per year, counting the total due on each order, and a running total across the years. Show the territory name, the year, that year's revenue and the running total.",
+      "category": "window",
+      "lang": "en",
+      "sql": "SELECT\n  st.name AS territory_name,\n  EXTRACT(YEAR FROM soh.orderdate) AS order_year,\n  SUM(soh.totaldue) AS yearly_revenue,\n  SUM(SUM(soh.totaldue)) OVER (PARTITION BY st.name ORDER BY EXTRACT(YEAR FROM soh.orderdate)) AS running_total_revenue\nFROM sales.salesorderheader AS soh\nJOIN sales.salesterritory AS st\n  ON soh.territoryid = st.territoryid\nGROUP BY\n  st.name,\n  EXTRACT(YEAR FROM soh.orderdate)\nORDER BY\n  st.name,\n  order_year;",
+      "gold_sql": "WITH yearly AS (\n  SELECT t.name AS territory, EXTRACT(YEAR FROM h.orderdate)::int AS yr,\n         SUM(h.totaldue) AS revenue\n  FROM sales.salesorderheader h\n  JOIN sales.salesterritory t ON t.territoryid = h.territoryid\n  GROUP BY t.name, yr)\nSELECT territory, yr, revenue,\n       SUM(revenue) OVER (PARTITION BY territory ORDER BY yr\n                          ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_total\nFROM yearly\n",
+      "latency_ms": 2148.7,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7923,
+        "completion_tokens": 149,
+        "thinking_tokens": 221,
+        "total_tokens": 8293,
+        "latency_ms": 2148.5,
+        "ttft_ms": null,
+        "tokens_per_sec": 172.21,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 370
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 40,
+      "pred_rows": 40
+    },
+    {
+      "id": "q31",
+      "question": "How many sales orders were placed online versus not online, and what percentage of the total is each? Show the online flag, the count and the percentage rounded to two decimals.",
+      "category": "aggregate",
+      "lang": "en",
+      "sql": "SELECT\n  onlineorderflag,\n  COUNT(salesorderid) AS order_count,\n  ROUND(COUNT(salesorderid) * 100.0 / SUM(COUNT(salesorderid)) OVER (), 2) AS percentage\nFROM sales.salesorderheader\nGROUP BY\n  onlineorderflag\nORDER BY\n  onlineorderflag;",
+      "gold_sql": "SELECT onlineorderflag, COUNT(*) AS orders,\n       ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (), 2) AS pct\nFROM sales.salesorderheader GROUP BY onlineorderflag\n",
+      "latency_ms": 2128.1,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7913,
+        "completion_tokens": 82,
+        "thinking_tokens": 218,
+        "total_tokens": 8213,
+        "latency_ms": 2127.9,
+        "ttft_ms": null,
+        "tokens_per_sec": 140.98,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 300
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 2,
+      "pred_rows": 2
+    },
+    {
+      "id": "q32",
+      "question": "Which three scrap reasons account for the most scrapped units? Show the reason name and the total scrapped quantity.",
+      "category": "aggregate",
+      "lang": "en",
+      "sql": "SELECT\n  T2.name,\n  SUM(T1.scrappedqty) AS total_scrapped_quantity\nFROM production.workorder AS T1\nINNER JOIN production.scrapreason AS T2\n  ON T1.scrapreasonid = T2.scrapreasonid\nGROUP BY\n  T2.name\nORDER BY\n  total_scrapped_quantity DESC\nLIMIT 3;",
+      "gold_sql": "SELECT sr.name, SUM(w.scrappedqty) AS scrapped FROM production.workorder w JOIN production.scrapreason sr ON sr.scrapreasonid = w.scrapreasonid GROUP BY sr.name ORDER BY scrapped DESC LIMIT 3\n",
+      "latency_ms": 1800.1,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7899,
+        "completion_tokens": 98,
+        "thinking_tokens": 220,
+        "total_tokens": 8217,
+        "latency_ms": 1799.9,
+        "ttft_ms": null,
+        "tokens_per_sec": 176.68,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 318
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 3,
+      "pred_rows": 3
+    },
+    {
+      "id": "q33",
+      "question": "How many employees currently work in each department? Show the department name and the number of employees.",
+      "category": "join",
+      "lang": "en",
+      "sql": "SELECT\n  d.name,\n  COUNT(DISTINCT e.businessentityid) AS number_of_employees\nFROM humanresources.department AS d\nJOIN humanresources.employeedepartmenthistory AS edh\n  ON d.departmentid = edh.departmentid\nJOIN humanresources.employee AS e\n  ON edh.businessentityid = e.businessentityid\nWHERE\n  e.currentflag = TRUE AND edh.enddate IS NULL\nGROUP BY\n  d.name\nORDER BY\n  d.name;",
+      "gold_sql": "SELECT d.name, COUNT(*) AS employees FROM humanresources.employeedepartmenthistory h JOIN humanresources.department d ON d.departmentid = h.departmentid WHERE h.enddate IS NULL GROUP BY d.name\n",
+      "latency_ms": 2005.7,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7897,
+        "completion_tokens": 122,
+        "thinking_tokens": 203,
+        "total_tokens": 8222,
+        "latency_ms": 2005.6,
+        "ttft_ms": null,
+        "tokens_per_sec": 162.05,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 325
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 16,
+      "pred_rows": 16
+    },
+    {
+      "id": "q34",
+      "question": "For each sales territory, who is the sales person with the highest year-to-date sales? Show the territory name, the first name, the last name and the sales figure.",
+      "category": "join",
+      "lang": "en",
+      "sql": "SELECT\n  st.name AS territory_name,\n  p.firstname,\n  p.lastname,\n  sp.salesytd\nFROM sales.salesterritory AS st\nJOIN sales.salesperson AS sp\n  ON st.territoryid = sp.territoryid\nJOIN person.person AS p\n  ON sp.businessentityid = p.businessentityid\nWHERE\n  (st.territoryid, sp.salesytd) IN (\n    SELECT\n      territoryid,\n      MAX(salesytd)\n    FROM sales.salesperson\n    GROUP BY\n      territoryid\n  );",
+      "gold_sql": "SELECT t.name, pe.firstname, pe.lastname, sp.salesytd FROM sales.salesperson sp JOIN sales.salesterritory t ON t.territoryid = sp.territoryid JOIN person.person pe ON pe.businessentityid = sp.businessentityid WHERE sp.salesytd = (SELECT MAX(s2.salesytd) FROM sales.salesperson s2\n                     WHERE s2.territoryid = sp.territoryid)\n",
+      "latency_ms": 2160.0,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7915,
+        "completion_tokens": 142,
+        "thinking_tokens": 188,
+        "total_tokens": 8245,
+        "latency_ms": 2159.9,
+        "ttft_ms": null,
+        "tokens_per_sec": 152.79,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 330
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 10,
+      "pred_rows": 10
+    },
+    {
+      "id": "q35",
+      "question": "How many distinct components go into the product 'Mountain-100 Black, 44' at any level of its bill of materials?",
+      "category": "subquery",
+      "lang": "en",
+      "sql": "WITH RECURSIVE ProductComponents AS (\n    -- Anchor member: Get direct components of 'Mountain-100 Black, 44'\n    SELECT\n        bom.componentid\n    FROM production.billofmaterials AS bom\n    INNER JOIN production.product AS p_assembly\n        ON bom.productassemblyid = p_assembly.productid\n    WHERE\n        p_assembly.name = 'Mountain-100 Black, 44'\n\n    UNION ALL\n\n    -- Recursive member: Get components of the components found so far\n    SELECT\n        bom_inner.componentid\n    FROM production.billofmaterials AS bom_inner\n    INNER JOIN ProductComponents AS pc\n        ON bom_inner.productassemblyid = pc.componentid\n)\nSELECT\n    COUNT(DISTINCT componentid)\nFROM ProductComponents;",
+      "gold_sql": "WITH RECURSIVE bom AS (\n  SELECT b.componentid FROM production.billofmaterials b\n  JOIN production.product p ON p.productid = b.productassemblyid\n  WHERE p.name = 'Mountain-100 Black, 44' AND b.enddate IS NULL\n  UNION\n  SELECT b.componentid FROM production.billofmaterials b\n  JOIN bom ON bom.componentid = b.productassemblyid\n  WHERE b.enddate IS NULL)\nSELECT COUNT(DISTINCT componentid) FROM bom\n",
+      "latency_ms": 3871.3,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7907,
+        "completion_tokens": 181,
+        "thinking_tokens": 626,
+        "total_tokens": 8714,
+        "latency_ms": 3871.2,
+        "ttft_ms": null,
+        "tokens_per_sec": 208.46,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 807
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 1,
+      "pred_rows": 1
+    },
+    {
+      "id": "q36",
+      "question": "Which products have been sold in every sales territory? Show the product names.",
+      "category": "subquery",
+      "lang": "en",
+      "sql": "SELECT\n  p.name\nFROM production.product AS p\nJOIN (\n  SELECT\n    sod.productid\n  FROM sales.salesorderdetail AS sod\n  JOIN sales.salesorderheader AS soh\n    ON sod.salesorderid = soh.salesorderid\n  WHERE\n    soh.territoryid IS NOT NULL\n  GROUP BY\n    sod.productid\n  HAVING\n    COUNT(DISTINCT soh.territoryid) = (\n      SELECT\n        COUNT(DISTINCT territoryid)\n      FROM sales.salesterritory\n    )\n) AS products_in_all_territories\n  ON p.productid = products_in_all_territories.productid;",
+      "gold_sql": "SELECT p.name FROM production.product p WHERE NOT EXISTS (\n  SELECT 1 FROM sales.salesterritory t WHERE NOT EXISTS (\n    SELECT 1 FROM sales.salesorderheader h\n    JOIN sales.salesorderdetail d ON d.salesorderid = h.salesorderid\n    WHERE d.productid = p.productid AND h.territoryid = t.territoryid))\n",
+      "latency_ms": 4766.8,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7893,
+        "completion_tokens": 162,
+        "thinking_tokens": 820,
+        "total_tokens": 8875,
+        "latency_ms": 4766.7,
+        "ttft_ms": null,
+        "tokens_per_sec": 206.01,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 982
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 164,
+      "pred_rows": 164
+    },
+    {
+      "id": "q37",
+      "question": "Which products have less total inventory on hand than their reorder point, counting a product with no inventory records as zero on hand? Show the product name, the quantity on hand and the reorder point.",
+      "category": "subquery",
+      "lang": "en",
+      "sql": "SELECT\n  p.name AS product_name,\n  COALESCE(SUM(pi.quantity), 0) AS quantity_on_hand,\n  p.reorderpoint AS reorder_point\nFROM production.product AS p\nLEFT JOIN production.productinventory AS pi\n  ON p.productid = pi.productid\nGROUP BY\n  p.productid,\n  p.name,\n  p.reorderpoint\nHAVING\n  COALESCE(SUM(pi.quantity), 0) < p.reorderpoint;",
+      "gold_sql": "SELECT p.name, COALESCE(SUM(i.quantity), 0) AS on_hand, p.reorderpoint FROM production.product p LEFT JOIN production.productinventory i ON i.productid = p.productid GROUP BY p.productid, p.name, p.reorderpoint HAVING COALESCE(SUM(i.quantity), 0) < p.reorderpoint\n",
+      "latency_ms": 3259.9,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7919,
+        "completion_tokens": 126,
+        "thinking_tokens": 351,
+        "total_tokens": 8396,
+        "latency_ms": 3259.7,
+        "ttft_ms": null,
+        "tokens_per_sec": 146.33,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 477
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 79,
+      "pred_rows": 79
+    },
+    {
+      "id": "q38",
+      "question": "For each month of 2013, show the month as a date (the first day of that month), the total revenue counting the total due on each order, and the percentage change in revenue from the preceding calendar month (for January 2013 that is December 2012), rounded to two decimals.",
+      "category": "window",
+      "lang": "en",
+      "sql": "WITH AllMonths AS (\n    SELECT generate_series('2012-12-01'::date, '2013-12-01'::date, '1 month'::interval)::date AS month_start\n),\nMonthlySales AS (\n    SELECT\n        DATE_TRUNC('month', orderdate) AS sales_month_start,\n        SUM(totaldue) AS monthly_revenue\n    FROM\n        sales.salesorderheader\n    WHERE\n        orderdate >= '2012-12-01' AND orderdate < '2014-01-01'\n    GROUP BY\n        1\n),\nCombinedRevenue AS (\n    SELECT\n        am.month_start,\n        COALESCE(ms.monthly_revenue, 0.0) AS current_month_revenue\n    FROM\n        AllMonths AS am\n    LEFT JOIN\n        MonthlySales AS ms ON am.month_start = ms.sales_month_start\n),\nCalculatedChange AS (\n    SELECT\n        month_start,\n        current_month_revenue,\n        LAG(current_month_revenue) OVER (ORDER BY month_start) AS previous_month_revenue\n    FROM\n        CombinedRevenue\n)\nSELECT\n    month_start,\n    current_month_revenue,\n    ROUND(\n        CASE\n            WHEN previous_month_revenue = 0 THEN\n                CASE\n                    WHEN current_month_revenue = 0 THEN 0.00\n                    ELSE NULL -- Represents infinite growth from zero, or undefined\n                END\n            ELSE ((current_month_revenue - previous_month_revenue) * 100.0) / previous_month_revenue\n        END,\n        2\n    ) AS percentage_change\nFROM\n    CalculatedChange\nWHERE\n    month_start >= '2013-01-01'\nORDER BY\n    month_start;",
+      "gold_sql": "WITH m AS (\n  SELECT DATE_TRUNC('month', orderdate)::date AS mo, SUM(totaldue) AS revenue\n  FROM sales.salesorderheader GROUP BY 1),\nlagged AS (\n  SELECT mo, revenue, LAG(revenue) OVER (ORDER BY mo) AS prev FROM m)\nSELECT mo, revenue, ROUND(100.0 * (revenue - prev) / prev, 2) AS pct_change FROM lagged WHERE EXTRACT(YEAR FROM mo) = 2013 ORDER BY mo\n",
+      "latency_ms": 15374.0,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7946,
+        "completion_tokens": 435,
+        "thinking_tokens": 2853,
+        "total_tokens": 11234,
+        "latency_ms": 15373.8,
+        "ttft_ms": null,
+        "tokens_per_sec": 213.87,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 3288
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": true,
+      "correct": true,
+      "exec_error": null,
+      "gold_rows": 12,
+      "pred_rows": 12
+    },
+    {
+      "id": "q27",
+      "question": "Show me our best customers.",
+      "category": "ambiguous",
+      "lang": "en",
+      "sql": "SELECT\n  c.customerid,\n  SUM(soh.totaldue) AS total_spent\nFROM sales.customer AS c\nJOIN sales.salesorderheader AS soh\n  ON c.customerid = soh.customerid\nGROUP BY\n  c.customerid\nORDER BY\n  total_spent DESC;",
+      "gold_sql": null,
+      "latency_ms": 4268.1,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7884,
+        "completion_tokens": 74,
+        "thinking_tokens": 719,
+        "total_tokens": 8677,
+        "latency_ms": 4267.9,
+        "ttft_ms": null,
+        "tokens_per_sec": 185.81,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 793
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": false
+    },
+    {
+      "id": "q28",
+      "question": "Care sunt cele mai bune produse?",
+      "category": "ambiguous",
+      "lang": "ro",
+      "sql": "SELECT\n  p.name,\n  SUM(sod.orderqty * sod.unitprice) AS total_sales_amount\nFROM production.product AS p\nJOIN sales.salesorderdetail AS sod\n  ON p.productid = sod.productid\nGROUP BY\n  p.name\nORDER BY\n  total_sales_amount DESC;",
+      "gold_sql": null,
+      "latency_ms": 2016.3,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7886,
+        "completion_tokens": 81,
+        "thinking_tokens": 240,
+        "total_tokens": 8207,
+        "latency_ms": 2016.1,
+        "ttft_ms": null,
+        "tokens_per_sec": 159.21,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 321
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": false
+    },
+    {
+      "id": "q29",
+      "question": "How many customers do we have?",
+      "category": "ambiguous",
+      "lang": "en",
+      "sql": "SELECT\n  COUNT(DISTINCT customerid)\nFROM sales.customer;",
+      "gold_sql": null,
+      "latency_ms": 799.4,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7885,
+        "completion_tokens": 21,
+        "thinking_tokens": 31,
+        "total_tokens": 7937,
+        "latency_ms": 799.3,
+        "ttft_ms": null,
+        "tokens_per_sec": 65.06,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 52
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": false
+    },
+    {
+      "id": "q30",
+      "question": "What were our sales last year?",
+      "category": "ambiguous",
+      "lang": "en",
+      "sql": "SELECT\n  SUM(T1.saleslastyear)\nFROM sales.salesterritory AS T1;",
+      "gold_sql": null,
+      "latency_ms": 9276.3,
+      "arm_error": null,
+      "clarified": false,
+      "usage": {
+        "prompt_tokens": 7885,
+        "completion_tokens": 23,
+        "thinking_tokens": 1683,
+        "total_tokens": 9591,
+        "latency_ms": 9276.2,
+        "ttft_ms": null,
+        "tokens_per_sec": 183.91,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 1706
+      },
+      "extra": {
+        "prompt_chars": 37019
+      },
+      "scored": false
+    }
+  ]
+}

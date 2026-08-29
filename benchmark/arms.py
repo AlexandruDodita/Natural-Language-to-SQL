@@ -38,7 +38,7 @@ sys.path.insert(0, str(HERE))
 
 import clients  # noqa: E402
 
-NAIVE_PROMPT = """You are a SQL expert for a car rental company database.
+NAIVE_PROMPT = """You are a SQL expert for {domain}.
 
 {schema}
 
@@ -90,8 +90,11 @@ def _single_shot_arm(prompt: str, complete) -> Callable[[dict], dict]:
     return run
 
 
-def make_naive_arm(schema_text: str) -> Callable[[dict], dict]:
-    prompt = NAIVE_PROMPT.format(schema=schema_text)
+DEFAULT_DOMAIN = "a car rental company database"
+
+
+def make_naive_arm(schema_text: str, domain: str = DEFAULT_DOMAIN) -> Callable[[dict], dict]:
+    prompt = NAIVE_PROMPT.format(schema=schema_text, domain=domain)
     return _single_shot_arm(prompt, clients.gemini_complete)
 
 
@@ -99,13 +102,14 @@ def make_local_arm(
     schema_text: str,
     base_url: str = clients.DEFAULT_LOCAL_BASE_URL,
     model: str = clients.DEFAULT_LOCAL_MODEL,
+    domain: str = DEFAULT_DOMAIN,
 ) -> Callable[[dict], dict]:
     """The naive arm, answered by a model running on this machine.
 
     Any OpenAI-compatible server will do (llama.cpp's llama-server, LM Studio,
     vLLM, Ollama); the arm only needs `POST {base_url}/chat/completions`.
     """
-    prompt = NAIVE_PROMPT.format(schema=schema_text)
+    prompt = NAIVE_PROMPT.format(schema=schema_text, domain=domain)
     return _single_shot_arm(
         prompt, lambda p: clients.local_complete(p, base_url=base_url, model=model))
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Renders the results JSONs as the LaTeX table bodies used in the thesis.
 
-    python benchmark/tables.py
+    python benchmark/tables.py                        # car_rental
+    python benchmark/tables.py --dataset adventureworks
 
 Every number in the results chapter is printed by this script from the JSON the
 harness wrote, so a table in the document can be regenerated from the measured
@@ -11,6 +12,7 @@ being caught.
 
 from __future__ import annotations
 
+import argparse
 import json
 import pathlib
 
@@ -108,6 +110,17 @@ def report_rows(runs: list[tuple[str, dict]]) -> str:
 
 
 def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--dataset", default="car_rental",
+                    help="which dataset's results to render; car_rental reads "
+                         "results/, anything else reads results/<dataset>/")
+    args = ap.parse_args()
+    global RESULTS
+    if args.dataset != "car_rental":
+        RESULTS = HERE / "results" / args.dataset
+        if not RESULTS.is_dir():
+            raise SystemExit(f"no results directory for dataset {args.dataset!r}: {RESULTS}")
+
     names = sorted(p.stem for p in RESULTS.glob("*.json"))
     # Only the per-model files: `naive.json`, `pipeline.json` and
     # `mcp-postgres.json` are single-model arm runs and belong to the arm

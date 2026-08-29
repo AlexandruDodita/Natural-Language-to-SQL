@@ -1,0 +1,586 @@
+# Benchmark question set for the adventureworks database.
+#
+# Same contract as questions.yaml -- identical fields, identical scoring -- so
+# the two sets differ only in the database they interrogate. See that file for
+# the field documentation.
+#
+# What this set is for: car_rental has 9 tables and ~70 columns, so the naive
+# arm can put the entire schema in one prompt and still have the right tables
+# be obvious. AdventureWorks has 68 tables, 1,099 columns and 91 foreign keys
+# across five schemas, and the questions below are written so that finding the
+# right three or four tables is itself most of the work. Several deliberately
+# sit next to a decoy: product / productmodel / productsubcategory /
+# productcategory, salesorderheader / purchaseorderheader, and salesperson /
+# salespersonquotahistory are all separate tables with overlapping vocabulary.
+#
+# Notes on this port that affect gold SQL:
+#   * There is no `linetotal` column. It is a computed column in the MSSQL
+#     original and the PostgreSQL port drops it, so revenue is written out as
+#     unitprice * (1 - unitpricediscount) * orderqty.
+#   * sales.salesterritory has a column named `group`, which is reserved and
+#     must be quoted.
+#   * Order dates span 2011-05-31 to 2014-06-30.
+
+questions:
+  # ---- simple: single table, filter or count -------------------------------
+  - id: q01
+    question: How many products are in the product catalogue?
+    lang: en
+    category: simple
+    tables: [production.product]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: SELECT COUNT(*) FROM production.product
+
+  - id: q02
+    question: List the names of all departments.
+    lang: en
+    category: simple
+    tables: [humanresources.department]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: SELECT name FROM humanresources.department
+
+  - id: q03
+    question: Ce produse sunt de culoare roșie? Arată numele și prețul de listă.
+    lang: ro
+    category: simple
+    tables: [production.product]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: SELECT name, listprice FROM production.product WHERE color = 'Red'
+    note: >
+      Romanian, per the bilingual requirement. Also a value-index question:
+      "roșie" must link to production.product.color = 'Red', a value, not a
+      table or column name.
+
+  - id: q04
+    question: How many employees are currently employed?
+    lang: en
+    category: simple
+    tables: [humanresources.employee]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: SELECT COUNT(*) FROM humanresources.employee WHERE currentflag = true
+
+  - id: q05
+    question: What credit card types do we accept?
+    lang: en
+    category: simple
+    tables: [sales.creditcard]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: SELECT DISTINCT cardtype FROM sales.creditcard
+
+  # ---- aggregate: grouping and arithmetic ----------------------------------
+  - id: q06
+    question: What is the total amount due across all sales orders?
+    lang: en
+    category: aggregate
+    tables: [sales.salesorderheader]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: SELECT SUM(totaldue) FROM sales.salesorderheader
+
+  - id: q07
+    question: How many sales orders were placed in each calendar year? Show the year and the number of orders.
+    lang: en
+    category: aggregate
+    tables: [sales.salesorderheader]
+    ordered: true
+    expected_chart: [bar, line]
+    gold_sql: >
+      SELECT EXTRACT(YEAR FROM orderdate)::int AS yr, COUNT(*) AS orders
+      FROM sales.salesorderheader GROUP BY yr ORDER BY yr
+
+  - id: q08
+    question: What is the average list price of products that have a list price above zero?
+    lang: en
+    category: aggregate
+    tables: [production.product]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: SELECT AVG(listprice) FROM production.product WHERE listprice > 0
+
+  - id: q09
+    question: Câte comenzi de achiziție are fiecare furnizor care are cel puțin o comandă? Arată numele furnizorului și numărul de comenzi.
+    lang: ro
+    category: aggregate
+    tables: [purchasing.purchaseorderheader, purchasing.vendor]
+    ordered: false
+    expected_chart: [bar]
+    gold_sql: >
+      SELECT v.name, COUNT(*) AS orders
+      FROM purchasing.purchaseorderheader h
+      JOIN purchasing.vendor v ON v.businessentityid = h.vendorid
+      GROUP BY v.name
+    note: >
+      Romanian, and a decoy: "comenzi" maps to purchaseorderheader here, not
+      salesorderheader, which is the larger and more obvious orders table.
+      Not a top-N question: 60+ vendors tie at exactly 51 purchase orders, so
+      any "top 5" would have no determinate answer to score against.
+
+  - id: q10
+    question: How many products are there in each product line, including the products with no product line assigned? Show the product line and the number of products.
+    lang: en
+    category: aggregate
+    tables: [production.product]
+    ordered: false
+    expected_chart: [bar, pie]
+    gold_sql: SELECT productline, COUNT(*) AS n FROM production.product GROUP BY productline
+
+  - id: q11
+    question: What are the highest and lowest list prices in the catalogue?
+    lang: en
+    category: aggregate
+    tables: [production.product]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: SELECT MAX(listprice) AS highest, MIN(listprice) AS lowest FROM production.product
+
+  # ---- join: multi-table, several of them cross-schema ---------------------
+  - id: q12
+    question: What are the top 10 products by total sales revenue? Show the product name and the revenue.
+    lang: en
+    category: join
+    tables: [sales.salesorderdetail, production.product]
+    ordered: true
+    expected_chart: [bar]
+    gold_sql: >
+      SELECT p.name,
+             SUM(d.unitprice * (1 - d.unitpricediscount) * d.orderqty) AS revenue
+      FROM sales.salesorderdetail d
+      JOIN production.product p ON p.productid = d.productid
+      GROUP BY p.name ORDER BY revenue DESC, p.name LIMIT 10
+    note: Cross-schema join, sales -> production.
+
+  - id: q13
+    question: Which sales territory generated the most revenue from sales orders, counting the total due on each order? Show the territory name and the revenue.
+    lang: en
+    category: join
+    tables: [sales.salesorderheader, sales.salesterritory]
+    ordered: true
+    expected_chart: [bar]
+    gold_sql: >
+      SELECT t.name, SUM(h.totaldue) AS revenue
+      FROM sales.salesorderheader h
+      JOIN sales.salesterritory t ON t.territoryid = h.territoryid
+      GROUP BY t.name ORDER BY revenue DESC LIMIT 1
+
+  - id: q14
+    question: Show the first name, last name and job title of every sales person.
+    lang: en
+    category: join
+    tables: [sales.salesperson, humanresources.employee, person.person]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: >
+      SELECT pe.firstname, pe.lastname, e.jobtitle
+      FROM sales.salesperson sp
+      JOIN humanresources.employee e ON e.businessentityid = sp.businessentityid
+      JOIN person.person pe ON pe.businessentityid = sp.businessentityid
+    note: >
+      The businessentityid indirection: a sales person is an employee is a
+      person, and the name lives two tables away from the sales table. Three
+      schemas in one query.
+
+  - id: q15
+    question: Which products does the vendor 'Mountain Works' supply? Show the product names.
+    lang: en
+    category: join
+    tables: [purchasing.productvendor, purchasing.vendor, production.product]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: >
+      SELECT p.name
+      FROM purchasing.productvendor pv
+      JOIN purchasing.vendor v ON v.businessentityid = pv.businessentityid
+      JOIN production.product p ON p.productid = pv.productid
+      WHERE v.name = 'Mountain Works'
+
+  - id: q16
+    question: What is the total sales revenue for each product category? Show the category name and the revenue.
+    lang: en
+    category: join
+    tables: [sales.salesorderdetail, production.product, production.productsubcategory, production.productcategory]
+    ordered: false
+    expected_chart: [bar, pie]
+    gold_sql: >
+      SELECT c.name AS category,
+             SUM(d.unitprice * (1 - d.unitpricediscount) * d.orderqty) AS revenue
+      FROM sales.salesorderdetail d
+      JOIN production.product p ON p.productid = d.productid
+      JOIN production.productsubcategory s ON s.productsubcategoryid = p.productsubcategoryid
+      JOIN production.productcategory c ON c.productcategoryid = s.productcategoryid
+      GROUP BY c.name
+    note: >
+      Four-table chain through the category hierarchy. product ->
+      productsubcategory -> productcategory is exactly the kind of two-hop
+      lookup that a schema-selection step has to get right.
+
+  - id: q17
+    question: List the name and the group of each sales territory.
+    lang: en
+    category: join
+    tables: [sales.salesterritory]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: SELECT name, "group" FROM sales.salesterritory
+    note: >
+      `group` is a reserved word and must be quoted. Single-table, but it is
+      here to catch a model that emits syntactically invalid SQL.
+
+  - id: q18
+    question: How many sales orders were shipped to each country? Show the country name and the count.
+    lang: en
+    category: join
+    tables: [sales.salesorderheader, person.address, person.stateprovince, person.countryregion]
+    ordered: false
+    expected_chart: [bar]
+    gold_sql: >
+      SELECT cr.name AS country, COUNT(*) AS orders
+      FROM sales.salesorderheader h
+      JOIN person.address a ON a.addressid = h.shiptoaddressid
+      JOIN person.stateprovince sp ON sp.stateprovinceid = a.stateprovinceid
+      JOIN person.countryregion cr ON cr.countryregioncode = sp.countryregioncode
+      GROUP BY cr.name
+    note: >
+      Four tables, and the join must pick shiptoaddressid rather than
+      billtoaddressid -- two columns of the same type on the same table.
+
+  - id: q19
+    question: Which shipping method is used on the most sales orders? Show the method name and the number of orders.
+    lang: en
+    category: join
+    tables: [sales.salesorderheader, purchasing.shipmethod]
+    ordered: true
+    expected_chart: [bar]
+    gold_sql: >
+      SELECT sm.name, COUNT(*) AS orders
+      FROM sales.salesorderheader h
+      JOIN purchasing.shipmethod sm ON sm.shipmethodid = h.shipmethodid
+      GROUP BY sm.name ORDER BY orders DESC LIMIT 1
+    note: shipmethod lives in the purchasing schema but is used by sales orders.
+
+  # ---- subquery ------------------------------------------------------------
+  - id: q20
+    question: Which products have never been ordered? Show their names.
+    lang: en
+    category: subquery
+    tables: [production.product, sales.salesorderdetail]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: >
+      SELECT p.name FROM production.product p
+      WHERE NOT EXISTS (SELECT 1 FROM sales.salesorderdetail d
+                        WHERE d.productid = p.productid)
+
+  - id: q21
+    question: Which products have a list price higher than the average list price of their own subcategory? Show the product name and its list price.
+    lang: en
+    category: subquery
+    tables: [production.product]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: >
+      SELECT p.name, p.listprice FROM production.product p
+      WHERE p.productsubcategoryid IS NOT NULL
+        AND p.listprice > (SELECT AVG(p2.listprice) FROM production.product p2
+                           WHERE p2.productsubcategoryid = p.productsubcategoryid)
+    note: Correlated subquery against the same table.
+
+  - id: q22
+    question: Which vendors have never had a purchase order? Show the vendor names.
+    lang: en
+    category: subquery
+    tables: [purchasing.vendor, purchasing.purchaseorderheader]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: >
+      SELECT v.name FROM purchasing.vendor v
+      WHERE NOT EXISTS (SELECT 1 FROM purchasing.purchaseorderheader h
+                        WHERE h.vendorid = v.businessentityid)
+
+  - id: q23
+    question: Which employees have a current pay rate above the average current pay rate? Show the first name, last name and the rate.
+    lang: en
+    category: subquery
+    tables: [humanresources.employeepayhistory, person.person]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: >
+      WITH current_rate AS (
+        SELECT DISTINCT ON (businessentityid) businessentityid, rate
+        FROM humanresources.employeepayhistory
+        ORDER BY businessentityid, ratechangedate DESC)
+      SELECT pe.firstname, pe.lastname, cr.rate
+      FROM current_rate cr
+      JOIN person.person pe ON pe.businessentityid = cr.businessentityid
+      WHERE cr.rate > (SELECT AVG(rate) FROM current_rate)
+    note: >
+      employeepayhistory holds one row per raise, so "current rate" means the
+      latest row per employee -- a model that averages the raw table gets a
+      different answer.
+
+  # ---- window --------------------------------------------------------------
+  - id: q24
+    question: For each product category, show the top 3 products by sales revenue. Show the category name, the product name and the revenue.
+    lang: en
+    category: window
+    tables: [sales.salesorderdetail, production.product, production.productsubcategory, production.productcategory]
+    ordered: false
+    expected_chart: [bar]
+    gold_sql: >
+      WITH rev AS (
+        SELECT c.name AS category, p.name AS product,
+               SUM(d.unitprice * (1 - d.unitpricediscount) * d.orderqty) AS revenue
+        FROM sales.salesorderdetail d
+        JOIN production.product p ON p.productid = d.productid
+        JOIN production.productsubcategory s ON s.productsubcategoryid = p.productsubcategoryid
+        JOIN production.productcategory c ON c.productcategoryid = s.productcategoryid
+        GROUP BY c.name, p.name),
+      ranked AS (
+        SELECT category, product, revenue,
+               ROW_NUMBER() OVER (PARTITION BY category ORDER BY revenue DESC, product) AS rn
+        FROM rev)
+      SELECT category, product, revenue FROM ranked WHERE rn <= 3
+
+  - id: q25
+    question: Rank the sales people by their year-to-date sales, highest first. Show the first name, last name, the year-to-date sales and the rank.
+    lang: en
+    category: window
+    tables: [sales.salesperson, person.person]
+    ordered: true
+    expected_chart: [bar]
+    gold_sql: >
+      SELECT pe.firstname, pe.lastname, sp.salesytd,
+             RANK() OVER (ORDER BY sp.salesytd DESC) AS rnk
+      FROM sales.salesperson sp
+      JOIN person.person pe ON pe.businessentityid = sp.businessentityid
+      ORDER BY sp.salesytd DESC
+
+  - id: q26
+    question: For each sales territory, show the revenue per year, counting the total due on each order, and a running total across the years. Show the territory name, the year, that year's revenue and the running total.
+    lang: en
+    category: window
+    tables: [sales.salesorderheader, sales.salesterritory]
+    ordered: false
+    expected_chart: [line, bar]
+    gold_sql: >
+      WITH yearly AS (
+        SELECT t.name AS territory, EXTRACT(YEAR FROM h.orderdate)::int AS yr,
+               SUM(h.totaldue) AS revenue
+        FROM sales.salesorderheader h
+        JOIN sales.salesterritory t ON t.territoryid = h.territoryid
+        GROUP BY t.name, yr)
+      SELECT territory, yr, revenue,
+             SUM(revenue) OVER (PARTITION BY territory ORDER BY yr
+                                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_total
+      FROM yearly
+
+  # ---- harder set -----------------------------------------------------------
+  # Added after the first run: every one of the five hosted models scored at or
+  # near 100% on the questions above, which measures nothing. A benchmark whose
+  # weakest entrant is saturated cannot rank anything. These reach further into
+  # the schema -- history tables that need a currency filter, a recursive bill
+  # of materials, relational division, a window over an aggregate -- and are
+  # where the 68-table schema actually costs something.
+
+  - id: q31
+    question: How many sales orders were placed online versus not online, and what percentage of the total is each? Show the online flag, the count and the percentage rounded to two decimals.
+    lang: en
+    category: aggregate
+    tables: [sales.salesorderheader]
+    ordered: false
+    expected_chart: [bar, pie]
+    gold_sql: >
+      SELECT onlineorderflag, COUNT(*) AS orders,
+             ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (), 2) AS pct
+      FROM sales.salesorderheader GROUP BY onlineorderflag
+    note: A window function over an aggregate -- the percentage needs the grand total.
+
+  - id: q32
+    question: Which three scrap reasons account for the most scrapped units? Show the reason name and the total scrapped quantity.
+    lang: en
+    category: aggregate
+    tables: [production.workorder, production.scrapreason]
+    ordered: true
+    expected_chart: [bar]
+    gold_sql: >
+      SELECT sr.name, SUM(w.scrappedqty) AS scrapped
+      FROM production.workorder w
+      JOIN production.scrapreason sr ON sr.scrapreasonid = w.scrapreasonid
+      GROUP BY sr.name ORDER BY scrapped DESC LIMIT 3
+    note: >
+      workorder.scrapreasonid is nullable and most rows are null, so the join
+      itself is the filter. Ranks 3 and 4 differ (876 vs 826), so the cut is
+      determinate.
+
+  - id: q33
+    question: How many employees currently work in each department? Show the department name and the number of employees.
+    lang: en
+    category: join
+    tables: [humanresources.employeedepartmenthistory, humanresources.department]
+    ordered: false
+    expected_chart: [bar]
+    gold_sql: >
+      SELECT d.name, COUNT(*) AS employees
+      FROM humanresources.employeedepartmenthistory h
+      JOIN humanresources.department d ON d.departmentid = h.departmentid
+      WHERE h.enddate IS NULL
+      GROUP BY d.name
+    note: >
+      employeedepartmenthistory is a history table with one row per posting.
+      "Currently" means enddate IS NULL; without that filter an employee who
+      has transferred is counted in both departments.
+
+  - id: q34
+    question: For each sales territory, who is the sales person with the highest year-to-date sales? Show the territory name, the first name, the last name and the sales figure.
+    lang: en
+    category: join
+    tables: [sales.salesperson, sales.salesterritory, person.person]
+    ordered: false
+    expected_chart: [bar]
+    gold_sql: >
+      SELECT t.name, pe.firstname, pe.lastname, sp.salesytd
+      FROM sales.salesperson sp
+      JOIN sales.salesterritory t ON t.territoryid = sp.territoryid
+      JOIN person.person pe ON pe.businessentityid = sp.businessentityid
+      WHERE sp.salesytd = (SELECT MAX(s2.salesytd) FROM sales.salesperson s2
+                           WHERE s2.territoryid = sp.territoryid)
+    note: >
+      Per-group argmax across three tables and two schemas. Sales people with no
+      territory are excluded by the join, which is the intended reading.
+
+  - id: q35
+    question: How many distinct components go into the product 'Mountain-100 Black, 44' at any level of its bill of materials?
+    lang: en
+    category: subquery
+    tables: [production.billofmaterials, production.product]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: >
+      WITH RECURSIVE bom AS (
+        SELECT b.componentid FROM production.billofmaterials b
+        JOIN production.product p ON p.productid = b.productassemblyid
+        WHERE p.name = 'Mountain-100 Black, 44' AND b.enddate IS NULL
+        UNION
+        SELECT b.componentid FROM production.billofmaterials b
+        JOIN bom ON bom.componentid = b.productassemblyid
+        WHERE b.enddate IS NULL)
+      SELECT COUNT(DISTINCT componentid) FROM bom
+    note: >
+      Needs WITH RECURSIVE: a bill of materials nests to several levels and a
+      single join answers only the top one. The enddate filter matters too --
+      billofmaterials keeps superseded rows.
+
+  - id: q36
+    question: Which products have been sold in every sales territory? Show the product names.
+    lang: en
+    category: subquery
+    tables: [production.product, sales.salesorderheader, sales.salesorderdetail, sales.salesterritory]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: >
+      SELECT p.name FROM production.product p
+      WHERE NOT EXISTS (
+        SELECT 1 FROM sales.salesterritory t WHERE NOT EXISTS (
+          SELECT 1 FROM sales.salesorderheader h
+          JOIN sales.salesorderdetail d ON d.salesorderid = h.salesorderid
+          WHERE d.productid = p.productid AND h.territoryid = t.territoryid))
+    note: >
+      Relational division -- "for all" has no direct SQL operator and needs the
+      doubly-nested NOT EXISTS, or a count-matching equivalent.
+
+  - id: q37
+    question: Which products have less total inventory on hand than their reorder point, counting a product with no inventory records as zero on hand? Show the product name, the quantity on hand and the reorder point.
+    lang: en
+    category: subquery
+    tables: [production.product, production.productinventory]
+    ordered: false
+    expected_chart: [bar]
+    gold_sql: >
+      SELECT p.name, COALESCE(SUM(i.quantity), 0) AS on_hand, p.reorderpoint
+      FROM production.product p
+      LEFT JOIN production.productinventory i ON i.productid = p.productid
+      GROUP BY p.productid, p.name, p.reorderpoint
+      HAVING COALESCE(SUM(i.quantity), 0) < p.reorderpoint
+    note: >
+      Inventory is held per location, so the comparison is against the summed
+      quantity and belongs in HAVING, not WHERE. The join must be a LEFT join:
+      a product with no inventory row has none on hand, which is below any
+      positive reorder point.
+
+  - id: q38
+    question: For each month of 2013, show the month as a date (the first day of that month), the total revenue counting the total due on each order, and the percentage change in revenue from the preceding calendar month (for January 2013 that is December 2012), rounded to two decimals.
+    lang: en
+    category: window
+    tables: [sales.salesorderheader]
+    ordered: true
+    expected_chart: [line, bar]
+    gold_sql: >
+      WITH m AS (
+        SELECT DATE_TRUNC('month', orderdate)::date AS mo, SUM(totaldue) AS revenue
+        FROM sales.salesorderheader GROUP BY 1),
+      lagged AS (
+        SELECT mo, revenue, LAG(revenue) OVER (ORDER BY mo) AS prev FROM m)
+      SELECT mo, revenue, ROUND(100.0 * (revenue - prev) / prev, 2) AS pct_change
+      FROM lagged WHERE EXTRACT(YEAR FROM mo) = 2013 ORDER BY mo
+    note: >
+      LAG over a monthly aggregate. Two things are pinned because both are
+      choices rather than skills: how the month is represented (the integer
+      1..12 or a date), and where the year filter goes. Aggregating 2013 alone
+      makes January's change null; aggregating every month and filtering the
+      output afterwards compares January 2013 against December 2012, which is
+      what "the preceding calendar month" means and what four of five models
+      did unprompted. The gold follows the models here -- they had the better
+      reading and the first version of this question scored them down for it.
+
+  # ---- ambiguous: no single correct answer; scored on asking, not guessing --
+  - id: q27
+    question: Show me our best customers.
+    lang: en
+    category: ambiguous
+    tables: [sales.customer]
+    ordered: false
+    gold_sql: null
+    note: >
+      "Best" has no column to map to -- order count, total spend and tenure are
+      all defensible, and the customer table itself mixes stores and individuals.
+
+  - id: q28
+    question: Care sunt cele mai bune produse?
+    lang: ro
+    category: ambiguous
+    tables: [production.product]
+    ordered: false
+    gold_sql: null
+    note: >
+      Romanian ambiguity: "cele mai bune" could rank by revenue, units sold,
+      review rating or margin.
+
+  - id: q29
+    question: How many customers do we have?
+    lang: en
+    category: ambiguous
+    tables: [sales.customer]
+    ordered: false
+    gold_sql: null
+    note: >
+      Schema-specific ambiguity worth more than the generic kind. sales.customer
+      has 19,820 rows, of which 1,336 carry a storeid and 19,119 carry a
+      personid -- the two overlap, so a store's customer rows and the individual
+      buyers are counted in the same table. "Customer" can mean rows, distinct
+      people, or distinct stores, and the three give different numbers.
+
+  - id: q30
+    question: What were our sales last year?
+    lang: en
+    category: ambiguous
+    tables: [sales.salesorderheader]
+    ordered: false
+    gold_sql: null
+    note: >
+      "Last year" has no anchor: the data ends 30 June 2014, so relative to now
+      the answer is empty, and relative to the data it is 2013 or a trailing
+      twelve months. The system should ask rather than pick one.

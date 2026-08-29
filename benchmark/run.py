@@ -40,6 +40,7 @@ sys.path.insert(0, str(HERE))
 
 import arms as arms_mod  # noqa: E402
 import clients  # noqa: E402
+import datasets as datasets_mod  # noqa: E402
 from score import result_sets_match, summarise  # noqa: E402
 
 STATEMENT_TIMEOUT_MS = 15_000
@@ -49,7 +50,8 @@ def load_questions(path: pathlib.Path) -> list[dict]:
     return yaml.safe_load(path.read_text())["questions"]
 
 
-def ensure_database(database_url: str | None, repo: pathlib.Path) -> str:
+def ensure_database(database_url: str | None, repo: pathlib.Path,
+                    ds: datasets_mod.Dataset) -> str:
     """Return a connection URL, creating a throwaway server if none was given.
 
     pgserver ships PostgreSQL binaries as a wheel, so the benchmark can run on a
@@ -66,25 +68,20 @@ def ensure_database(database_url: str | None, repo: pathlib.Path) -> str:
     data_dir.mkdir(parents=True, exist_ok=True)
     srv = pgserver.get_server(str(data_dir))
     try:
-        srv.psql("CREATE DATABASE car_rental;")
+        srv.psql(f"CREATE DATABASE {ds.db_name};")
     except Exception:
         pass  # already exists
-    uri = srv.get_uri(database="car_rental")
+    uri = srv.get_uri(database=ds.db_name)
 
     with psycopg.connect(uri, autocommit=True) as c:
-        exists = c.execute(
-            "SELECT 1 FROM information_schema.tables WHERE table_name='vehicles'"
-        ).fetchone()
-        if not exists:
-            c.execute((repo / "test_app_db" / "init" / "01_schema.sql").read_text())
-            c.execute((repo / "benchmark_data" / "car_rental_seed_postgres.sql").read_text())
-            print("seeded throwaway database from the frozen dataset")
+        if not c.execute(ds.probe_sql).fetchone():
+            ds.seed(c, repo)
     return uri
 
 
-def schema_text(repo: pathlib.Path) -> str:
+def schema_text(repo: pathlib.Path, ds: datasets_mod.Dataset) -> str:
     """Whole-schema dump for the naive arm: its defining characteristic."""
-    return (repo / "test_app_db" / "init" / "01_schema.sql").read_text()
+    return ds.schema_text(repo)
 
 
 def cost_block(model: str, usage: dict, n_questions: int, local: bool = False) -> dict:
@@ -129,7 +126,11 @@ def execute(conn, sql: str):
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--arm", required=True, choices=sorted(arms_mod.REGISTRY))
-    ap.add_argument("--questions", type=pathlib.Path, default=HERE / "questions.yaml")
+    ap.add_argument("--dataset", default=datasets_mod.DEFAULT,
+                    choices=sorted(datasets_mod.REGISTRY),
+                    help="which evaluation database to run against")
+    ap.add_argument("--questions", type=pathlib.Path,
+                    help="override the dataset's question set")
     ap.add_argument("--database-url", default=os.environ.get("BENCHMARK_DATABASE_URL"))
     ap.add_argument("--base-url", default="http://localhost:8100", help="pipeline arm only")
     ap.add_argument("--local-base-url", default=clients.DEFAULT_LOCAL_BASE_URL,
@@ -141,19 +142,21 @@ def main() -> int:
     args = ap.parse_args()
 
     repo = HERE.parent
-    questions = load_questions(args.questions)
+    ds = datasets_mod.REGISTRY[args.dataset]
+    questions = load_questions(args.questions or ds.questions_path(HERE))
     if args.limit:
         questions = questions[: args.limit]
 
     import psycopg
 
-    uri = ensure_database(args.database_url, repo)
+    uri = ensure_database(args.database_url, repo, ds)
 
     if args.arm == "naive":
-        arm = arms_mod.make_naive_arm(schema_text(repo))
+        arm = arms_mod.make_naive_arm(schema_text(repo, ds), domain=ds.domain)
         model_label = clients.gemini_model_name()
     elif args.arm == "local":
-        arm = arms_mod.make_local_arm(schema_text(repo), args.local_base_url, args.local_model)
+        arm = arms_mod.make_local_arm(schema_text(repo, ds), args.local_base_url,
+                                      args.local_model, domain=ds.domain)
         model_label = args.local_model
     elif args.arm == "pipeline":
         arm = arms_mod.make_pipeline_arm(args.base_url)
@@ -167,6 +170,8 @@ def main() -> int:
     with psycopg.connect(uri, autocommit=True) as conn:
         conn.execute("SET default_transaction_read_only = on")
         conn.execute(f"SET statement_timeout = {STATEMENT_TIMEOUT_MS}")
+        if ds.search_path:
+            conn.execute(f"SET search_path = {ds.search_path}")
         for i, q in enumerate(questions, 1):
             out = arm(q)
             rec = {
@@ -204,10 +209,14 @@ def main() -> int:
     summary["cost"] = cost_block(model_label, summary["usage"], len(results),
                                  local=args.arm == "local")
 
-    out_path = args.out or (HERE / "results" / f"{args.arm}.json")
+    # car_rental keeps writing results/<arm>.json so existing files and the
+    # table generator are untouched; other datasets get their own subdirectory.
+    default_out = (HERE / "results" / f"{args.arm}.json" if args.dataset == datasets_mod.DEFAULT
+                   else HERE / "results" / args.dataset / f"{args.arm}.json")
+    out_path = args.out or default_out
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    payload = {"arm": args.arm, "model": model_label, "summary": summary,
-               "results": results}
+    payload = {"arm": args.arm, "dataset": args.dataset, "model": model_label,
+               "summary": summary, "results": results}
     if args.arm == "local":
         payload["backend"] = clients.LOCAL_BACKEND or "unspecified ($LOCAL_BACKEND not set)"
         payload["endpoint"] = args.local_base_url

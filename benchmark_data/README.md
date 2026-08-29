@@ -1,4 +1,14 @@
-# Frozen benchmark dataset
+# Benchmark datasets
+
+Two evaluation databases live here. `adventureworks/` holds the setup script
+for the 68-table AdventureWorks OLTP database (fetched from a pinned upstream
+commit rather than committed, since its CSVs are 102 MB) and
+`adventureworks_schema.sql` is the generated schema-only DDL the naive arm puts
+in its prompt. See `benchmark/README.md` for what each database is for.
+
+The rest of this file documents the frozen car rental dataset.
+
+# Frozen car rental dataset
 
 `car_rental_seed_postgres.sql` and `test_app_db_oracle/init/02_seed_data.sql` hold the
 same 8,026 rows as literal `INSERT` statements — 10 locations, 5 vehicle categories,
