@@ -6,6 +6,22 @@
 # Spider and BIRD use, and it avoids penalising a correct query for using a
 # different but equivalent join order, alias, or subquery shape.
 #
+# Every question states the columns it wants back, and pins any measure that
+# has more than one defensible reading ("revenue from completed payments", not
+# "revenue"). That is not padding. The scorer compares result sets and counts an
+# extra or missing column, or a different total, as a wrong answer -- so a
+# question that leaves those open measures whether the model guessed this file's
+# conventions, not whether it found the right tables.
+#
+# This was corrected after the fact. Eight questions here originally left the
+# projection or the measure open, and they accounted for most of the reported
+# failures: models wrote WHERE status = 'completed' computing revenue where the
+# gold summed every payment including refunds, or returned an extra id column.
+# Disambiguating them moved gemini-2.5-flash from 80.8% to 96.2% and shrank the
+# six-run spread from 11.5 points to 3.8 -- most of what was being reported as
+# sampling noise was the model re-guessing an under-specified question and
+# landing differently each time.
+#
 # Fields:
 #   id        stable identifier, referenced in results tables
 #   question  natural-language question as a user would type it
@@ -83,7 +99,7 @@ questions:
 
   # ---- aggregate: grouping, aggregation, having ----------------------------
   - id: q07
-    question: What is the average salary of employees per branch?
+    question: What is the average salary of employees per branch? Show the branch name and the average salary.
     lang: en
     category: aggregate
     tables: [employees, locations]
@@ -95,7 +111,7 @@ questions:
       GROUP BY l.name
 
   - id: q08
-    question: How many vehicles are there in each category?
+    question: How many vehicles are there in each category? Show the category name and the number of vehicles.
     lang: en
     category: aggregate
     tables: [vehicles, vehicle_categories]
@@ -116,7 +132,7 @@ questions:
     gold_sql: SELECT SUM(amount) AS total FROM payments WHERE status = 'completed'
 
   - id: q10
-    question: Show total revenue by location.
+    question: Show total revenue from completed payments by location. Show the location name and the revenue.
     lang: en
     category: aggregate
     tables: [payments, reservations, locations]
@@ -127,11 +143,16 @@ questions:
       FROM payments p
       JOIN reservations r ON p.reservation_id = r.id
       JOIN locations l ON r.pickup_location = l.id
+      WHERE p.status = 'completed'
       GROUP BY l.name
-    note: Three-table join behind a question that names only one concept.
+    note: >
+      Three-table join behind a question that names only one concept. "Completed
+      payments" is stated because refunded and pending rows exist and q09
+      already draws that line; without it the question scores a model for
+      guessing which of two defensible totals was meant.
 
   - id: q11
-    question: What is the average rating for each vehicle category?
+    question: What is the average rating for each vehicle category? Show the category name and the average rating.
     lang: en
     category: aggregate
     tables: [reviews, reservations, vehicles, vehicle_categories]
@@ -166,7 +187,7 @@ questions:
       this returns 4 of 5 rows.
 
   - id: q13
-    question: How much have we spent on maintenance per maintenance type?
+    question: How much have we spent on maintenance per maintenance type? Show the maintenance type and the total cost.
     lang: en
     category: aggregate
     tables: [maintenance_records]
@@ -175,13 +196,15 @@ questions:
     gold_sql: SELECT maintenance_type, SUM(cost) AS total FROM maintenance_records GROUP BY maintenance_type
 
   - id: q14
-    question: Care este veniturile totale pe fiecare metodă de plată?
+    question: Care sunt veniturile totale din plățile finalizate, pe fiecare metodă de plată? Arată metoda de plată și totalul.
     lang: ro
     category: aggregate
     tables: [payments]
     ordered: false
     expected_chart: [bar, pie]
-    gold_sql: SELECT payment_method, SUM(amount) AS total FROM payments GROUP BY payment_method
+    gold_sql: >
+      SELECT payment_method, SUM(amount) AS total FROM payments
+      WHERE status = 'completed' GROUP BY payment_method
 
   # ---- join: explicit multi-table questions --------------------------------
   - id: q15
@@ -265,7 +288,7 @@ questions:
     gold_sql: SELECT make, model, daily_rate FROM vehicles WHERE daily_rate > (SELECT AVG(daily_rate) FROM vehicles)
 
   - id: q21
-    question: Which clients spent the most money in total? Show the top ten as first name, last name and total spent.
+    question: Which clients have the highest total reservation cost? Show the top ten as first name, last name and the total.
     lang: en
     category: subquery
     tables: [clients, reservations]
@@ -278,7 +301,7 @@ questions:
       ORDER BY spent DESC NULLS LAST LIMIT 10
 
   - id: q22
-    question: Find the branch with the highest total revenue. Show the branch name and its total revenue.
+    question: Find the branch with the highest total revenue from completed payments. Show the branch name and its total revenue.
     lang: en
     category: subquery
     tables: [payments, reservations, locations]
@@ -289,6 +312,7 @@ questions:
       FROM payments p
       JOIN reservations r ON p.reservation_id = r.id
       JOIN locations l ON r.pickup_location = l.id
+      WHERE p.status = 'completed'
       GROUP BY l.name ORDER BY revenue DESC LIMIT 1
 
   - id: q23

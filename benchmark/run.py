@@ -144,6 +144,9 @@ def main() -> int:
     repo = HERE.parent
     ds = datasets_mod.REGISTRY[args.dataset]
     questions = load_questions(args.questions or ds.questions_path(HERE))
+    # Fingerprint the whole set, not the truncated one: a --limit run answers a
+    # prefix of the same questions and is not a different experiment.
+    fingerprint = datasets_mod.questions_fingerprint(questions)
     if args.limit:
         questions = questions[: args.limit]
 
@@ -216,6 +219,7 @@ def main() -> int:
     out_path = args.out or default_out
     out_path.parent.mkdir(parents=True, exist_ok=True)
     payload = {"arm": args.arm, "dataset": args.dataset, "model": model_label,
+               "questions_fingerprint": fingerprint,
                "summary": summary, "results": results}
     if args.arm == "local":
         payload["backend"] = clients.LOCAL_BACKEND or "unspecified ($LOCAL_BACKEND not set)"

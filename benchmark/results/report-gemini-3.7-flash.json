@@ -6,20 +6,20 @@
     "chart_type_accuracy": 1.0,
     "chart_type_accuracy_chartable": 1.0,
     "chart_type_accuracy_scalar": 1.0,
-    "structurally_valid": 25,
-    "structural_validity": 0.9615,
+    "structurally_valid": 26,
+    "structural_validity": 1.0,
     "unparseable_responses": 0,
     "usage": {
       "n": 26,
-      "prompt_tokens_total": 10488,
-      "prompt_tokens_mean": 403.38,
-      "completion_tokens_total": 729,
-      "thinking_tokens_total": 3249,
-      "output_tokens_total": 3978,
-      "output_tokens_mean": 153.0,
-      "total_tokens_total": 14466,
-      "tokens_per_sec_mean": 97.82,
-      "tokens_per_sec_median": 94.91,
+      "prompt_tokens_total": 10578,
+      "prompt_tokens_mean": 406.85,
+      "completion_tokens_total": 723,
+      "thinking_tokens_total": 3136,
+      "output_tokens_total": 3859,
+      "output_tokens_mean": 148.42,
+      "total_tokens_total": 14437,
+      "tokens_per_sec_mean": 57.77,
+      "tokens_per_sec_median": 53.78,
       "decode_tokens_per_sec_mean": null,
       "ttft_ms_median": null
     }
@@ -37,7 +37,7 @@
       "raw_chart": {
         "type": "none",
         "title": "Available Vehicles Count",
-        "x": null,
+        "x": "",
         "y": "count"
       },
       "structurally_valid": true,
@@ -56,15 +56,15 @@
       "error": null,
       "usage": {
         "prompt_tokens": 272,
-        "completion_tokens": 25,
-        "thinking_tokens": 118,
-        "total_tokens": 415,
-        "latency_ms": 2002.5,
+        "completion_tokens": 24,
+        "thinking_tokens": 66,
+        "total_tokens": 362,
+        "latency_ms": 1594.0,
         "ttft_ms": null,
-        "tokens_per_sec": 71.41,
+        "tokens_per_sec": 56.46,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 143
+        "output_tokens": 90
       }
     },
     {
@@ -78,7 +78,7 @@
       "chart_type_correct": true,
       "raw_chart": {
         "type": "none",
-        "title": "Branch Offices by City",
+        "title": "Branch Offices and Cities",
         "x": "name",
         "y": "city"
       },
@@ -99,14 +99,14 @@
       "usage": {
         "prompt_tokens": 341,
         "completion_tokens": 27,
-        "thinking_tokens": 83,
-        "total_tokens": 451,
-        "latency_ms": 1430.1,
+        "thinking_tokens": 84,
+        "total_tokens": 452,
+        "latency_ms": 1554.3,
         "ttft_ms": null,
-        "tokens_per_sec": 76.92,
+        "tokens_per_sec": 71.42,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 110
+        "output_tokens": 111
       }
     },
     {
@@ -121,7 +121,7 @@
       "raw_chart": {
         "type": "none",
         "title": "Toyota Vehicles Count",
-        "x": null,
+        "x": "",
         "y": "count"
       },
       "structurally_valid": true,
@@ -140,15 +140,15 @@
       "error": null,
       "usage": {
         "prompt_tokens": 273,
-        "completion_tokens": 25,
-        "thinking_tokens": 78,
-        "total_tokens": 376,
-        "latency_ms": 3798.8,
+        "completion_tokens": 24,
+        "thinking_tokens": 87,
+        "total_tokens": 384,
+        "latency_ms": 4651.9,
         "ttft_ms": null,
-        "tokens_per_sec": 27.11,
+        "tokens_per_sec": 23.86,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 103
+        "output_tokens": 111
       }
     },
     {
@@ -163,8 +163,8 @@
       "raw_chart": {
         "type": "none",
         "title": "Vehicles in Maintenance",
-        "x": null,
-        "y": null
+        "x": "make",
+        "y": "model"
       },
       "structurally_valid": true,
       "checks": {
@@ -182,15 +182,15 @@
       "error": null,
       "usage": {
         "prompt_tokens": 418,
-        "completion_tokens": 25,
-        "thinking_tokens": 157,
-        "total_tokens": 600,
-        "latency_ms": 1303.6,
+        "completion_tokens": 27,
+        "thinking_tokens": 79,
+        "total_tokens": 524,
+        "latency_ms": 1239.7,
         "ttft_ms": null,
-        "tokens_per_sec": 139.61,
+        "tokens_per_sec": 85.5,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 182
+        "output_tokens": 106
       }
     },
     {
@@ -205,8 +205,8 @@
       "raw_chart": {
         "type": "none",
         "title": "Num\u0103r total clien\u021bi",
-        "x": null,
-        "y": "count"
+        "x": "",
+        "y": ""
       },
       "structurally_valid": true,
       "checks": {
@@ -224,15 +224,15 @@
       "error": null,
       "usage": {
         "prompt_tokens": 274,
-        "completion_tokens": 28,
-        "thinking_tokens": 98,
-        "total_tokens": 400,
-        "latency_ms": 1055.2,
+        "completion_tokens": 25,
+        "thinking_tokens": 114,
+        "total_tokens": 413,
+        "latency_ms": 3096.5,
         "ttft_ms": null,
-        "tokens_per_sec": 119.41,
+        "tokens_per_sec": 44.89,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 126
+        "output_tokens": 139
       }
     },
     {
@@ -267,20 +267,20 @@
       "usage": {
         "prompt_tokens": 372,
         "completion_tokens": 34,
-        "thinking_tokens": 170,
-        "total_tokens": 576,
-        "latency_ms": 2179.2,
+        "thinking_tokens": 252,
+        "total_tokens": 658,
+        "latency_ms": 2247.4,
         "ttft_ms": null,
-        "tokens_per_sec": 93.61,
+        "tokens_per_sec": 127.26,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 204
+        "output_tokens": 286
       }
     },
     {
       "id": "q07",
       "category": "aggregate",
-      "question": "What is the average salary of employees per branch?",
+      "question": "What is the average salary of employees per branch? Show the branch name and the average salary.",
       "expected_chart": [
         "bar"
       ],
@@ -288,7 +288,7 @@
       "chart_type_correct": true,
       "raw_chart": {
         "type": "bar",
-        "title": "Average Salary per Branch",
+        "title": "Average Salary by Branch",
         "x": "name",
         "y": "avg_salary"
       },
@@ -307,22 +307,22 @@
       },
       "error": null,
       "usage": {
-        "prompt_tokens": 497,
+        "prompt_tokens": 506,
         "completion_tokens": 29,
-        "thinking_tokens": 92,
+        "thinking_tokens": 83,
         "total_tokens": 618,
-        "latency_ms": 1313.5,
+        "latency_ms": 8543.2,
         "ttft_ms": null,
-        "tokens_per_sec": 92.12,
+        "tokens_per_sec": 13.11,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 121
+        "output_tokens": 112
       }
     },
     {
       "id": "q08",
       "category": "aggregate",
-      "question": "How many vehicles are there in each category?",
+      "question": "How many vehicles are there in each category? Show the category name and the number of vehicles.",
       "expected_chart": [
         "bar",
         "pie"
@@ -331,7 +331,7 @@
       "chart_type_correct": true,
       "raw_chart": {
         "type": "bar",
-        "title": "Vehicle Count by Category",
+        "title": "Number of Vehicles by Category",
         "x": "name",
         "y": "vehicle_count"
       },
@@ -350,16 +350,16 @@
       },
       "error": null,
       "usage": {
-        "prompt_tokens": 333,
-        "completion_tokens": 29,
-        "thinking_tokens": 131,
-        "total_tokens": 493,
-        "latency_ms": 1924.7,
+        "prompt_tokens": 343,
+        "completion_tokens": 30,
+        "thinking_tokens": 149,
+        "total_tokens": 522,
+        "latency_ms": 2123.7,
         "ttft_ms": null,
-        "tokens_per_sec": 83.13,
+        "tokens_per_sec": 84.29,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 160
+        "output_tokens": 179
       }
     },
     {
@@ -374,7 +374,7 @@
       "raw_chart": {
         "type": "none",
         "title": "Total Revenue from Completed Payments",
-        "x": null,
+        "x": "",
         "y": "total"
       },
       "structurally_valid": true,
@@ -393,21 +393,21 @@
       "error": null,
       "usage": {
         "prompt_tokens": 285,
-        "completion_tokens": 27,
-        "thinking_tokens": 91,
-        "total_tokens": 403,
-        "latency_ms": 1309.7,
+        "completion_tokens": 26,
+        "thinking_tokens": 81,
+        "total_tokens": 392,
+        "latency_ms": 5409.2,
         "ttft_ms": null,
-        "tokens_per_sec": 90.1,
+        "tokens_per_sec": 19.78,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 118
+        "output_tokens": 107
       }
     },
     {
       "id": "q10",
       "category": "aggregate",
-      "question": "Show total revenue by location.",
+      "question": "Show total revenue from completed payments by location. Show the location name and the revenue.",
       "expected_chart": [
         "bar",
         "pie"
@@ -435,22 +435,22 @@
       },
       "error": null,
       "usage": {
-        "prompt_tokens": 425,
+        "prompt_tokens": 444,
         "completion_tokens": 27,
-        "thinking_tokens": 85,
-        "total_tokens": 537,
-        "latency_ms": 1180.1,
+        "thinking_tokens": 82,
+        "total_tokens": 553,
+        "latency_ms": 3097.4,
         "ttft_ms": null,
-        "tokens_per_sec": 94.91,
+        "tokens_per_sec": 35.19,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 112
+        "output_tokens": 109
       }
     },
     {
       "id": "q11",
       "category": "aggregate",
-      "question": "What is the average rating for each vehicle category?",
+      "question": "What is the average rating for each vehicle category? Show the category name and the average rating.",
       "expected_chart": [
         "bar"
       ],
@@ -477,16 +477,16 @@
       },
       "error": null,
       "usage": {
-        "prompt_tokens": 444,
-        "completion_tokens": 30,
-        "thinking_tokens": 95,
-        "total_tokens": 569,
-        "latency_ms": 1368.3,
+        "prompt_tokens": 453,
+        "completion_tokens": 29,
+        "thinking_tokens": 70,
+        "total_tokens": 552,
+        "latency_ms": 2737.7,
         "ttft_ms": null,
-        "tokens_per_sec": 91.35,
+        "tokens_per_sec": 36.16,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 125
+        "output_tokens": 99
       }
     },
     {
@@ -522,20 +522,20 @@
       "usage": {
         "prompt_tokens": 337,
         "completion_tokens": 32,
-        "thinking_tokens": 107,
-        "total_tokens": 476,
-        "latency_ms": 1297.3,
+        "thinking_tokens": 82,
+        "total_tokens": 451,
+        "latency_ms": 2478.9,
         "ttft_ms": null,
-        "tokens_per_sec": 107.15,
+        "tokens_per_sec": 45.99,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 139
+        "output_tokens": 114
       }
     },
     {
       "id": "q13",
       "category": "aggregate",
-      "question": "How much have we spent on maintenance per maintenance type?",
+      "question": "How much have we spent on maintenance per maintenance type? Show the maintenance type and the total cost.",
       "expected_chart": [
         "bar",
         "pie"
@@ -544,7 +544,7 @@
       "chart_type_correct": true,
       "raw_chart": {
         "type": "bar",
-        "title": "Total Maintenance Spending by Maintenance Type",
+        "title": "Total Maintenance Cost by Maintenance Type",
         "x": "maintenance_type",
         "y": "total"
       },
@@ -563,22 +563,22 @@
       },
       "error": null,
       "usage": {
-        "prompt_tokens": 399,
+        "prompt_tokens": 408,
         "completion_tokens": 31,
-        "thinking_tokens": 101,
-        "total_tokens": 531,
-        "latency_ms": 1250.1,
+        "thinking_tokens": 126,
+        "total_tokens": 565,
+        "latency_ms": 1851.4,
         "ttft_ms": null,
-        "tokens_per_sec": 105.59,
+        "tokens_per_sec": 84.8,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 132
+        "output_tokens": 157
       }
     },
     {
       "id": "q14",
       "category": "aggregate",
-      "question": "Care este veniturile totale pe fiecare metod\u0103 de plat\u0103?",
+      "question": "Care sunt veniturile totale din pl\u0103\u021bile finalizate, pe fiecare metod\u0103 de plat\u0103? Arat\u0103 metoda de plat\u0103 \u0219i totalul.",
       "expected_chart": [
         "bar",
         "pie"
@@ -606,16 +606,16 @@
       },
       "error": null,
       "usage": {
-        "prompt_tokens": 332,
+        "prompt_tokens": 355,
         "completion_tokens": 35,
-        "thinking_tokens": 234,
-        "total_tokens": 601,
-        "latency_ms": 2198.4,
+        "thinking_tokens": 222,
+        "total_tokens": 612,
+        "latency_ms": 6931.8,
         "ttft_ms": null,
-        "tokens_per_sec": 122.36,
+        "tokens_per_sec": 37.08,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 269
+        "output_tokens": 257
       }
     },
     {
@@ -650,14 +650,14 @@
       "usage": {
         "prompt_tokens": 544,
         "completion_tokens": 18,
-        "thinking_tokens": 97,
-        "total_tokens": 659,
-        "latency_ms": 1289.8,
+        "thinking_tokens": 82,
+        "total_tokens": 644,
+        "latency_ms": 1976.5,
         "ttft_ms": null,
-        "tokens_per_sec": 89.16,
+        "tokens_per_sec": 50.59,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 115
+        "output_tokens": 100
       }
     },
     {
@@ -672,9 +672,9 @@
       "chart_type_correct": true,
       "raw_chart": {
         "type": "none",
-        "title": "",
-        "x": "",
-        "y": ""
+        "title": "Client Reservations",
+        "x": "last_name",
+        "y": "reservations"
       },
       "structurally_valid": true,
       "checks": {
@@ -692,15 +692,15 @@
       "error": null,
       "usage": {
         "prompt_tokens": 416,
-        "completion_tokens": 18,
-        "thinking_tokens": 353,
-        "total_tokens": 787,
-        "latency_ms": 2124.6,
+        "completion_tokens": 28,
+        "thinking_tokens": 327,
+        "total_tokens": 771,
+        "latency_ms": 2836.7,
         "ttft_ms": null,
-        "tokens_per_sec": 174.63,
+        "tokens_per_sec": 125.14,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 371
+        "output_tokens": 355
       }
     },
     {
@@ -714,91 +714,7 @@
       "chart_type_correct": true,
       "raw_chart": {
         "type": "none",
-        "title": "",
-        "x": "",
-        "y": ""
-      },
-      "structurally_valid": true,
-      "checks": {
-        "opens": true,
-        "data_sheet": true,
-        "header_ok": true,
-        "data_ok": true,
-        "chart_sheet_ok": true,
-        "chart_embedded": true,
-        "chart_type_ok": true,
-        "chart_refs_ok": true,
-        "notes": [],
-        "axes_resolvable": false
-      },
-      "error": null,
-      "usage": {
-        "prompt_tokens": 356,
-        "completion_tokens": 18,
-        "thinking_tokens": 83,
-        "total_tokens": 457,
-        "latency_ms": 1247.1,
-        "ttft_ms": null,
-        "tokens_per_sec": 80.99,
-        "decode_tokens_per_sec": null,
-        "finish_reason": "1",
-        "output_tokens": 101
-      }
-    },
-    {
-      "id": "q18",
-      "category": "join",
-      "question": "Which reservations have no payment recorded against them? Show reservation id, pickup date and total cost.",
-      "expected_chart": [
-        "none"
-      ],
-      "predicted_chart": "none",
-      "chart_type_correct": true,
-      "raw_chart": {
-        "type": "none",
-        "title": "Reservations Without Payment",
-        "x": "id",
-        "y": "total_cost"
-      },
-      "structurally_valid": true,
-      "checks": {
-        "opens": true,
-        "data_sheet": true,
-        "header_ok": true,
-        "data_ok": true,
-        "chart_sheet_ok": true,
-        "chart_embedded": true,
-        "chart_type_ok": true,
-        "chart_refs_ok": true,
-        "notes": [],
-        "axes_resolvable": false
-      },
-      "error": null,
-      "usage": {
-        "prompt_tokens": 495,
-        "completion_tokens": 29,
-        "thinking_tokens": 171,
-        "total_tokens": 695,
-        "latency_ms": 1681.0,
-        "ttft_ms": null,
-        "tokens_per_sec": 118.98,
-        "decode_tokens_per_sec": null,
-        "finish_reason": "1",
-        "output_tokens": 200
-      }
-    },
-    {
-      "id": "q19",
-      "category": "join",
-      "question": "Show all reviews with a rating of 1. Show the rating, the comment, and the make and model of the vehicle.",
-      "expected_chart": [
-        "none"
-      ],
-      "predicted_chart": "none",
-      "chart_type_correct": true,
-      "raw_chart": {
-        "type": "none",
-        "title": "Reviews with Rating of 1",
+        "title": "Employees at Downtown Hub",
         "x": null,
         "y": null
       },
@@ -817,16 +733,100 @@
       },
       "error": null,
       "usage": {
-        "prompt_tokens": 496,
-        "completion_tokens": 27,
-        "thinking_tokens": 82,
-        "total_tokens": 605,
-        "latency_ms": 1182.6,
+        "prompt_tokens": 356,
+        "completion_tokens": 25,
+        "thinking_tokens": 123,
+        "total_tokens": 504,
+        "latency_ms": 2290.2,
         "ttft_ms": null,
-        "tokens_per_sec": 92.17,
+        "tokens_per_sec": 64.62,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 109
+        "output_tokens": 148
+      }
+    },
+    {
+      "id": "q18",
+      "category": "join",
+      "question": "Which reservations have no payment recorded against them? Show reservation id, pickup date and total cost.",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": "none",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "none",
+        "title": "",
+        "x": "",
+        "y": ""
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 495,
+        "completion_tokens": 18,
+        "thinking_tokens": 107,
+        "total_tokens": 620,
+        "latency_ms": 1916.3,
+        "ttft_ms": null,
+        "tokens_per_sec": 65.23,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 125
+      }
+    },
+    {
+      "id": "q19",
+      "category": "join",
+      "question": "Show all reviews with a rating of 1. Show the rating, the comment, and the make and model of the vehicle.",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": "none",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "none",
+        "title": "",
+        "x": "",
+        "y": ""
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 496,
+        "completion_tokens": 18,
+        "thinking_tokens": 143,
+        "total_tokens": 657,
+        "latency_ms": 2110.5,
+        "ttft_ms": null,
+        "tokens_per_sec": 76.28,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 161
       }
     },
     {
@@ -861,20 +861,20 @@
       "usage": {
         "prompt_tokens": 421,
         "completion_tokens": 33,
-        "thinking_tokens": 162,
-        "total_tokens": 616,
-        "latency_ms": 1506.3,
+        "thinking_tokens": 127,
+        "total_tokens": 581,
+        "latency_ms": 1861.6,
         "ttft_ms": null,
-        "tokens_per_sec": 129.45,
+        "tokens_per_sec": 85.95,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 195
+        "output_tokens": 160
       }
     },
     {
       "id": "q21",
       "category": "subquery",
-      "question": "Which clients spent the most money in total? Show the top ten as first name, last name and total spent.",
+      "question": "Which clients have the highest total reservation cost? Show the top ten as first name, last name and the total.",
       "expected_chart": [
         "bar"
       ],
@@ -882,7 +882,7 @@
       "chart_type_correct": true,
       "raw_chart": {
         "type": "bar",
-        "title": "Top 10 Clients by Total Spending",
+        "title": "Top 10 Clients by Total Reservation Cost",
         "x": "last_name",
         "y": "spent"
       },
@@ -902,21 +902,21 @@
       "error": null,
       "usage": {
         "prompt_tokens": 474,
-        "completion_tokens": 33,
-        "thinking_tokens": 158,
-        "total_tokens": 665,
-        "latency_ms": 1704.4,
+        "completion_tokens": 34,
+        "thinking_tokens": 138,
+        "total_tokens": 646,
+        "latency_ms": 5154.4,
         "ttft_ms": null,
-        "tokens_per_sec": 112.06,
+        "tokens_per_sec": 33.37,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 191
+        "output_tokens": 172
       }
     },
     {
       "id": "q22",
       "category": "subquery",
-      "question": "Find the branch with the highest total revenue. Show the branch name and its total revenue.",
+      "question": "Find the branch with the highest total revenue from completed payments. Show the branch name and its total revenue.",
       "expected_chart": [
         "none",
         "bar"
@@ -944,16 +944,16 @@
       },
       "error": null,
       "usage": {
-        "prompt_tokens": 340,
+        "prompt_tokens": 351,
         "completion_tokens": 26,
-        "thinking_tokens": 80,
-        "total_tokens": 446,
-        "latency_ms": 1113.2,
+        "thinking_tokens": 121,
+        "total_tokens": 498,
+        "latency_ms": 4513.5,
         "ttft_ms": null,
-        "tokens_per_sec": 95.22,
+        "tokens_per_sec": 32.57,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 106
+        "output_tokens": 147
       }
     },
     {
@@ -988,14 +988,14 @@
       "usage": {
         "prompt_tokens": 439,
         "completion_tokens": 33,
-        "thinking_tokens": 91,
-        "total_tokens": 563,
-        "latency_ms": 3318.4,
+        "thinking_tokens": 73,
+        "total_tokens": 545,
+        "latency_ms": 2620.6,
         "ttft_ms": null,
-        "tokens_per_sec": 37.37,
+        "tokens_per_sec": 40.45,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 124
+        "output_tokens": 106
       }
     },
     {
@@ -1030,14 +1030,14 @@
       "usage": {
         "prompt_tokens": 379,
         "completion_tokens": 30,
-        "thinking_tokens": 96,
-        "total_tokens": 505,
-        "latency_ms": 1613.9,
+        "thinking_tokens": 94,
+        "total_tokens": 503,
+        "latency_ms": 6518.7,
         "ttft_ms": null,
-        "tokens_per_sec": 78.07,
+        "tokens_per_sec": 19.02,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 126
+        "output_tokens": 124
       }
     },
     {
@@ -1072,14 +1072,14 @@
       "usage": {
         "prompt_tokens": 534,
         "completion_tokens": 29,
-        "thinking_tokens": 112,
-        "total_tokens": 675,
-        "latency_ms": 1255.4,
+        "thinking_tokens": 111,
+        "total_tokens": 674,
+        "latency_ms": 2603.4,
         "ttft_ms": null,
-        "tokens_per_sec": 112.31,
+        "tokens_per_sec": 53.78,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 141
+        "output_tokens": 140
       }
     },
     {
@@ -1098,26 +1098,34 @@
         "x": "month",
         "y": "n"
       },
-      "structurally_valid": false,
+      "structurally_valid": true,
       "checks": {
-        "opens": false,
-        "notes": [
-          "TypeError: Excel does not support timezones in datetimes. The tzinfo in the datetime/time object must be set to None."
-        ]
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
       },
-      "error": "TypeError: Excel does not support timezones in datetimes. The tzinfo in the datetime/time object must be set to None.",
+      "error": null,
       "usage": {
         "prompt_tokens": 592,
         "completion_tokens": 31,
-        "thinking_tokens": 124,
-        "total_tokens": 747,
-        "latency_ms": 1434.6,
+        "thinking_tokens": 113,
+        "total_tokens": 736,
+        "latency_ms": 1615.2,
         "ttft_ms": null,
-        "tokens_per_sec": 108.05,
+        "tokens_per_sec": 89.15,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 155
+        "output_tokens": 144
       }
     }
-  ]
+  ],
+  "dataset": "car_rental",
+  "questions_fingerprint": "e5f746342d1e"
 }

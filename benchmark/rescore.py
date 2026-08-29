@@ -4,7 +4,7 @@
 Every results file stores the SQL each arm produced alongside the gold SQL, so
 when the scorer changes the honest move is to re-execute both and recompute -
 not to re-run the models. Re-running would mix a scorer change with fresh
-sampling noise (a repeat run of the same model has moved by ~8 points here),
+sampling noise (a repeat run of the same model moves by ~4 points here),
 making it impossible to say which caused a number to move.
 
     python benchmark/rescore.py            # rewrite every results file in place

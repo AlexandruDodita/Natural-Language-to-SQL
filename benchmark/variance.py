@@ -2,9 +2,14 @@
 """Quantify run-to-run variance for one model on an unchanged setup.
 
 Sampling noise is the first thing a results table has to survive. Repeating the
-identical naive run on gemini-2.5-flash six times spans 11.5 points, so any
+identical naive run on gemini-2.5-flash six times spans 3.8 points, so any
 comparison in this chapter that turns on a smaller gap is reporting noise, not a
 difference between systems. This script prints the numbers that claim rests on.
+
+That spread was 11.5 points before the question set was disambiguated. Most of
+what looked like sampling noise was the model re-guessing an under-specified
+convention -- which payments count as revenue, which columns to project -- and
+landing differently each time. Only q21 and q24 still move between runs.
 
     python benchmark/variance.py
 """

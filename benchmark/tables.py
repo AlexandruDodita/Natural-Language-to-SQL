@@ -15,8 +15,10 @@ from __future__ import annotations
 import argparse
 import json
 import pathlib
+import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
 RESULTS = HERE / "results"
 CATEGORIES = ["simple", "aggregate", "join", "subquery", "window"]
 
@@ -34,20 +36,39 @@ def num(x, d: int = 1) -> str:
     return f"{x:.{d}f}" if isinstance(x, (int, float)) else "--"
 
 
+CURRENT_FINGERPRINT: str | None = None
+
+
+def is_stale(run: dict | None) -> bool:
+    """True when a results file answers a question set that no longer exists.
+
+    Rewording a question invalidates every stored answer to it, and the failure
+    is silent -- the file still parses, the percentages still add up, they just
+    describe a different experiment. Files written before fingerprinting existed
+    carry no fingerprint and are treated as stale, which is the safe reading.
+    """
+    if CURRENT_FINGERPRINT is None:
+        return False
+    return (run or {}).get("questions_fingerprint") != CURRENT_FINGERPRINT
+
+
 def tex_model(name: str, run: dict | None = None) -> str:
     """The model's name, plus the backend for a local run.
 
     A local throughput figure is meaningless without the engine that produced
     it, so the backend travels with the label rather than living in a footnote.
+    A row scored against a superseded question set is marked, because printing
+    it next to current rows without a word is how a stale number reaches print.
     """
+    stale = "\\textsuperscript{*}" if is_stale(run) else ""
     backend = (run or {}).get("backend") or ""
     for tag in ("CUDA", "Vulkan", "CPU"):
         if tag.lower() in backend.lower():
             # The file name may already carry the backend to keep two runs of
             # one model apart; the label should not say it twice.
             bare = name[: -len(tag) - 1] if name.lower().endswith("-" + tag.lower()) else name
-            return "\\code{" + bare.replace("_", "\\_") + "}" + f" ({tag})"
-    return "\\code{" + name.replace("_", "\\_") + "}"
+            return "\\code{" + bare.replace("_", "\\_") + "}" + f" ({tag}){stale}"
+    return "\\code{" + name.replace("_", "\\_") + "}" + stale
 
 
 def accuracy_rows(runs: list[tuple[str, dict]]) -> str:
@@ -99,7 +120,7 @@ def report_rows(runs: list[tuple[str, dict]]) -> str:
     for label, d in runs:
         s = d["summary"]
         out.append(" & ".join([
-            tex_model(label),
+            tex_model(label, d),
             f"{s['chart_type_correct']}/{s['n']}",
             pct(s["chart_type_accuracy"]),
             pct(s.get("chart_type_accuracy_chartable")),
@@ -120,6 +141,14 @@ def main() -> None:
         RESULTS = HERE / "results" / args.dataset
         if not RESULTS.is_dir():
             raise SystemExit(f"no results directory for dataset {args.dataset!r}: {RESULTS}")
+
+    # Fingerprint of the question set these results are being rendered against.
+    import datasets as datasets_mod
+    import yaml
+    global CURRENT_FINGERPRINT
+    ds = datasets_mod.REGISTRY[args.dataset]
+    CURRENT_FINGERPRINT = datasets_mod.questions_fingerprint(
+        yaml.safe_load(ds.questions_path(HERE).read_text())["questions"])
 
     names = sorted(p.stem for p in RESULTS.glob("*.json"))
     # Only the per-model files: `naive.json`, `pipeline.json` and
@@ -151,6 +180,28 @@ def main() -> None:
 
     print("\n% --- excel report quality ---")
     print(report_rows(rep_runs))
+
+    # Scan every arm result, not just the rendered rows: pipeline.json and
+    # mcp-postgres.json belong to the arm comparison rather than these tables,
+    # and a stale file nobody prints is still a stale file somebody will cite.
+    stale = []
+    for path in sorted(RESULTS.rglob("*.json")):
+        doc = json.loads(path.read_text())
+        summary = doc.get("summary") or {}
+        if "execution_accuracy" not in summary and "chart_type_accuracy" not in summary:
+            continue
+        # results/ nests one directory per non-default dataset, so the walk sees
+        # other datasets' files; they are not stale, they are someone else's.
+        if doc.get("dataset", datasets_mod.DEFAULT) != args.dataset:
+            continue
+        if is_stale(doc):
+            stale.append(path.relative_to(RESULTS))
+    if stale:
+        print("\n% --- STALE ---")
+        print("% Rows marked * were scored against a superseded question set and are")
+        print("% not comparable with the rest of the table. Re-run before citing:")
+        for rel in stale:
+            print(f"%   {rel}")
 
 
 if __name__ == "__main__":

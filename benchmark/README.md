@@ -56,12 +56,60 @@ The remaining 4 in each are deliberately ambiguous and are scored on whether the
 system asked for clarification instead of guessing.
 
 Both sets name their output columns in the question ("Show the territory name
-and the revenue"). That is not decoration: the scorer compares result sets and
-counts an extra or missing column as a different answer, so a question that
-leaves the projection open measures whether the model guessed the same columns
-rather than whether it found the right tables. The first draft of the
-AdventureWorks set left them open and scored gemini-2.5-flash at 69%, where
-every single miss was a projection mismatch and not one was a wrong join.
+and the revenue"), and pin any measure with more than one defensible reading
+("revenue from completed payments", not "revenue"). That is not decoration: the
+scorer compares result sets and counts an extra column, a missing column or a
+different total as a wrong answer, so a question that leaves those open measures
+whether the model guessed this file's conventions rather than whether it found
+the right tables.
+
+Both sets needed correcting for this. The first draft of the AdventureWorks set
+left projections open and scored gemini-2.5-flash at 69%, where every single
+miss was a projection mismatch and not one was a wrong join. car_rental had the
+same defect in eight questions, and fixing it moved the hosted models from
+80.8-96.2% to 96.2-100%. It also shrank the six-run spread on gemini-2.5-flash
+from 11.5 points to 3.8: most of what `variance.py` was reporting as sampling
+noise was the model re-guessing an under-specified question and landing
+differently each time.
+
+The numbers that survive this are worth stating plainly. Once the questions are
+unambiguous, the naive whole-schema baseline answers essentially everything on
+both databases, and a 7.5x larger schema does not dent it -- what the larger
+schema costs is 5.1x the prompt tokens, 2.3-2.8x the money, and clarification on
+ambiguous questions, which falls from 13/20 to 3/20 across the same five models.
+
+### Staleness is tracked, not remembered
+
+Every results file records a `questions_fingerprint`: a digest of the question
+ids, texts and gold SQL it was scored against. `tables.py` compares it to the
+current question set, marks any mismatched row with a `*`, and prints the list
+of files to re-run. A file written before this existed carries no fingerprint
+and is treated as stale, which is the safe reading.
+
+This exists because the failure it prevents is silent. Rewording a question
+invalidates every stored answer to it, but the file still parses and the
+percentages still add up -- they just describe a different experiment. A stale
+local row sitting in the same LaTeX table as a freshly run hosted row is how a
+wrong number reaches print.
+
+### Results regenerated for the revised car_rental questions
+
+Changing a question's wording invalidates any stored answer to it, so every
+car_rental result was regenerated against the revised set -- except the arms
+whose back ends are not reachable from a bare checkout. These still need
+re-running, each against a service that has to be started first:
+
+| file | needs |
+| --- | --- |
+| `results/pipeline.json` | `rag-service` on :8100 (compose stack) |
+| `results/local-*.json` (4) | `llama-server` on :1234 with the gguf model |
+| `results/report-qwen3.5-9b*.json`, `results/report-bonsai-27b-q1_0.json` | the same local endpoint |
+
+Everything else -- the five hosted `naive-*` runs, `naive.json`, the four
+`repeat/` runs, `mcp-postgres.json`, `variance.json` and the five hosted
+`report-*.json` -- was re-run and is current. The `mcp-postgres` arm does not
+need Docker: point `DATABASE_URL` at the `pgserver` instance
+(`pgserver.get_server("benchmark/.pgdata").get_uri(database="car_rental")`).
 
 **Throughput and tokens** (`clients.py`). Per question: prompt tokens,
 completion tokens, reasoning tokens, latency, and two throughput figures --

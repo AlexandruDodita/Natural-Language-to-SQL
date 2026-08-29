@@ -21,6 +21,8 @@ scorer changes, which is what keeps the comparison honest.
 from __future__ import annotations
 
 import dataclasses
+import hashlib
+import json
 import pathlib
 import subprocess
 import sys
@@ -101,3 +103,20 @@ REGISTRY: dict[str, Dataset] = {
 }
 
 DEFAULT = "car_rental"
+
+
+def questions_fingerprint(questions: list[dict]) -> str:
+    """Short digest of a question set's scoreable content.
+
+    Recorded in every results file and checked when the results are rendered.
+    Changing a question's wording invalidates any stored answer to it, and the
+    failure is silent: the numbers still add up, they just describe a different
+    experiment. A file whose fingerprint does not match the current question set
+    is stale, and saying so in the table is cheaper than remembering it.
+
+    Only id, question text and gold SQL are hashed -- a reworded note or a
+    changed expected_chart does not invalidate a stored answer.
+    """
+    payload = json.dumps([[q["id"], q["question"], q.get("gold_sql")] for q in questions],
+                         sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:12]

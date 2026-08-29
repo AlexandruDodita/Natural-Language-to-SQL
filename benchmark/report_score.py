@@ -49,6 +49,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(REPO / "rag-service"))
 
 import clients  # noqa: E402
+import datasets as datasets_mod  # noqa: E402
 
 MAX_ROWS = 200  # the product's own row cap for a report
 SAMPLE_ROWS = 8  # rows shown to the model; it needs the shape, not the data
@@ -242,7 +243,8 @@ def summarise_report(records: list[dict]) -> dict:
 
 
 def revalidate(path: pathlib.Path, questions_path: pathlib.Path,
-               database_url: str | None) -> int:
+               database_url: str | None,
+               ds: datasets_mod.Dataset) -> int:
     """Redo the workbook checks on a finished run without calling any model.
 
     The chart the model chose is already recorded, and building and reading back
@@ -256,7 +258,7 @@ def revalidate(path: pathlib.Path, questions_path: pathlib.Path,
 
     doc = json.loads(path.read_text())
     gold = {q["id"]: q for q in yaml.safe_load(questions_path.read_text())["questions"]}
-    uri = ensure_database(database_url, REPO)
+    uri = ensure_database(database_url, REPO, ds)
 
     with psycopg.connect(uri, autocommit=True) as conn:
         conn.execute("SET default_transaction_read_only = on")
@@ -307,7 +309,11 @@ def structurally_valid(checks: dict) -> bool:
 # ---------------------------------------------------------------------------
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--questions", type=pathlib.Path, default=HERE / "questions.yaml")
+    ap.add_argument("--dataset", default=datasets_mod.DEFAULT,
+                    choices=sorted(datasets_mod.REGISTRY),
+                    help="which evaluation database to score against")
+    ap.add_argument("--questions", type=pathlib.Path,
+                    help="override the dataset's question set")
     ap.add_argument("--database-url", default=os.environ.get("BENCHMARK_DATABASE_URL"))
     ap.add_argument("--model", help="Gemini model id (default: $GEMINI_MODEL)")
     ap.add_argument("--local", action="store_true", help="use the OpenAI-compatible local endpoint")
@@ -320,6 +326,8 @@ def main() -> int:
                          "file, reusing the chart the model already chose; no "
                          "model is called")
     args = ap.parse_args()
+    ds = datasets_mod.REGISTRY[args.dataset]
+    questions_path = args.questions or ds.questions_path(HERE)
 
     from report import ChartConfig, ReportRequest, build_excel  # rag-service/report.py
 
@@ -328,15 +336,15 @@ def main() -> int:
     from run import ensure_database  # reuses the same fixture the SQL benchmark uses
 
     if args.revalidate:
-        return revalidate(args.revalidate, args.questions, args.database_url)
+        return revalidate(args.revalidate, questions_path, args.database_url, ds)
 
-    questions = [q for q in yaml.safe_load(args.questions.read_text())["questions"]
+    questions = [q for q in yaml.safe_load(questions_path.read_text())["questions"]
                  if q.get("gold_sql") and q.get("expected_chart")]
     if args.limit:
         questions = questions[: args.limit]
 
     label = args.local_model if args.local else (args.model or clients.gemini_model_name())
-    uri = ensure_database(args.database_url, REPO)
+    uri = ensure_database(args.database_url, REPO, ds)
 
     records: list[dict] = []
     with psycopg.connect(uri, autocommit=True) as conn:
@@ -394,8 +402,14 @@ def main() -> int:
 
     out = args.out or (HERE / "results" / f"report-{label}.json")
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps({"model": label, "summary": summary, "results": records},
-                              indent=2, default=str))
+    out.write_text(json.dumps(
+        {"model": label, "dataset": args.dataset,
+         # The chart choice is prompted with the question text, so a reworded
+         # question invalidates this file exactly as it does a SQL run.
+         "questions_fingerprint": datasets_mod.questions_fingerprint(
+             yaml.safe_load(questions_path.read_text())["questions"]),
+         "summary": summary, "results": records},
+        indent=2, default=str))
 
     print(f"\n=== excel report quality: {label} ===")
     print(f"chart-type accuracy   : {summary['chart_type_accuracy']:.1%} ({n_type}/{n})")

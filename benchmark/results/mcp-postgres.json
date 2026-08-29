@@ -1,20 +1,21 @@
 {
   "arm": "mcp-postgres",
+  "dataset": "car_rental",
   "model": "gemini-2.5-flash",
   "summary": {
     "n_scored": 26,
-    "n_correct": 22,
-    "execution_accuracy": 0.8462,
+    "n_correct": 24,
+    "execution_accuracy": 0.9231,
     "by_category": {
       "aggregate": {
         "n": 8,
-        "correct": 7,
-        "accuracy": 0.875
+        "correct": 8,
+        "accuracy": 1.0
       },
       "join": {
         "n": 5,
-        "correct": 4,
-        "accuracy": 0.8
+        "correct": 5,
+        "accuracy": 1.0
       },
       "simple": {
         "n": 6,
@@ -36,8 +37,8 @@
     "no_sql_produced": 0,
     "ambiguous_total": 4,
     "ambiguous_clarified": 1,
-    "latency_ms_median": 3574.0,
-    "latency_ms_mean": 4365.4,
+    "latency_ms_median": 4173.83,
+    "latency_ms_mean": 4841.5,
     "usage": {},
     "cost": {}
   },
@@ -49,9 +50,10 @@
       "lang": "en",
       "sql": "SELECT COUNT(*) FROM vehicles WHERE status = 'available';",
       "gold_sql": "SELECT COUNT(*) FROM vehicles WHERE status = 'available'",
-      "latency_ms": 2502.94,
+      "latency_ms": 3758.81,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
         "tool_calls": 2
       },
@@ -68,11 +70,12 @@
       "lang": "en",
       "sql": "SELECT name AS branch_name, city FROM locations;",
       "gold_sql": "SELECT name, city FROM locations",
-      "latency_ms": 3165.7,
+      "latency_ms": 2908.72,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
-        "tool_calls": 3
+        "tool_calls": 2
       },
       "scored": true,
       "correct": true,
@@ -87,9 +90,10 @@
       "lang": "en",
       "sql": "SELECT COUNT(*) FROM vehicles WHERE make = 'Toyota';",
       "gold_sql": "SELECT COUNT(*) FROM vehicles WHERE make = 'Toyota'",
-      "latency_ms": 2371.77,
+      "latency_ms": 2558.81,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
         "tool_calls": 2
       },
@@ -104,13 +108,14 @@
       "question": "Which vehicles are currently in maintenance? Show make, model and license plate.",
       "category": "simple",
       "lang": "en",
-      "sql": "\nSELECT v.make, v.model, v.license_plate\nFROM vehicles v\nJOIN maintenance_records mr ON v.id = mr.vehicle_id\nWHERE mr.completed = FALSE;\n",
+      "sql": "SELECT DISTINCT v.make, v.model, v.license_plate FROM vehicles v JOIN maintenance_records mr ON v.id = mr.vehicle_id WHERE mr.completed = FALSE;",
       "gold_sql": "SELECT make, model, license_plate FROM vehicles WHERE status = 'maintenance'",
-      "latency_ms": 4157.62,
+      "latency_ms": 6745.43,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
-        "tool_calls": 2
+        "tool_calls": 3
       },
       "scored": true,
       "correct": false,
@@ -125,9 +130,10 @@
       "lang": "ro",
       "sql": "SELECT COUNT(id) FROM clients;",
       "gold_sql": "SELECT COUNT(*) FROM clients",
-      "latency_ms": 2513.28,
+      "latency_ms": 2593.45,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
         "tool_calls": 2
       },
@@ -142,11 +148,12 @@
       "question": "Show the five most expensive vehicles by daily rate. Show make, model and daily rate.",
       "category": "simple",
       "lang": "en",
-      "sql": "SELECT make, model, daily_rate FROM vehicles ORDER BY daily_rate DESC LIMIT 5",
+      "sql": "SELECT make, model, daily_rate FROM vehicles ORDER BY daily_rate DESC LIMIT 5;",
       "gold_sql": "SELECT make, model, daily_rate FROM vehicles ORDER BY daily_rate DESC LIMIT 5",
-      "latency_ms": 3026.1,
+      "latency_ms": 3108.13,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
         "tool_calls": 2
       },
@@ -158,14 +165,15 @@
     },
     {
       "id": "q07",
-      "question": "What is the average salary of employees per branch?",
+      "question": "What is the average salary of employees per branch? Show the branch name and the average salary.",
       "category": "aggregate",
       "lang": "en",
-      "sql": "SELECT l.name AS branch_name, AVG(e.salary) AS average_salary FROM employees e JOIN locations l ON e.location_id = l.id GROUP BY l.name;",
+      "sql": "SELECT l.name AS branch_name, AVG(e.salary) AS average_salary FROM employees e JOIN locations l ON e.location_id = l.id GROUP BY l.name ORDER BY l.name;",
       "gold_sql": "SELECT l.name, AVG(e.salary) AS avg_salary FROM employees e JOIN locations l ON e.location_id = l.id GROUP BY l.name\n",
-      "latency_ms": 3133.15,
+      "latency_ms": 3048.09,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
         "tool_calls": 2
       },
@@ -177,14 +185,15 @@
     },
     {
       "id": "q08",
-      "question": "How many vehicles are there in each category?",
+      "question": "How many vehicles are there in each category? Show the category name and the number of vehicles.",
       "category": "aggregate",
       "lang": "en",
-      "sql": "SELECT vc.name AS category_name, COUNT(v.id) AS vehicle_count FROM vehicles v JOIN vehicle_categories vc ON v.category_id = vc.id GROUP BY vc.name ORDER BY vc.name;",
+      "sql": "\nSELECT\n  vc.name AS category_name,\n  COUNT(v.id) AS number_of_vehicles\nFROM vehicles AS v\nJOIN vehicle_categories AS vc\n  ON v.category_id = vc.id\nGROUP BY\n  vc.name\nORDER BY\n  vc.name;\n",
       "gold_sql": "SELECT c.name, COUNT(*) AS vehicle_count FROM vehicles v JOIN vehicle_categories c ON v.category_id = c.id GROUP BY c.name\n",
-      "latency_ms": 3042.85,
+      "latency_ms": 3042.01,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
         "tool_calls": 2
       },
@@ -199,32 +208,34 @@
       "question": "What is the total revenue from completed payments?",
       "category": "aggregate",
       "lang": "en",
-      "sql": "SELECT SUM(amount) FROM payments WHERE status = 'Completed'",
+      "sql": "SELECT SUM(amount) FROM payments WHERE status = 'completed'",
       "gold_sql": "SELECT SUM(amount) AS total FROM payments WHERE status = 'completed'",
-      "latency_ms": 2507.52,
+      "latency_ms": 4330.6,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
-        "tool_calls": 2
+        "tool_calls": 4
       },
       "scored": true,
-      "correct": false,
+      "correct": true,
       "exec_error": null,
       "gold_rows": 1,
       "pred_rows": 1
     },
     {
       "id": "q10",
-      "question": "Show total revenue by location.",
+      "question": "Show total revenue from completed payments by location. Show the location name and the revenue.",
       "category": "aggregate",
       "lang": "en",
-      "sql": "SELECT l.name AS location_name, SUM(r.total_cost) AS total_revenue FROM locations l JOIN reservations r ON l.id = r.pickup_location GROUP BY l.name ORDER BY total_revenue DESC;",
-      "gold_sql": "SELECT l.name, SUM(p.amount) AS revenue FROM payments p JOIN reservations r ON p.reservation_id = r.id JOIN locations l ON r.pickup_location = l.id GROUP BY l.name\n",
-      "latency_ms": 3574.0,
+      "sql": "\nSELECT\n  l.name AS location_name,\n  SUM(p.amount) AS total_revenue\nFROM payments AS p\nJOIN reservations AS r\n  ON p.reservation_id = r.id\nJOIN locations AS l\n  ON r.pickup_location = l.id\nWHERE\n  p.status = 'completed'\nGROUP BY\n  l.name\nORDER BY\n  total_revenue DESC;\n",
+      "gold_sql": "SELECT l.name, SUM(p.amount) AS revenue FROM payments p JOIN reservations r ON p.reservation_id = r.id JOIN locations l ON r.pickup_location = l.id WHERE p.status = 'completed' GROUP BY l.name\n",
+      "latency_ms": 7856.86,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
-        "tool_calls": 2
+        "tool_calls": 4
       },
       "scored": true,
       "correct": true,
@@ -234,14 +245,15 @@
     },
     {
       "id": "q11",
-      "question": "What is the average rating for each vehicle category?",
+      "question": "What is the average rating for each vehicle category? Show the category name and the average rating.",
       "category": "aggregate",
       "lang": "en",
-      "sql": "\nSELECT\n  vc.name AS vehicle_category,\n  AVG(r.rating) AS average_rating\nFROM reviews AS r\nJOIN reservations AS res\n  ON r.reservation_id = res.id\nJOIN vehicles AS v\n  ON res.vehicle_id = v.id\nJOIN vehicle_categories AS vc\n  ON v.category_id = vc.id\nGROUP BY\n  vc.name\nORDER BY\n  vc.name;\n",
+      "sql": "\nSELECT\n  vc.name AS category_name,\n  AVG(r.rating) AS average_rating\nFROM vehicle_categories AS vc\nJOIN vehicles AS v\n  ON vc.id = v.category_id\nJOIN reservations AS res\n  ON v.id = res.vehicle_id\nJOIN reviews AS r\n  ON res.id = r.reservation_id\nGROUP BY\n  vc.name\nORDER BY\n  vc.name;\n",
       "gold_sql": "SELECT c.name, AVG(rv.rating) AS avg_rating FROM reviews rv JOIN reservations r ON rv.reservation_id = r.id JOIN vehicles v ON r.vehicle_id = v.id JOIN vehicle_categories c ON v.category_id = c.id GROUP BY c.name\n",
-      "latency_ms": 3636.84,
+      "latency_ms": 3510.42,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
         "tool_calls": 2
       },
@@ -258,9 +270,10 @@
       "lang": "en",
       "sql": "\nSELECT\n  vc.name AS category_name,\n  COUNT(v.id) AS vehicle_count\nFROM vehicles AS v\nJOIN vehicle_categories AS vc\n  ON v.category_id = vc.id\nGROUP BY\n  vc.name\nHAVING\n  COUNT(v.id) > 15;\n",
       "gold_sql": "SELECT c.name, COUNT(*) AS n FROM vehicles v JOIN vehicle_categories c ON v.category_id = c.id GROUP BY c.name HAVING COUNT(*) > 15\n",
-      "latency_ms": 3386.68,
+      "latency_ms": 3454.45,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
         "tool_calls": 2
       },
@@ -272,14 +285,15 @@
     },
     {
       "id": "q13",
-      "question": "How much have we spent on maintenance per maintenance type?",
+      "question": "How much have we spent on maintenance per maintenance type? Show the maintenance type and the total cost.",
       "category": "aggregate",
       "lang": "en",
-      "sql": "SELECT maintenance_type, SUM(cost) AS total_cost FROM maintenance_records GROUP BY maintenance_type ORDER BY maintenance_type;",
+      "sql": "SELECT maintenance_type, SUM(cost) AS total_cost FROM maintenance_records GROUP BY maintenance_type ORDER BY total_cost DESC;",
       "gold_sql": "SELECT maintenance_type, SUM(cost) AS total FROM maintenance_records GROUP BY maintenance_type",
-      "latency_ms": 3020.23,
+      "latency_ms": 3022.52,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
         "tool_calls": 2
       },
@@ -291,14 +305,15 @@
     },
     {
       "id": "q14",
-      "question": "Care este veniturile totale pe fiecare metod\u0103 de plat\u0103?",
+      "question": "Care sunt veniturile totale din pl\u0103\u021bile finalizate, pe fiecare metod\u0103 de plat\u0103? Arat\u0103 metoda de plat\u0103 \u0219i totalul.",
       "category": "aggregate",
       "lang": "ro",
-      "sql": "SELECT payment_method, SUM(amount) AS total_revenue FROM payments GROUP BY payment_method;",
-      "gold_sql": "SELECT payment_method, SUM(amount) AS total FROM payments GROUP BY payment_method",
-      "latency_ms": 2762.33,
+      "sql": "SELECT payment_method, SUM(amount) AS total_revenue FROM payments WHERE status = 'completed' GROUP BY payment_method;",
+      "gold_sql": "SELECT payment_method, SUM(amount) AS total FROM payments WHERE status = 'completed' GROUP BY payment_method\n",
+      "latency_ms": 3037.64,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
         "tool_calls": 2
       },
@@ -313,11 +328,12 @@
       "question": "List the reservations picked up in Miami. Show reservation id, pickup date and return date.",
       "category": "join",
       "lang": "en",
-      "sql": "SELECT r.id AS reservation_id, r.pickup_date, r.return_date FROM reservations r JOIN locations l ON r.pickup_location = l.id WHERE l.city = 'Miami'",
+      "sql": "SELECT r.id AS reservation_id, r.pickup_date, r.return_date FROM reservations AS r JOIN locations AS l ON r.pickup_location = l.id WHERE l.city = 'Miami'",
       "gold_sql": "SELECT r.id, r.pickup_date, r.return_date FROM reservations r JOIN locations l ON r.pickup_location = l.id WHERE l.city = 'Miami'\n",
-      "latency_ms": 15478.96,
+      "latency_ms": 15490.49,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
         "tool_calls": 2
       },
@@ -332,30 +348,32 @@
       "question": "Show each client's first name, last name and the number of reservations they made, including clients with none.",
       "category": "join",
       "lang": "en",
-      "sql": "\nSELECT\n  c.first_name,\n  c.last_name,\n  COUNT(r.id) AS number_of_reservations\nFROM clients AS c\nLEFT JOIN reservations AS r\n  ON c.id = r.client_id\nGROUP BY\n  c.first_name,\n  c.last_name\nORDER BY\n  c.first_name,\n  c.last_name;\n",
+      "sql": "\nSELECT\n  c.first_name,\n  c.last_name,\n  COUNT(r.id) AS number_of_reservations\nFROM clients AS c\nLEFT JOIN reservations AS r\n  ON c.id = r.client_id\nGROUP BY\n  c.id,\n  c.first_name,\n  c.last_name\nORDER BY\n  number_of_reservations DESC,\n  c.last_name,\n  c.first_name;\n",
       "gold_sql": "SELECT c.first_name, c.last_name, COUNT(r.id) AS reservations FROM clients c LEFT JOIN reservations r ON r.client_id = c.id GROUP BY c.id, c.first_name, c.last_name\n",
-      "latency_ms": 8349.97,
+      "latency_ms": 4271.92,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
         "tool_calls": 2
       },
       "scored": true,
-      "correct": false,
+      "correct": true,
       "exec_error": null,
       "gold_rows": 600,
-      "pred_rows": 585
+      "pred_rows": 600
     },
     {
       "id": "q17",
       "question": "Which employees work at the Downtown Hub? Show first name, last name and role.",
       "category": "join",
       "lang": "en",
-      "sql": "SELECT e.first_name, e.last_name, e.role FROM employees AS e JOIN locations AS l ON e.location_id = l.id WHERE l.name = 'Downtown Hub'",
+      "sql": "SELECT e.first_name, e.last_name, e.role FROM employees e JOIN locations l ON e.location_id = l.id WHERE l.name = 'Downtown Hub';",
       "gold_sql": "SELECT e.first_name, e.last_name, e.role FROM employees e JOIN locations l ON e.location_id = l.id WHERE l.name = 'Downtown Hub'\n",
-      "latency_ms": 2959.28,
+      "latency_ms": 2773.03,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
         "tool_calls": 2
       },
@@ -372,9 +390,10 @@
       "lang": "en",
       "sql": "\nSELECT\n  r.id AS reservation_id,\n  r.pickup_date,\n  r.total_cost\nFROM reservations AS r\nLEFT JOIN payments AS p\n  ON r.id = p.reservation_id\nWHERE\n  p.id IS NULL;\n",
       "gold_sql": "SELECT r.id, r.pickup_date, r.total_cost FROM reservations r WHERE NOT EXISTS (SELECT 1 FROM payments p WHERE p.reservation_id = r.id)\n",
-      "latency_ms": 3527.83,
+      "latency_ms": 3645.32,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
         "tool_calls": 2
       },
@@ -389,11 +408,12 @@
       "question": "Show all reviews with a rating of 1. Show the rating, the comment, and the make and model of the vehicle.",
       "category": "join",
       "lang": "en",
-      "sql": "SELECT r.rating, r.comment, v.make, v.model FROM reviews r JOIN reservations res ON r.reservation_id = res.id JOIN vehicles v ON res.vehicle_id = v.id WHERE r.rating = 1;",
+      "sql": "\nSELECT\n  r.rating,\n  r.comment,\n  v.make,\n  v.model\nFROM reviews AS r\nJOIN reservations AS res\n  ON r.reservation_id = res.id\nJOIN vehicles AS v\n  ON res.vehicle_id = v.id\nWHERE\n  r.rating = 1;\n",
       "gold_sql": "SELECT rv.rating, rv.comment, v.make, v.model FROM reviews rv JOIN reservations r ON rv.reservation_id = r.id JOIN vehicles v ON r.vehicle_id = v.id WHERE rv.rating = 1\n",
-      "latency_ms": 5713.59,
+      "latency_ms": 6718.0,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
         "tool_calls": 2
       },
@@ -410,11 +430,12 @@
       "lang": "en",
       "sql": "SELECT make, model, daily_rate FROM vehicles WHERE daily_rate > (SELECT AVG(daily_rate) FROM vehicles)",
       "gold_sql": "SELECT make, model, daily_rate FROM vehicles WHERE daily_rate > (SELECT AVG(daily_rate) FROM vehicles)",
-      "latency_ms": 4093.75,
+      "latency_ms": 5496.36,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
-        "tool_calls": 2
+        "tool_calls": 3
       },
       "scored": true,
       "correct": true,
@@ -424,35 +445,37 @@
     },
     {
       "id": "q21",
-      "question": "Which clients spent the most money in total? Show the top ten as first name, last name and total spent.",
+      "question": "Which clients have the highest total reservation cost? Show the top ten as first name, last name and the total.",
       "category": "subquery",
       "lang": "en",
-      "sql": "\nSELECT\n  c.first_name,\n  c.last_name,\n  SUM(p.amount) AS total_spent\nFROM clients AS c\nJOIN reservations AS r\n  ON c.id = r.client_id\nJOIN payments AS p\n  ON r.id = p.reservation_id\nGROUP BY\n  c.id,\n  c.first_name,\n  c.last_name\nORDER BY\n  total_spent DESC\nLIMIT 10;\n",
+      "sql": "\nSELECT\n  c.first_name,\n  c.last_name,\n  SUM(r.total_cost) AS total_reservation_cost\nFROM clients AS c\nJOIN reservations AS r\n  ON c.id = r.client_id\nGROUP BY\n  c.first_name,\n  c.last_name\nORDER BY\n  total_reservation_cost DESC\nLIMIT 10;\n",
       "gold_sql": "SELECT c.first_name, c.last_name, SUM(r.total_cost) AS spent FROM clients c JOIN reservations r ON r.client_id = c.id GROUP BY c.id, c.first_name, c.last_name ORDER BY spent DESC NULLS LAST LIMIT 10\n",
-      "latency_ms": 4622.5,
+      "latency_ms": 3982.44,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
         "tool_calls": 2
       },
       "scored": true,
-      "correct": true,
+      "correct": false,
       "exec_error": null,
       "gold_rows": 10,
       "pred_rows": 10
     },
     {
       "id": "q22",
-      "question": "Find the branch with the highest total revenue. Show the branch name and its total revenue.",
+      "question": "Find the branch with the highest total revenue from completed payments. Show the branch name and its total revenue.",
       "category": "subquery",
       "lang": "en",
-      "sql": "\nSELECT\n  l.name AS branch_name,\n  SUM(r.total_cost) AS total_revenue\nFROM locations AS l\nJOIN reservations AS r\n  ON l.id = r.pickup_location\nGROUP BY\n  l.name\nORDER BY\n  total_revenue DESC\nLIMIT 1;\n",
-      "gold_sql": "SELECT l.name, SUM(p.amount) AS revenue FROM payments p JOIN reservations r ON p.reservation_id = r.id JOIN locations l ON r.pickup_location = l.id GROUP BY l.name ORDER BY revenue DESC LIMIT 1\n",
-      "latency_ms": 2982.54,
+      "sql": "\nSELECT\n  l.name AS branch_name,\n  SUM(p.amount) AS total_revenue\nFROM payments AS p\nJOIN reservations AS r\n  ON p.reservation_id = r.id\nJOIN locations AS l\n  ON r.pickup_location = l.id\nWHERE\n  p.status = 'completed'\nGROUP BY\n  l.name\nORDER BY\n  total_revenue DESC\nLIMIT 1;\n",
+      "gold_sql": "SELECT l.name, SUM(p.amount) AS revenue FROM payments p JOIN reservations r ON p.reservation_id = r.id JOIN locations l ON r.pickup_location = l.id WHERE p.status = 'completed' GROUP BY l.name ORDER BY revenue DESC LIMIT 1\n",
+      "latency_ms": 6444.79,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
-        "tool_calls": 2
+        "tool_calls": 4
       },
       "scored": true,
       "correct": true,
@@ -465,11 +488,12 @@
       "question": "Which vehicles have had more than three maintenance records? Show make, model and license plate.",
       "category": "subquery",
       "lang": "en",
-      "sql": "\nSELECT\n  v.make,\n  v.model,\n  v.license_plate\nFROM vehicles AS v\nJOIN maintenance_records AS mr\n  ON v.id = mr.vehicle_id\nGROUP BY\n  v.make,\n  v.model,\n  v.license_plate\nHAVING\n  COUNT(mr.id) > 3;\n",
+      "sql": "\nSELECT\n  v.make,\n  v.model,\n  v.license_plate\nFROM vehicles AS v\nJOIN maintenance_records AS mr\n  ON v.id = mr.vehicle_id\nGROUP BY\n  v.id,\n  v.make,\n  v.model,\n  v.license_plate\nHAVING\n  COUNT(mr.id) > 3;\n",
       "gold_sql": "SELECT v.make, v.model, v.license_plate FROM vehicles v WHERE (SELECT COUNT(*) FROM maintenance_records m WHERE m.vehicle_id = v.id) > 3\n",
-      "latency_ms": 5960.33,
+      "latency_ms": 5889.75,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
         "tool_calls": 2
       },
@@ -484,30 +508,32 @@
       "question": "List clients who have never left a review. Show first and last name.",
       "category": "subquery",
       "lang": "en",
-      "sql": "\nSELECT\n  c.first_name,\n  c.last_name\nFROM clients AS c\nLEFT JOIN reservations AS r\n  ON c.id = r.client_id\nLEFT JOIN reviews AS rev\n  ON r.id = rev.reservation_id\nWHERE\n  rev.id IS NULL;\n",
+      "sql": "\nSELECT\n  c.first_name,\n  c.last_name\nFROM clients AS c\nWHERE\n  c.id NOT IN (\n    SELECT\n      r.client_id\n    FROM reservations AS r\n    JOIN reviews AS rev\n      ON r.id = rev.reservation_id\n  );\n",
       "gold_sql": "SELECT c.first_name, c.last_name FROM clients c WHERE NOT EXISTS (\n  SELECT 1 FROM reservations r\n  JOIN reviews rv ON rv.reservation_id = r.id\n  WHERE r.client_id = c.id\n)\n",
-      "latency_ms": 4627.4,
+      "latency_ms": 7371.89,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
         "tool_calls": 2
       },
       "scored": true,
-      "correct": false,
+      "correct": true,
       "exec_error": null,
       "gold_rows": 84,
-      "pred_rows": 1808
+      "pred_rows": 84
     },
     {
       "id": "q25",
       "question": "For each branch, show the highest paid employee as branch name, first name, last name and salary.",
       "category": "window",
       "lang": "en",
-      "sql": "\nWITH RankedEmployees AS (\n    SELECT\n        l.name AS branch_name,\n        e.first_name,\n        e.last_name,\n        e.salary,\n        RANK() OVER (PARTITION BY l.id ORDER BY e.salary DESC) as rank_num\n    FROM\n        employees AS e\n    JOIN\n        locations AS l\n    ON\n        e.location_id = l.id\n)\nSELECT\n    branch_name,\n    first_name,\n    last_name,\n    salary\nFROM\n    RankedEmployees\nWHERE\n    rank_num = 1;\n",
+      "sql": "\nWITH RankedEmployees AS (\n    SELECT\n        l.name AS branch_name,\n        e.first_name,\n        e.last_name,\n        e.salary,\n        RANK() OVER (PARTITION BY l.id ORDER BY e.salary DESC) as rnk\n    FROM\n        employees e\n    JOIN\n        locations l ON e.location_id = l.id\n)\nSELECT\n    branch_name,\n    first_name,\n    last_name,\n    salary\nFROM\n    RankedEmployees\nWHERE\n    rnk = 1;\n",
       "gold_sql": "SELECT name, first_name, last_name, salary FROM (\n  SELECT l.name, e.first_name, e.last_name, e.salary,\n         ROW_NUMBER() OVER (PARTITION BY l.id ORDER BY e.salary DESC) AS rn\n  FROM employees e JOIN locations l ON e.location_id = l.id\n) t WHERE rn = 1\n",
-      "latency_ms": 4435.84,
+      "latency_ms": 4173.83,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
         "tool_calls": 2
       },
@@ -522,11 +548,12 @@
       "question": "Show monthly reservation counts for 2024, as the first day of each month and the count.",
       "category": "window",
       "lang": "en",
-      "sql": "\nSELECT\n  DATE_TRUNC('month', pickup_date) AS month,\n  COUNT(id) AS reservation_count\nFROM reservations\nWHERE\n  EXTRACT(YEAR FROM pickup_date) = 2024\nGROUP BY\n  month\nORDER BY\n  month;\n",
+      "sql": "\nSELECT\n  DATE_TRUNC('month', pickup_date) AS month_start,\n  COUNT(id) AS reservation_count\nFROM reservations\nWHERE\n  EXTRACT(YEAR FROM pickup_date) = 2024\nGROUP BY\n  month_start\nORDER BY\n  month_start;\n",
       "gold_sql": "SELECT DATE_TRUNC('month', pickup_date) AS month, COUNT(*) AS n FROM reservations WHERE pickup_date >= DATE '2024-01-01' AND pickup_date < DATE '2025-01-01' GROUP BY 1 ORDER BY 1\n",
-      "latency_ms": 4167.09,
+      "latency_ms": 4438.42,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
         "tool_calls": 2
       },
@@ -541,11 +568,12 @@
       "question": "Care sunt cei mai buni clien\u021bi?",
       "category": "ambiguous",
       "lang": "ro",
-      "sql": "\nSELECT\n  c.first_name,\n  c.last_name,\n  SUM(r.total_cost) AS total_amount_spent,\n  COUNT(r.id) AS number_of_reservations\nFROM clients AS c\nJOIN reservations AS r\n  ON c.id = r.client_id\nGROUP BY\n  c.id,\n  c.first_name,\n  c.last_name\nORDER BY\n  total_amount_spent DESC\nLIMIT 10;\n",
+      "sql": "\nSELECT\n  c.first_name,\n  c.last_name,\n  SUM(r.total_cost) AS total_spent\nFROM clients AS c\nJOIN reservations AS r\n  ON c.id = r.client_id\nGROUP BY\n  c.id,\n  c.first_name,\n  c.last_name\nORDER BY\n  total_spent DESC\nLIMIT 10;\n",
       "gold_sql": null,
-      "latency_ms": 6037.75,
+      "latency_ms": 4987.28,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
         "tool_calls": 3
       },
@@ -556,13 +584,14 @@
       "question": "Show me the good vehicles.",
       "category": "ambiguous",
       "lang": "en",
-      "sql": "\nSELECT\n  v.make,\n  v.model,\n  v.year,\n  AVG(r.rating) AS average_rating\nFROM vehicles AS v\nJOIN reservations AS res\n  ON v.id = res.vehicle_id\nJOIN reviews AS r\n  ON res.id = r.reservation_id\nGROUP BY\n  v.id,\n  v.make,\n  v.model,\n  v.year\nHAVING\n  AVG(r.rating) >= 4\nORDER BY\n  average_rating DESC;\n",
+      "sql": "\nSELECT\n  v.make,\n  v.model,\n  AVG(r.rating) AS average_rating\nFROM vehicles AS v\nJOIN reservations AS res\n  ON v.id = res.vehicle_id\nJOIN reviews AS r\n  ON res.id = r.reservation_id\nGROUP BY\n  v.make,\n  v.model\nORDER BY\n  average_rating DESC;\n",
       "gold_sql": null,
-      "latency_ms": 10069.56,
+      "latency_ms": 4254.3,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
-        "tool_calls": 4
+        "tool_calls": 2
       },
       "scored": false
     },
@@ -571,13 +600,14 @@
       "question": "How is the business doing?",
       "category": "ambiguous",
       "lang": "en",
-      "sql": "\nSELECT\n  SUM(p.amount) AS total_revenue,\n  COUNT(DISTINCT r.id) AS total_reservations,\n  COUNT(DISTINCT c.id) AS total_clients,\n  SUM(mr.cost) AS total_maintenance_cost\nFROM payments AS p\nLEFT JOIN reservations AS r\n  ON p.reservation_id = r.id\nLEFT JOIN clients AS c\n  ON r.client_id = c.id\nLEFT JOIN maintenance_records AS mr\n  ON r.vehicle_id = mr.vehicle_id;\n",
+      "sql": "\nSELECT\n    (SELECT SUM(amount) FROM payments WHERE status = 'completed') AS total_revenue,\n    (SELECT COUNT(id) FROM reservations WHERE status = 'completed') AS total_completed_reservations,\n    (SELECT AVG(rating) FROM reviews) AS average_review_rating,\n    (SELECT COUNT(id) FROM vehicles) AS total_vehicles,\n    (SELECT COUNT(id) FROM vehicles WHERE status = 'available') AS available_vehicles;\n",
       "gold_sql": null,
-      "latency_ms": 4132.04,
+      "latency_ms": 11347.69,
       "arm_error": null,
       "clarified": false,
+      "usage": null,
       "extra": {
-        "tool_calls": 2
+        "tool_calls": 4
       },
       "scored": false
     },
@@ -588,13 +618,15 @@
       "lang": "en",
       "sql": null,
       "gold_sql": null,
-      "latency_ms": 1003.02,
+      "latency_ms": 984.86,
       "arm_error": null,
       "clarified": true,
+      "usage": null,
       "extra": {
         "tool_calls": 0
       },
       "scored": false
     }
-  ]
+  ],
+  "questions_fingerprint": "e5f746342d1e"
 }
