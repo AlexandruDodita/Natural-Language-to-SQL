@@ -137,6 +137,8 @@ def main() -> int:
                     help="local arm only: OpenAI-compatible endpoint")
     ap.add_argument("--local-model", default=clients.DEFAULT_LOCAL_MODEL,
                     help="local arm only: model id the endpoint serves")
+    ap.add_argument("--agent-model", default="claude-opus-5",
+                    help="model for the claude-agent arm (e.g. claude-opus-5)")
     ap.add_argument("--limit", type=int, help="run only the first N questions")
     ap.add_argument("--out", type=pathlib.Path)
     args = ap.parse_args()
@@ -164,6 +166,30 @@ def main() -> int:
     elif args.arm == "pipeline":
         arm = arms_mod.make_pipeline_arm(args.base_url)
         model_label = clients.gemini_model_name()
+    elif args.arm == "claude-agent":
+        # The agent explores the live database instead of being handed a schema,
+        # so it needs the MCP server pointed at the same URI the scorer uses.
+        # Written per run rather than committed: it embeds an absolute socket
+        # path that is only valid on this machine.
+        cfg = HERE / ".mcp-agent-config.json"
+        cfg.write_text(json.dumps({"mcpServers": {"postgres": {
+            "command": sys.executable,
+            "args": [str(repo / "mcps" / "postgres" / "server.py")],
+            "env": {"DATABASE_URL": uri, "MAX_ROWS": "100",
+                    "STATEMENT_TIMEOUT_MS": str(STATEMENT_TIMEOUT_MS)},
+        }}}, indent=2))
+        arm = arms_mod.make_claude_agent_arm(args.agent_model, domain=ds.domain)
+        model_label = args.agent_model
+    elif args.arm == "codex-agent":
+        cfg = HERE / ".mcp-agent-config.json"
+        cfg.write_text(json.dumps({"mcpServers": {"postgres": {
+            "command": sys.executable,
+            "args": [str(repo / "mcps" / "postgres" / "server.py")],
+            "env": {"DATABASE_URL": uri, "MAX_ROWS": "100",
+                    "STATEMENT_TIMEOUT_MS": str(STATEMENT_TIMEOUT_MS)},
+        }}}, indent=2))
+        arm = arms_mod.make_codex_agent_arm(args.agent_model, domain=ds.domain)
+        model_label = args.agent_model
     else:
         arm = arms_mod.make_mcp_postgres_arm()
         model_label = clients.gemini_model_name()
@@ -197,6 +223,17 @@ def main() -> int:
                 if out["sql"]:
                     try:
                         gold = execute(conn, q["gold_sql"])
+                        if not gold:
+                            # A gold query returning nothing makes the question
+                            # unscoreable rather than hard: the comparison sees
+                            # two empty result sets and matches them, so any
+                            # query that returns no rows -- including a wrong
+                            # one -- is marked correct. Fail loudly instead of
+                            # quietly inflating the score.
+                            raise SystemExit(
+                                f"{q['id']}: gold SQL returns zero rows against "
+                                f"{args.dataset}. An empty gold is trivially "
+                                f"matchable; fix the question or the fixture.")
                         pred = execute(conn, out["sql"])
                         rec["correct"] = result_sets_match(gold, pred, q.get("ordered", False))
                         rec["gold_rows"], rec["pred_rows"] = len(gold), len(pred)
@@ -211,6 +248,16 @@ def main() -> int:
     summary["usage"] = clients.aggregate_usage([r.get("usage") for r in results])
     summary["cost"] = cost_block(model_label, summary["usage"], len(results),
                                  local=args.arm == "local")
+    # An arm that knows what it actually spent beats an extrapolation from list
+    # prices: the agent arm re-reads a large cached prefix every turn, which the
+    # per-token estimate cannot see. Recorded alongside, never instead of, so the
+    # two are comparable across arms.
+    billed = [r["extra"]["cost_usd"] for r in results
+              if (r.get("extra") or {}).get("cost_usd") is not None]
+    if billed:
+        summary["cost"]["usd_per_100_questions_measured"] = round(
+            sum(billed) / len(billed) * 100, 4)
+        summary["cost"]["measured_questions"] = len(billed)
 
     # car_rental keeps writing results/<arm>.json so existing files and the
     # table generator are untouched; other datasets get their own subdirectory.

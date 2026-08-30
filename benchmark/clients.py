@@ -209,6 +209,17 @@ PRICING_USD_PER_MTOK: dict[str, dict[str, float]] = {
     # Tiered by prompt length; every prompt in this benchmark is far below the
     # 200k-token threshold, so the lower tier is the applicable one.
     "gemini-3.1-pro-preview": {"input": 2.00, "output": 12.00},
+    # Anthropic list rates, for the agent arm. These are the sticker prices and
+    # they OVERSTATE what that arm actually costs: an agent re-sends a large
+    # cached prefix every turn, and cache reads bill at a fraction of the input
+    # rate. The arm records the CLI's own cache-aware figure per question, which
+    # is what `usd_per_100_questions_measured` reports; this row exists so the
+    # extrapolated column is not simply blank, and the two should be read
+    # together.
+    "claude-fable-5": {"input": 10.00, "output": 50.00},
+    "claude-opus-5": {"input": 5.00, "output": 25.00},
+    "claude-sonnet-5": {"input": 2.00, "output": 10.00},
+    "claude-haiku-4-5": {"input": 1.00, "output": 5.00},
     # A locally served model has no per-token price. Zero here means "no API
     # invoice", not "free": the hardware and the electricity are the cost, and
     # the thesis discusses them separately.
