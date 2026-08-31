@@ -1,0 +1,2135 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NL2SQL Workbench — UI redesign mockup</title>
+<style>
+/* ==========================================================================
+   Design tokens
+   ========================================================================== */
+:root{
+  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+
+  /* spacing: 4pt base */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
+  /* radii */
+  --r1:6px; --r2:10px; --r3:14px; --r4:22px;
+  /* type scale: 11 / 12 / 13 / 15 / 18 / 22 / 30 */
+  --t-2xs:11px; --t-xs:12px; --t-sm:13px; --t-md:15px; --t-lg:18px; --t-xl:22px; --t-2xl:30px;
+  --lh-tight:1.25; --lh-normal:1.5; --lh-loose:1.65;
+
+  --dur:160ms;
+  --ease:cubic-bezier(.2,.7,.3,1);
+}
+
+/* light palette ---------------------------------------------------------- */
+:root{
+  --bg:            #f4f4f6;
+  --surface:       #ffffff;
+  --surface-2:     #f7f7f9;
+  --surface-3:     #ececed;
+  --border:        #e0e0e5;
+  --border-strong: #cbcbd3;
+  --text:          #16161c;
+  --text-2:        #4c4c58;
+  --text-3:        #7d7d8b;
+  --accent:        #5646d6;
+  --accent-soft:   #ece9ff;
+  --accent-text:   #4535c9;
+  --ok:            #087f52;
+  --ok-soft:       #e2f6ec;
+  --warn:          #a35700;
+  --warn-soft:     #fdf0dd;
+  --danger:        #c5253f;
+  --danger-soft:   #fdeaed;
+  --shadow-sm: 0 1px 2px rgba(15,15,25,.06), 0 1px 3px rgba(15,15,25,.05);
+  --shadow-md: 0 2px 4px rgba(15,15,25,.05), 0 8px 24px rgba(15,15,25,.09);
+  --grid:  rgba(20,20,35,.09);
+  --axis:  #8b8b99;
+  --c1:#5646d6; --c2:#0f9488; --c3:#c47b06; --c4:#c8397f; --c5:#2f7ed0;
+  --c6:#5c8a1d; --c7:#9a4bd6; --c8:#cf5230;
+}
+:root[data-theme="dark"]{
+  --bg:            #0e0e13;
+  --surface:       #17171e;
+  --surface-2:     #1d1d26;
+  --surface-3:     #262630;
+  --border:        #2b2b37;
+  --border-strong: #3d3d4c;
+  --text:          #ececeF;
+  --text-2:        #b4b4c0;
+  --text-3:        #83838f;
+  --accent:        #9b8cff;
+  --accent-soft:   #241f4d;
+  --accent-text:   #b7abff;
+  --ok:            #46c88f;
+  --ok-soft:       #122e24;
+  --warn:          #e0a350;
+  --warn-soft:     #33260f;
+  --danger:        #f0798f;
+  --danger-soft:   #35161e;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+  --shadow-md: 0 4px 8px rgba(0,0,0,.32), 0 16px 40px rgba(0,0,0,.42);
+  --grid:  rgba(255,255,255,.08);
+  --axis:  #6f6f7d;
+  --c1:#9b8cff; --c2:#3fd0bd; --c3:#f0b55c; --c4:#f277b0;
+  --c5:#63b3f5; --c6:#a6d95e; --c7:#c99bff; --c8:#ff9470;
+}
+
+*{box-sizing:border-box; margin:0; padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--font-sans);
+  font-size:var(--t-sm);
+  line-height:var(--lh-normal);
+  color:var(--text);
+  background:var(--bg);
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;
+}
+button,input,select,textarea{font:inherit; color:inherit}
+button{background:none; border:none; cursor:pointer}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-strong); border-radius:99px; border:3px solid transparent; background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:var(--text-3); background-clip:content-box; border:3px solid transparent}
+
+/* ==========================================================================
+   Primitives
+   ========================================================================== */
+.btn{
+  display:inline-flex; align-items:center; gap:var(--s2);
+  padding:6px 11px; border-radius:var(--r1);
+  font-size:var(--t-xs); font-weight:530; color:var(--text-2);
+  border:1px solid var(--border); background:var(--surface);
+  transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+  white-space:nowrap;
+}
+.btn:hover{background:var(--surface-2); border-color:var(--border-strong); color:var(--text)}
+.btn-primary{background:var(--accent); border-color:var(--accent); color:#fff}
+:root[data-theme="dark"] .btn-primary{color:#12101f}
+.btn-primary:hover{filter:brightness(1.08); background:var(--accent); border-color:var(--accent); color:#fff}
+:root[data-theme="dark"] .btn-primary:hover{color:#12101f}
+.btn-ghost{border-color:transparent; background:transparent}
+.btn-ghost:hover{background:var(--surface-3); border-color:transparent}
+.btn-sm{padding:3px 8px; font-size:var(--t-2xs)}
+.btn[disabled]{opacity:.45; pointer-events:none}
+
+.seg{display:inline-flex; padding:2px; gap:2px; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--r1)}
+.seg button{
+  padding:4px 9px; border-radius:4px; font-size:var(--t-2xs); font-weight:560;
+  color:var(--text-3); transition:all var(--dur) var(--ease);
+}
+.seg button:hover{color:var(--text)}
+.seg button[aria-pressed="true"]{background:var(--surface); color:var(--text); box-shadow:var(--shadow-sm)}
+:root[data-theme="dark"] .seg button[aria-pressed="true"]{background:var(--surface-3)}
+
+select.ctl, input.ctl{
+  appearance:none; padding:5px 26px 5px 9px; border-radius:var(--r1);
+  border:1px solid var(--border); background:var(--surface); color:var(--text);
+  font-size:var(--t-2xs); font-weight:520; min-width:0;
+  background-image:linear-gradient(45deg,transparent 50%,var(--text-3) 50%),linear-gradient(135deg,var(--text-3) 50%,transparent 50%);
+  background-position:calc(100% - 13px) calc(50% + 1px), calc(100% - 9px) calc(50% + 1px);
+  background-size:4px 4px, 4px 4px; background-repeat:no-repeat;
+}
+input.ctl{background-image:none; padding-right:9px}
+select.ctl:focus, input.ctl:focus{outline:2px solid var(--accent); outline-offset:-1px}
+
+.chip{
+  display:inline-flex; align-items:center; gap:5px;
+  padding:2px 8px; border-radius:99px; font-size:var(--t-2xs); font-weight:540;
+  background:var(--surface-2); color:var(--text-2); border:1px solid var(--border);
+  white-space:nowrap;
+}
+.chip .dot{width:6px;height:6px;border-radius:99px;background:var(--text-3)}
+.chip-ok{background:var(--ok-soft); color:var(--ok); border-color:transparent}
+.chip-ok .dot{background:var(--ok)}
+.chip-warn{background:var(--warn-soft); color:var(--warn); border-color:transparent}
+.chip-warn .dot{background:var(--warn)}
+.chip-danger{background:var(--danger-soft); color:var(--danger); border-color:transparent}
+.chip-danger .dot{background:var(--danger)}
+.chip-accent{background:var(--accent-soft); color:var(--accent-text); border-color:transparent}
+.chip-accent .dot{background:var(--accent)}
+.mono{font-family:var(--font-mono); font-size:var(--t-2xs); letter-spacing:-.1px}
+.muted{color:var(--text-3)}
+.label{font-size:var(--t-2xs); font-weight:640; letter-spacing:.06em; text-transform:uppercase; color:var(--text-3)}
+
+/* ==========================================================================
+   App shell
+   ========================================================================== */
+.app{
+  display:grid; height:100vh;
+  grid-template-columns:268px minmax(0,1fr) var(--panel-w, 520px);
+  grid-template-rows:auto minmax(0,1fr);
+  grid-template-areas:"top top top" "rail main panel";
+}
+body.panel-closed .app{grid-template-columns:268px minmax(0,1fr) 0}
+body.rail-closed .app{grid-template-columns:0 minmax(0,1fr) var(--panel-w,520px)}
+body.rail-closed.panel-closed .app{grid-template-columns:0 minmax(0,1fr) 0}
+
+/* --- top bar ------------------------------------------------------------- */
+.topbar{
+  grid-area:top; display:flex; align-items:center; gap:var(--s3);
+  padding:0 var(--s4); height:52px;
+  background:var(--surface); border-bottom:1px solid var(--border);
+}
+.brand{display:flex; align-items:center; gap:var(--s2); font-weight:660; font-size:var(--t-sm); letter-spacing:-.01em}
+.brand .mark{
+  width:22px;height:22px;border-radius:7px;display:grid;place-items:center;
+  background:linear-gradient(145deg,var(--accent),var(--c2)); color:#fff; font-size:11px; font-weight:800;
+}
+.topbar .spacer{flex:1}
+.topbar .sep{width:1px;height:20px;background:var(--border)}
+
+/* --- rail ---------------------------------------------------------------- */
+.rail{
+  grid-area:rail; overflow:hidden auto; background:var(--surface);
+  border-right:1px solid var(--border); display:flex; flex-direction:column;
+}
+body.rail-closed .rail{display:none}
+.rail-sec{padding:var(--s4) var(--s3) var(--s3); border-bottom:1px solid var(--border)}
+.rail-sec:last-child{border-bottom:none}
+.rail-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--s2)}
+.rail-list{display:flex; flex-direction:column; gap:2px}
+
+.thread{
+  display:block; width:100%; text-align:left; padding:7px 9px; border-radius:var(--r1);
+  transition:background var(--dur) var(--ease); position:relative;
+}
+.thread:hover{background:var(--surface-2)}
+.thread[aria-current="true"]{background:var(--accent-soft)}
+.thread[aria-current="true"] .thread-title{color:var(--accent-text)}
+.thread-title{font-size:var(--t-xs); font-weight:560; color:var(--text); display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.thread-meta{display:flex; align-items:center; gap:5px; margin-top:3px; font-size:var(--t-2xs); color:var(--text-3)}
+.thread-meta .pill{padding:0 5px; border-radius:99px; background:var(--surface-3); font-size:10px; font-weight:600}
+
+/* schema tree */
+.tree{display:flex; flex-direction:column; gap:1px; max-height:290px; overflow:auto; margin:0 -4px; padding:0 4px}
+.tnode{border-radius:var(--r1)}
+.tnode > .trow{
+  display:flex; align-items:center; gap:6px; width:100%; padding:5px 7px; border-radius:var(--r1);
+  font-size:var(--t-xs); color:var(--text-2); transition:background var(--dur) var(--ease);
+}
+.tnode > .trow:hover{background:var(--surface-2); color:var(--text)}
+.tnode.used > .trow{background:var(--accent-soft); color:var(--accent-text); font-weight:560}
+.tnode .caret{width:9px; color:var(--text-3); font-size:9px; transition:transform var(--dur) var(--ease)}
+.tnode[open] .caret{transform:rotate(90deg)}
+.tnode .tcount{margin-left:auto; font-size:10px; color:var(--text-3); font-family:var(--font-mono)}
+.tcols{padding:2px 0 6px 24px; display:none; flex-direction:column; gap:1px}
+.tnode[open] .tcols{display:flex}
+.tcol{display:flex; gap:6px; align-items:baseline; font-size:var(--t-2xs); color:var(--text-3)}
+.tcol b{font-weight:520; color:var(--text-2); font-family:var(--font-mono); font-size:var(--t-2xs)}
+.tcol .ty{font-family:var(--font-mono); font-size:10px; opacity:.75}
+.tcol .pk{color:var(--c3); font-size:9px; font-weight:700}
+.tcol .fk{color:var(--c5); font-size:9px; font-weight:700}
+
+/* history */
+.hist{display:flex; flex-direction:column; gap:2px}
+.hist-item{
+  display:flex; align-items:center; gap:var(--s2); width:100%; padding:6px 8px; border-radius:var(--r1);
+  text-align:left; transition:background var(--dur) var(--ease);
+}
+.hist-item:hover{background:var(--surface-2)}
+.hist-item .htxt{min-width:0; flex:1}
+.hist-item .hq{display:block; font-size:var(--t-2xs); color:var(--text-2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.hist-item .hm{display:block; font-size:10px; color:var(--text-3); font-family:var(--font-mono); margin-top:1px}
+.hist-item .rerun{opacity:0; font-size:10px; color:var(--accent-text); font-weight:640; transition:opacity var(--dur) var(--ease)}
+.hist-item:hover .rerun{opacity:1}
+
+/* --- main / conversation -------------------------------------------------- */
+.main{grid-area:main; display:flex; flex-direction:column; min-width:0; background:var(--bg)}
+.stream{flex:1; overflow:auto; padding:var(--s5) var(--s5) var(--s6)}
+.stream-inner{max-width:780px; margin:0 auto; display:flex; flex-direction:column; gap:var(--s5)}
+
+.turn{display:flex; flex-direction:column; gap:var(--s3)}
+.turn-user{align-items:flex-end}
+.bubble-user{
+  max-width:min(100%,560px); padding:9px 15px; border-radius:var(--r3) var(--r3) 4px var(--r3);
+  background:var(--accent); color:#fff; font-size:var(--t-md); line-height:var(--lh-normal);
+  box-shadow:var(--shadow-sm);
+}
+:root[data-theme="dark"] .bubble-user{color:#141227}
+.turn-user .meta{font-size:var(--t-2xs); color:var(--text-3); display:flex; gap:var(--s2); align-items:center}
+
+.answer{display:flex; flex-direction:column; gap:var(--s3)}
+.answer .prose{font-size:var(--t-md); line-height:var(--lh-loose); color:var(--text); max-width:66ch}
+.answer .prose strong{font-weight:640}
+
+/* provenance strip */
+.prov{
+  display:flex; flex-wrap:wrap; align-items:center; gap:6px;
+  padding:var(--s2) var(--s3); border-radius:var(--r2);
+  background:var(--surface); border:1px solid var(--border);
+}
+.prov .prov-sep{width:1px;height:14px;background:var(--border)}
+.prov button.chip{cursor:pointer}
+.prov button.chip:hover{border-color:var(--border-strong); color:var(--text)}
+
+/* result card */
+.rescard{
+  border:1px solid var(--border); border-radius:var(--r3); background:var(--surface);
+  overflow:hidden; box-shadow:var(--shadow-sm); transition:border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.rescard:hover{border-color:var(--border-strong); box-shadow:var(--shadow-md)}
+.rescard-head{display:flex; align-items:center; gap:var(--s3); padding:var(--s3) var(--s4)}
+.rescard-head .ico{
+  width:30px;height:30px;border-radius:9px; display:grid; place-items:center; flex:none;
+  background:var(--accent-soft); color:var(--accent-text);
+}
+.rescard-head .t{min-width:0; flex:1}
+.rescard-head .t b{display:block; font-size:var(--t-sm); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.rescard-head .t span{font-size:var(--t-2xs); color:var(--text-3)}
+.rescard-preview{border-top:1px solid var(--border); background:var(--surface-2); padding:var(--s3) var(--s3) var(--s2)}
+.rescard-preview svg{display:block; width:100%; height:auto}
+
+/* clarification card */
+.clarify{
+  border:1px solid var(--border); border-left:3px solid var(--c3);
+  border-radius:var(--r2); background:var(--surface); padding:var(--s4); box-shadow:var(--shadow-sm);
+}
+.clarify h4{font-size:var(--t-md); font-weight:600; margin-bottom:var(--s1); line-height:var(--lh-tight)}
+.clarify p{font-size:var(--t-sm); color:var(--text-2); margin-bottom:var(--s3)}
+.opts{display:flex; flex-direction:column; gap:var(--s2)}
+.opt{
+  display:flex; align-items:flex-start; gap:var(--s3); text-align:left; width:100%;
+  padding:10px var(--s3); border-radius:var(--r2); border:1px solid var(--border); background:var(--surface-2);
+  transition:all var(--dur) var(--ease);
+}
+.opt:hover{border-color:var(--accent); background:var(--accent-soft)}
+.opt .k{
+  flex:none; width:20px;height:20px;border-radius:6px; display:grid;place-items:center;
+  background:var(--surface); border:1px solid var(--border); font-size:10px; font-weight:700; color:var(--text-3);
+}
+.opt:hover .k{border-color:var(--accent); color:var(--accent-text)}
+.opt .b{min-width:0}
+.opt .b b{display:block; font-size:var(--t-sm); font-weight:560}
+.opt .b span{display:block; font-size:var(--t-2xs); color:var(--text-3); margin-top:2px; font-family:var(--font-mono)}
+
+/* repair / blocked cards */
+.notice{border-radius:var(--r2); border:1px solid var(--border); background:var(--surface); overflow:hidden}
+.notice-head{display:flex; align-items:center; gap:var(--s2); padding:9px var(--s3); font-size:var(--t-xs); font-weight:560}
+.notice.warn{border-left:3px solid var(--warn)}
+.notice.danger{border-left:3px solid var(--danger)}
+.notice-body{padding:0 var(--s3) var(--s3); font-size:var(--t-xs); color:var(--text-2); display:none}
+.notice[open] .notice-body{display:block}
+.trail{display:flex; flex-direction:column; gap:var(--s2); margin-top:var(--s2)}
+.trail-step{display:flex; gap:var(--s3); align-items:flex-start}
+.trail-step .n{
+  flex:none; width:18px;height:18px;border-radius:99px; display:grid;place-items:center;
+  font-size:10px; font-weight:700; background:var(--surface-3); color:var(--text-3);
+}
+.trail-step.fail .n{background:var(--danger-soft); color:var(--danger)}
+.trail-step.pass .n{background:var(--ok-soft); color:var(--ok)}
+.trail-step pre{
+  font-family:var(--font-mono); font-size:var(--t-2xs); line-height:1.5; color:var(--text-2);
+  background:var(--surface-2); border:1px solid var(--border); border-radius:var(--r1);
+  padding:7px 9px; overflow:auto; white-space:pre-wrap; margin-top:4px;
+}
+.trail-step .err{color:var(--danger); font-family:var(--font-mono); font-size:var(--t-2xs)}
+
+/* composer */
+.composer{padding:0 var(--s5) var(--s5); background:linear-gradient(to top,var(--bg) 72%,transparent)}
+.composer-inner{max-width:780px; margin:0 auto}
+.composer-box{
+  border:1px solid var(--border); border-radius:var(--r3); background:var(--surface);
+  box-shadow:var(--shadow-md); transition:border-color var(--dur) var(--ease);
+}
+.composer-box:focus-within{border-color:var(--accent)}
+.composer-box textarea{
+  width:100%; border:none; background:none; resize:none; outline:none;
+  padding:13px var(--s4) 4px; font-size:var(--t-md); line-height:var(--lh-normal); min-height:46px; max-height:180px;
+}
+.composer-box textarea::placeholder{color:var(--text-3)}
+.composer-bar{display:flex; align-items:center; gap:var(--s2); padding:6px 8px 8px var(--s3); flex-wrap:wrap}
+.composer-bar .spacer{flex:1}
+.send{
+  width:30px;height:30px;border-radius:9px; display:grid;place-items:center;
+  background:var(--accent); color:#fff; transition:transform var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+:root[data-theme="dark"] .send{color:#141227}
+.send:hover{transform:translateY(-1px)}
+.starter-row{display:flex; gap:var(--s2); flex-wrap:wrap; margin-top:var(--s3)}
+.starter{
+  padding:5px 10px; border-radius:99px; border:1px solid var(--border); background:var(--surface);
+  font-size:var(--t-2xs); color:var(--text-2); transition:all var(--dur) var(--ease);
+}
+.starter:hover{border-color:var(--accent); color:var(--accent-text); background:var(--accent-soft)}
+
+/* --- workbench panel ------------------------------------------------------ */
+.panel{
+  grid-area:panel; background:var(--surface); border-left:1px solid var(--border);
+  display:flex; flex-direction:column; min-width:0; overflow:hidden;
+}
+body.panel-closed .panel{display:none}
+.panel-head{display:flex; align-items:center; gap:var(--s2); padding:var(--s3) var(--s4) var(--s2)}
+.panel-head .t{min-width:0; flex:1}
+.panel-head .t b{display:block; font-size:var(--t-sm); font-weight:620; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.panel-head .t .sub{display:flex; gap:6px; align-items:center; font-size:var(--t-2xs); color:var(--text-3); margin-top:2px}
+.tabs{display:flex; gap:var(--s1); padding:0 var(--s4); border-bottom:1px solid var(--border)}
+.tabs button{
+  padding:7px 10px; font-size:var(--t-xs); font-weight:560; color:var(--text-3);
+  border-bottom:2px solid transparent; margin-bottom:-1px; transition:all var(--dur) var(--ease);
+}
+.tabs button:hover{color:var(--text)}
+.tabs button[aria-selected="true"]{color:var(--accent-text); border-bottom-color:var(--accent)}
+.tabs .badge{margin-left:5px; padding:0 5px; border-radius:99px; background:var(--surface-3); font-size:10px; color:var(--text-3); font-weight:600}
+.panel-body{flex:1; overflow:auto; min-height:0}
+.pane{display:none; padding:var(--s4)}
+.pane[data-active="true"]{display:block}
+
+/* chart toolbar */
+.suggest{
+  display:flex; gap:var(--s2); align-items:center; flex-wrap:wrap;
+  padding:var(--s2) var(--s3); border-radius:var(--r2);
+  background:var(--surface-2); border:1px solid var(--border); margin-bottom:var(--s3);
+}
+.suggest .shape{font-size:var(--t-2xs); color:var(--text-3); font-family:var(--font-mono)}
+.sg{
+  display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:99px;
+  border:1px solid var(--border); background:var(--surface); font-size:var(--t-2xs); font-weight:560; color:var(--text-2);
+  transition:all var(--dur) var(--ease);
+}
+.sg:hover{border-color:var(--accent); color:var(--accent-text)}
+.sg[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:#fff}
+:root[data-theme="dark"] .sg[aria-pressed="true"]{color:#141227}
+.sg .why{font-weight:440; opacity:.75}
+
+.ctlbar{display:flex; flex-wrap:wrap; gap:var(--s2) var(--s3); align-items:center; margin-bottom:var(--s3)}
+.ctlgrp{display:flex; align-items:center; gap:6px}
+.ctlgrp > span{font-size:10px; font-weight:660; letter-spacing:.05em; text-transform:uppercase; color:var(--text-3)}
+.toggle{display:inline-flex; align-items:center; gap:5px; font-size:var(--t-2xs); color:var(--text-2); cursor:pointer; user-select:none}
+.toggle input{appearance:none; width:26px;height:15px; border-radius:99px; background:var(--surface-3); border:1px solid var(--border); position:relative; transition:background var(--dur) var(--ease); cursor:pointer}
+.toggle input::after{content:""; position:absolute; top:1px; left:1px; width:11px;height:11px;border-radius:99px; background:var(--text-3); transition:transform var(--dur) var(--ease), background var(--dur) var(--ease)}
+.toggle input:checked{background:var(--accent); border-color:var(--accent)}
+.toggle input:checked::after{transform:translateX(11px); background:#fff}
+
+.chartbox{
+  border:1px solid var(--border); border-radius:var(--r2); background:var(--surface);
+  padding:var(--s3) var(--s3) var(--s2); position:relative;
+}
+.chartbox svg{display:block; width:100%; height:auto; overflow:visible}
+.legend{display:flex; flex-wrap:wrap; gap:var(--s3); justify-content:center; padding:var(--s2) 0 2px}
+.legend button{display:inline-flex; align-items:center; gap:5px; font-size:var(--t-2xs); color:var(--text-2)}
+.legend button[aria-pressed="false"]{opacity:.35}
+.legend .sw{width:9px;height:9px;border-radius:3px}
+.chart-note{font-size:var(--t-2xs); color:var(--text-3); margin-top:var(--s2); line-height:1.45}
+.crossfilter{
+  display:flex; align-items:center; gap:var(--s2); margin-top:var(--s3); padding:7px var(--s3);
+  border-radius:var(--r1); background:var(--accent-soft); color:var(--accent-text); font-size:var(--t-2xs); font-weight:540;
+}
+.crossfilter[hidden]{display:none}
+
+/* table */
+.tbl-tools{display:flex; gap:var(--s2); align-items:center; margin-bottom:var(--s2); flex-wrap:wrap}
+.tbl-wrap{border:1px solid var(--border); border-radius:var(--r2); overflow:auto; max-height:520px}
+table.grid{border-collapse:separate; border-spacing:0; width:100%; font-size:var(--t-xs)}
+table.grid thead th{
+  position:sticky; top:0; z-index:2; background:var(--surface-2); text-align:left;
+  padding:6px 10px 7px; border-bottom:1px solid var(--border); white-space:nowrap; cursor:pointer;
+  font-weight:600; color:var(--text-2);
+}
+table.grid thead th:hover{color:var(--text)}
+table.grid thead th .th-in{display:flex; align-items:center; gap:5px}
+table.grid thead th .ty{font-size:9px; font-family:var(--font-mono); color:var(--text-3); font-weight:500; padding:0 3px; border:1px solid var(--border); border-radius:3px}
+table.grid thead th .sort{color:var(--accent); font-size:9px}
+table.grid thead th .prof{display:block; height:12px; margin-top:3px}
+table.grid tbody td{padding:5px 10px; border-bottom:1px solid var(--border); white-space:nowrap; color:var(--text-2)}
+table.grid tbody tr:hover td{background:var(--surface-2)}
+table.grid tbody tr.hl td{background:var(--accent-soft)}
+table.grid td.num{text-align:right; font-family:var(--font-mono); font-variant-numeric:tabular-nums}
+table.grid td .null{color:var(--text-3); font-style:italic; opacity:.6}
+.tbl-foot{display:flex; align-items:center; gap:var(--s3); padding-top:var(--s2); font-size:var(--t-2xs); color:var(--text-3)}
+
+/* sql pane */
+.sqlbar{display:flex; gap:var(--s2); align-items:center; margin-bottom:var(--s2); flex-wrap:wrap}
+.sqlbox{border:1px solid var(--border); border-radius:var(--r2); overflow:hidden; background:var(--surface-2)}
+.sqlbox textarea{
+  width:100%; min-height:220px; border:none; outline:none; resize:vertical; background:transparent;
+  font-family:var(--font-mono); font-size:var(--t-xs); line-height:1.65; padding:var(--s3); color:var(--text);
+  tab-size:2;
+}
+.sqlbox.edited{border-color:var(--warn)}
+.diffbox{margin-top:var(--s2); border:1px solid var(--border); border-radius:var(--r2); overflow:hidden}
+.diffbox pre{font-family:var(--font-mono); font-size:var(--t-2xs); line-height:1.6; padding:var(--s3); overflow:auto; color:var(--text-3)}
+.explain{margin-top:var(--s3)}
+.explain-row{display:flex; gap:var(--s2); align-items:baseline; font-family:var(--font-mono); font-size:var(--t-2xs); color:var(--text-2); padding:3px 0}
+.explain-row .cost{color:var(--text-3)}
+
+/* provenance pane */
+.pv-sec{margin-bottom:var(--s5)}
+.pv-sec > .label{margin-bottom:var(--s2); display:block}
+.stagebar{display:flex; height:26px; border-radius:var(--r1); overflow:hidden; border:1px solid var(--border)}
+.stagebar div{display:grid; place-items:center; font-size:10px; font-weight:600; color:#fff; overflow:hidden; white-space:nowrap}
+:root[data-theme="dark"] .stagebar div{color:#141227}
+.stagekey{display:flex; flex-wrap:wrap; gap:var(--s3); margin-top:var(--s2)}
+.stagekey span{display:inline-flex; align-items:center; gap:5px; font-size:var(--t-2xs); color:var(--text-2)}
+.stagekey i{width:8px;height:8px;border-radius:2px; display:inline-block}
+.rank{display:flex; flex-direction:column; gap:5px}
+.rank-row{display:grid; grid-template-columns:150px 1fr 44px; gap:var(--s2); align-items:center; font-size:var(--t-2xs)}
+.rank-row .nm{font-family:var(--font-mono); color:var(--text-2); overflow:hidden; text-overflow:ellipsis}
+.rank-row .nm.on{color:var(--accent-text); font-weight:600}
+.rank-row .bar{height:7px; border-radius:99px; background:var(--surface-3); overflow:hidden}
+.rank-row .bar i{display:block; height:100%; border-radius:99px; background:var(--accent); opacity:.45}
+.rank-row .nm.on + .bar i{opacity:1}
+.rank-row .sc{text-align:right; font-family:var(--font-mono); color:var(--text-3)}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:5px var(--s4); font-size:var(--t-2xs)}
+.kv dt{color:var(--text-3)}
+.kv dd{color:var(--text-2); font-family:var(--font-mono)}
+
+/* board */
+.board{display:none; flex:1; overflow:auto; padding:var(--s5)}
+body[data-view="board"] .board{display:block}
+body[data-view="board"] .stream, body[data-view="board"] .composer{display:none}
+.board-head{max-width:1180px; margin:0 auto var(--s4); display:flex; align-items:flex-end; gap:var(--s3); flex-wrap:wrap}
+.board-head h2{font-size:var(--t-xl); font-weight:660; letter-spacing:-.015em}
+.board-head p{font-size:var(--t-xs); color:var(--text-3); margin-top:2px}
+.board-grid{max-width:1180px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:var(--s4)}
+.tile{border:1px solid var(--border); border-radius:var(--r3); background:var(--surface); padding:var(--s4); box-shadow:var(--shadow-sm)}
+.tile-head{display:flex; align-items:flex-start; gap:var(--s2); margin-bottom:var(--s3)}
+.tile-head b{font-size:var(--t-sm); font-weight:600; flex:1; line-height:var(--lh-tight)}
+.tile-kpi{font-size:var(--t-2xl); font-weight:680; letter-spacing:-.03em; font-variant-numeric:tabular-nums}
+.tile-kpi .delta{font-size:var(--t-xs); font-weight:600; margin-left:var(--s2)}
+.tile .chart-note{margin-top:var(--s2)}
+.tile svg{display:block; width:100%; height:auto; overflow:visible}
+
+/* toast */
+.toast{
+  position:fixed; left:50%; bottom:22px; transform:translate(-50%,14px);
+  display:flex; align-items:center; gap:var(--s2);
+  padding:9px var(--s4); border-radius:99px; background:var(--text); color:var(--bg);
+  font-size:var(--t-xs); font-weight:560; box-shadow:var(--shadow-md);
+  opacity:0; pointer-events:none; transition:opacity var(--dur) var(--ease), transform var(--dur) var(--ease); z-index:60;
+}
+.toast.on{opacity:1; transform:translate(-50%,0)}
+
+/* responsive -------------------------------------------------------------- */
+@media (max-width:1400px){ .app{--panel-w:460px} }
+@media (max-width:1180px){
+  .app{grid-template-columns:238px minmax(0,1fr) 0 !important}
+  .panel{
+    position:fixed; inset:52px 0 0 auto; width:min(520px,100%); z-index:50;
+    box-shadow:var(--shadow-md); display:none;
+  }
+  body:not(.panel-closed) .panel{display:flex}
+  .panel-scrim{position:fixed; inset:52px 0 0 0; background:rgba(0,0,0,.35); z-index:49; display:none}
+  body:not(.panel-closed) .panel-scrim{display:block}
+}
+@media (max-width:820px){
+  .app{grid-template-columns:0 minmax(0,1fr) 0 !important}
+  .rail{position:fixed; inset:52px auto 0 0; width:268px; z-index:50; display:flex}
+  body.rail-closed .rail{display:none}
+  .stream, .composer{padding-left:var(--s4); padding-right:var(--s4)}
+  .board{padding:var(--s4)}
+  .topbar .hide-sm{display:none}
+}
+@media (max-width:560px){
+  .topbar .hide-xs{display:none}
+  .composer-box textarea{min-height:68px}   /* the placeholder wraps to two lines */
+  .stream{padding-top:var(--s4)}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===================== top bar ===================== -->
+  <header class="topbar">
+    <button class="btn btn-ghost btn-sm" id="railToggle" aria-label="Toggle sidebar" title="Sidebar">☰</button>
+    <div class="brand"><span class="mark">Q</span><span class="hide-xs">NL2SQL Workbench</span></div>
+    <div class="sep hide-sm"></div>
+
+    <div class="ctlgrp hide-sm">
+      <span>DB</span>
+      <select class="ctl" id="datasetSel" title="Target database">
+        <option value="car_rental">car_rental · 9 tables</option>
+        <option value="adventureworks">adventureworks · 68 tables</option>
+      </select>
+    </div>
+
+    <div class="ctlgrp hide-sm">
+      <span>Role</span>
+      <select class="ctl" id="roleSel" title="Authorization role from policy.yaml">
+        <option value="manager">manager</option>
+        <option value="agent">agent · branch 3</option>
+        <option value="analyst">analyst</option>
+        <option value="auditor">auditor</option>
+      </select>
+    </div>
+
+    <div class="seg hide-sm" id="engineSeg" role="group" aria-label="Query engine">
+      <button data-engine="rag" aria-pressed="true">RAG</button>
+      <button data-engine="mcp" aria-pressed="false">MCP</button>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="seg" id="viewSeg" role="group" aria-label="View">
+      <button data-view="chat" aria-pressed="true">Chat</button>
+      <button data-view="board" aria-pressed="false">Board <span class="mono">4</span></button>
+    </div>
+    <button class="btn btn-sm" id="themeToggle" title="Light / dark theme">Theme</button>
+    <button class="btn btn-sm" id="panelToggle" title="Toggle workbench">Workbench</button>
+  </header>
+
+  <!-- ===================== left rail ===================== -->
+  <aside class="rail" id="rail">
+    <div class="rail-sec">
+      <div class="rail-head">
+        <span class="label">Conversations</span>
+        <button class="btn btn-ghost btn-sm" id="newChat">+ New</button>
+      </div>
+      <div class="rail-list" id="threadList"></div>
+    </div>
+
+    <div class="rail-sec">
+      <div class="rail-head">
+        <span class="label">Schema</span>
+        <span class="mono muted" id="schemaCount"></span>
+      </div>
+      <input class="ctl" id="schemaFilter" placeholder="Filter tables and columns…" style="width:100%;margin-bottom:8px">
+      <div class="tree" id="schemaTree"></div>
+      <p class="chart-note" style="margin-top:8px">Highlighted tables were retrieved for the active query
+        (<span class="mono">/retrieve</span> ranking, top-k).</p>
+    </div>
+
+    <div class="rail-sec">
+      <div class="rail-head"><span class="label">Query history</span></div>
+      <div class="hist" id="histList"></div>
+    </div>
+  </aside>
+
+  <!-- ===================== main ===================== -->
+  <main class="main">
+    <section class="stream" id="stream">
+      <div class="stream-inner" id="streamInner"></div>
+    </section>
+
+    <section class="board" id="board">
+      <div class="board-head">
+        <div style="flex:1">
+          <h2>Fleet &amp; revenue board</h2>
+          <p>Four pinned queries. Each tile keeps its own SQL, filters and chart spec, and refreshes independently.</p>
+        </div>
+        <button class="btn btn-sm" data-toast="Board exported as report.xlsx — one sheet per tile plus a cover sheet">Export board</button>
+        <button class="btn btn-sm" data-toast="Scheduled: every Monday 08:00, emailed as XLSX">Schedule</button>
+      </div>
+      <div class="board-grid" id="boardGrid"></div>
+    </section>
+
+    <div class="composer">
+      <div class="composer-inner">
+        <div class="composer-box">
+          <textarea id="composer" rows="1" placeholder="Ask about the data — e.g. “revenue per branch by payment method in 2024”"></textarea>
+          <div class="composer-bar">
+            <span class="chip" id="engineChip"><span class="dot"></span>RAG pipeline</span>
+            <span class="chip" id="roleChip"><span class="dot"></span>manager</span>
+            <span class="chip"><span class="dot"></span>read-only · max 500 rows</span>
+            <div class="spacer"></div>
+            <button class="send" id="sendBtn" aria-label="Send">→</button>
+          </div>
+        </div>
+        <div class="starter-row" id="starters"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================== workbench panel ===================== -->
+  <div class="panel-scrim" id="scrim"></div>
+  <aside class="panel" id="panel" aria-label="Result workbench">
+    <div class="panel-head">
+      <div class="t">
+        <b id="pTitle">Query results</b>
+        <div class="sub" id="pSub"></div>
+      </div>
+      <button class="btn btn-sm" id="exportBtn">Export ▾</button>
+      <button class="btn btn-ghost btn-sm" id="pinBtn" title="Pin to board">Pin</button>
+      <button class="btn btn-ghost btn-sm" id="panelClose" aria-label="Close">✕</button>
+    </div>
+
+    <nav class="tabs" id="tabs" role="tablist">
+      <button role="tab" data-tab="chart" aria-selected="true">Chart</button>
+      <button role="tab" data-tab="table" aria-selected="false">Table <span class="badge" id="rowBadge">—</span></button>
+      <button role="tab" data-tab="sql" aria-selected="false">SQL</button>
+      <button role="tab" data-tab="prov" aria-selected="false">Provenance</button>
+    </nav>
+
+    <div class="panel-body">
+      <!-- chart pane -->
+      <section class="pane" data-pane="chart" data-active="true">
+        <div class="suggest" id="suggest"></div>
+        <div class="ctlbar" id="chartCtls"></div>
+        <div class="chartbox"><div id="chartHost"></div><div class="legend" id="legend"></div></div>
+        <div class="crossfilter" id="crossfilter" hidden>
+          <span id="cfText"></span>
+          <div style="flex:1"></div>
+          <button class="btn btn-sm" id="cfDrill">Drill down ▸</button>
+          <button class="btn btn-sm" id="cfClear">Clear</button>
+        </div>
+        <p class="chart-note" id="chartNote"></p>
+      </section>
+
+      <!-- table pane -->
+      <section class="pane" data-pane="table">
+        <div class="tbl-tools">
+          <input class="ctl" id="tblFilter" placeholder="Filter rows…" style="flex:1;min-width:140px">
+          <select class="ctl" id="tblAgg">
+            <option value="none">No grouping</option>
+          </select>
+          <button class="btn btn-sm" id="tblReset">Reset</button>
+        </div>
+        <div class="tbl-wrap"><table class="grid" id="grid"></table></div>
+        <div class="tbl-foot" id="tblFoot"></div>
+      </section>
+
+      <!-- sql pane -->
+      <section class="pane" data-pane="sql">
+        <div class="sqlbar">
+          <button class="btn btn-primary btn-sm" id="runSql">▶ Run</button>
+          <button class="btn btn-sm" id="explainSql">Explain</button>
+          <button class="btn btn-sm" id="formatSql">Format</button>
+          <button class="btn btn-sm" id="copySql">Copy</button>
+          <div style="flex:1"></div>
+          <button class="btn btn-sm" id="revertSql" disabled>Revert to generated</button>
+        </div>
+        <div class="sqlbox" id="sqlBox"><textarea id="sqlText" spellcheck="false"></textarea></div>
+        <p class="chart-note" id="sqlNote"></p>
+        <div class="explain" id="explainOut"></div>
+      </section>
+
+      <!-- provenance pane -->
+      <section class="pane" data-pane="prov" id="provPane"></section>
+    </div>
+  </aside>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+"use strict";
+/* =========================================================================
+   NL2SQL Workbench — interactive static mockup.
+   No build step, no network. All data below is plausible fake data drawn
+   from the two benchmark domains (car_rental, AdventureWorks).
+   ========================================================================= */
+
+const $  = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.prototype.slice.call((r || document).querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+  ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296}}
+
+function fmtNum(v){
+  if (v === null || v === undefined) return '—';
+  if (typeof v !== 'number') return String(v);
+  const a = Math.abs(v);
+  if (a >= 1e9) return (v/1e9).toFixed(2) + 'B';
+  if (a >= 1e6) return (v/1e6).toFixed(2) + 'M';
+  if (a >= 1e4) return (v/1e3).toFixed(1) + 'k';
+  if (Number.isInteger(v)) return v.toLocaleString('en-US');
+  return (Math.round(v*100)/100).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function ticks(min, max, n){
+  n = n || 5;
+  if (min === max) { max = min + (min === 0 ? 1 : Math.abs(min)*0.2); }
+  const span = max - min, step0 = span / n;
+  const mag = Math.pow(10, Math.floor(Math.log10(step0)));
+  const norm = step0 / mag;
+  let step = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10;
+  step *= mag;
+  const lo = Math.floor(min/step)*step, hi = Math.ceil(max/step)*step, out = [];
+  for (let v = lo; v <= hi + step/2; v += step) out.push(+v.toFixed(10));
+  return out;
+}
+const CV = i => 'var(--c' + ((i % 8) + 1) + ')';
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+/* =========================================================================
+   1. Schemas (abridged, real column names)
+   ========================================================================= */
+const SCHEMAS = {
+  car_rental: { label:'car_rental', tables:[
+    {n:'locations',  rows:10,   cols:[['id','serial','pk'],['name','varchar(100)'],['city','varchar(100)'],['address','varchar(255)'],['phone','varchar(20)']]},
+    {n:'employees',  rows:48,   cols:[['id','serial','pk'],['location_id','int','fk'],['first_name','varchar(50)'],['last_name','varchar(50)'],['role','varchar(30)'],['salary','numeric(10,2)'],['hire_date','date']]},
+    {n:'vehicle_categories', rows:5, cols:[['id','serial','pk'],['name','varchar(50)'],['daily_rate_min','numeric'],['daily_rate_max','numeric']]},
+    {n:'vehicles',   rows:80,   cols:[['id','serial','pk'],['category_id','int','fk'],['location_id','int','fk'],['make','varchar(50)'],['model','varchar(50)'],['year','int'],['license_plate','varchar(20)'],['daily_rate','numeric(10,2)'],['mileage','int'],['status','varchar(20)']]},
+    {n:'clients',    rows:400,  cols:[['id','serial','pk'],['first_name','varchar(50)'],['last_name','varchar(50)'],['email','varchar(150)'],['drivers_license','varchar(30)'],['date_of_birth','date'],['registration_date','date']]},
+    {n:'reservations', rows:2400, cols:[['id','serial','pk'],['client_id','int','fk'],['vehicle_id','int','fk'],['pickup_location','int','fk'],['return_location','int','fk'],['pickup_date','date'],['return_date','date'],['status','varchar(20)'],['total_cost','numeric(10,2)']]},
+    {n:'payments',   rows:2600, cols:[['id','serial','pk'],['reservation_id','int','fk'],['amount','numeric(10,2)'],['payment_method','varchar(20)'],['payment_date','date'],['status','varchar(20)']]},
+    {n:'maintenance_records', rows:1300, cols:[['id','serial','pk'],['vehicle_id','int','fk'],['maintenance_type','varchar(30)'],['cost','numeric(10,2)'],['maintenance_date','date'],['mileage_at_service','int']]},
+    {n:'reviews',    rows:1180, cols:[['id','serial','pk'],['reservation_id','int','fk'],['rating','int'],['comment','text'],['review_date','date']]}
+  ]},
+  adventureworks: { label:'adventureworks', tables:[
+    {n:'sales.salesorderheader', rows:31465, cols:[['salesorderid','int','pk'],['orderdate','timestamp'],['customerid','int','fk'],['territoryid','int','fk'],['subtotal','numeric'],['totaldue','numeric'],['status','smallint']]},
+    {n:'sales.salesorderdetail', rows:121317, cols:[['salesorderdetailid','int','pk'],['salesorderid','int','fk'],['productid','int','fk'],['orderqty','smallint'],['unitprice','numeric'],['linetotal','numeric']]},
+    {n:'sales.salesterritory', rows:10, cols:[['territoryid','int','pk'],['name','varchar(50)'],['countryregioncode','varchar(3)','fk'],['group','varchar(50)'],['salesytd','numeric']]},
+    {n:'sales.customer', rows:19820, cols:[['customerid','int','pk'],['personid','int','fk'],['storeid','int','fk'],['territoryid','int','fk']]},
+    {n:'production.product', rows:504, cols:[['productid','int','pk'],['name','varchar(50)'],['productsubcategoryid','int','fk'],['standardcost','numeric'],['listprice','numeric'],['sellstartdate','timestamp']]},
+    {n:'production.productcategory', rows:4, cols:[['productcategoryid','int','pk'],['name','varchar(50)']]},
+    {n:'production.productsubcategory', rows:37, cols:[['productsubcategoryid','int','pk'],['productcategoryid','int','fk'],['name','varchar(50)']]},
+    {n:'person.address', rows:19614, cols:[['addressid','int','pk'],['city','varchar(30)'],['stateprovinceid','int','fk'],['postalcode','varchar(15)'],['spatiallocation','varchar(44)']]},
+    {n:'person.stateprovince', rows:181, cols:[['stateprovinceid','int','pk'],['stateprovincecode','varchar(3)'],['countryregioncode','varchar(3)','fk'],['name','varchar(50)'],['territoryid','int','fk']]},
+    {n:'person.countryregion', rows:238, cols:[['countryregioncode','varchar(3)','pk'],['name','varchar(50)']]},
+    {n:'humanresources.employee', rows:290, cols:[['businessentityid','int','pk'],['jobtitle','varchar(50)'],['hiredate','date'],['gender','char(1)'],['vacationhours','smallint']]}
+  ]}
+};
+
+/* =========================================================================
+   2. Result fixtures
+   ========================================================================= */
+function fleetRows(){
+  const rnd = mulberry32(20240831);
+  const cats = ['Economy','Compact','SUV','Van','Luxury'];
+  const base = {Economy:[42,0.021],Compact:[55,0.024],SUV:[78,0.031],Van:[86,0.034],Luxury:[120,0.046]};
+  const out = [];
+  for (let i = 0; i < 64; i++){
+    const c = cats[i % 5], b = base[c];
+    const mileage = Math.round(12000 + rnd()*118000);
+    let cost = Math.round(b[0]*8 + mileage*b[1]*(0.75 + rnd()*0.6));
+    if (i === 11 || i === 47) cost = Math.round(cost * 2.9);      // two genuine outliers
+    const util = Math.round((38 + rnd()*54) * 10) / 10;
+    out.push(['B-' + (100+i) + '-' + c.slice(0,3).toUpperCase(), c, mileage, cost, util,
+              Math.round(220 - util*1.9)]);
+  }
+  return out;
+}
+function awCategoryMonths(){
+  const rnd = mulberry32(7771);
+  const cats = ['Bikes','Components','Clothing','Accessories'];
+  const scale = {Bikes:[520000,1.0],Components:[128000,1.35],Clothing:[41000,1.9],Accessories:[26000,2.4]};
+  const rows = [];
+  for (let y = 2012; y <= 2013; y++){
+    for (let m = 0; m < 12; m++){
+      cats.forEach(c => {
+        const s = scale[c];
+        const growth = 1 + (y - 2012 + m/12) * (s[1] - 1) * 0.55;
+        const season = 1 + 0.22*Math.sin((m/12)*Math.PI*2 - 0.8);
+        rows.push([y + '-' + String(m+1).padStart(2,'0'), c,
+          Math.round(s[0]*growth*season*(0.9 + rnd()*0.2))]);
+      });
+    }
+  }
+  return rows;
+}
+
+const RESULTS = {
+
+  r_veh_cat: {
+    title:'Vehicles per category', dataset:'car_rental', question:'How many vehicles are in each category?',
+    columns:['category','vehicle_count'], types:['text','int'],
+    rows:[['SUV',18],['Economy',18],['Compact',16],['Van',16],['Luxury',12]],
+    sql:"SELECT vc.name AS category,\n       COUNT(*) AS vehicle_count\nFROM vehicles v\nJOIN vehicle_categories vc ON vc.id = v.category_id\nGROUP BY vc.name\nORDER BY vehicle_count DESC\nLIMIT 500",
+    chart:{type:'bar', x:'category', y:['vehicle_count']},
+    plan:[['HashAggregate','cost=6.41..6.46 rows=5 width=15'],
+          ['  Hash Join','cost=1.11..6.01 rows=80 width=7'],
+          ['    Seq Scan on vehicles v','cost=0.00..4.80 rows=80 width=4'],
+          ['    Hash → Seq Scan on vehicle_categories vc','cost=1.05..1.05 rows=5 width=15']],
+    meta:{ rowCount:5, durationMs:18.4, attempts:1, retries:0, outcome:'answered', engine:'rag',
+      model:'gemini-2.5-flash', role:'manager', requestId:'a7f3c1b90e42', maxRows:500,
+      retrieval:{ mode:'topk', tables:['vehicles','vehicle_categories'],
+        ranking:[['vehicles',2.41],['vehicle_categories',2.18],['reservations',1.02],['maintenance_records',0.88],['locations',0.61],['payments',0.44],['clients',0.31],['reviews',0.29],['employees',0.18]],
+        valueMatches:[] },
+      stages:{retrieval:41.2, generation:812.5, validation:3.1, dry_run:6.4, execution:18.4, answer:643.0},
+      policy:{filters:[], denied:[]} },
+    answer:'There are **80 vehicles** across five categories. SUV and Economy lead with 18 each, Compact and Van hold 16, and Luxury is the smallest fleet at 12.'
+  },
+
+  r_rev_yoy: {
+    title:'Monthly revenue 2024 vs 2023', dataset:'car_rental',
+    question:'For each month of 2024, show revenue from completed payments and the % change vs the same month of 2023.',
+    columns:['month','revenue_2024','revenue_2023','yoy_pct'], types:['month','num','num','num'],
+    rows:[['2024-01',13368.12,10822.15,23.52],['2024-02',14912.40,12004.88,24.22],
+          ['2024-03',16430.55,13990.10,17.44],['2024-04',15870.20,14320.60,10.82],
+          ['2024-05',17204.85,15110.05,13.86],['2024-06',19342.10,16880.44,14.58],
+          ['2024-07',21105.60,18990.12,11.14],['2024-08',20880.35,19240.70,8.52],
+          ['2024-09',17650.90,16110.25,9.56],['2024-10',16220.44,15005.80,8.09],
+          ['2024-11',14980.10,13720.35,9.18],['2024-12',18410.75,15990.60,15.14]],
+    sql:"WITH m AS (\n  SELECT DATE_TRUNC('month', payment_date)::date AS month,\n         SUM(amount) AS revenue\n  FROM payments\n  WHERE status = 'completed'\n  GROUP BY 1\n)\nSELECT a.month,\n       a.revenue AS revenue_2024,\n       b.revenue AS revenue_2023,\n       ROUND(100.0 * (a.revenue - b.revenue) / b.revenue, 2) AS yoy_pct\nFROM m a\nJOIN m b ON b.month = a.month - INTERVAL '1 year'\nWHERE a.month >= DATE '2024-01-01'\n  AND a.month <  DATE '2025-01-01'\nORDER BY a.month",
+    chart:{type:'combo', x:'month', y:['revenue_2024','revenue_2023'], secondary:'yoy_pct'},
+    plan:[['Sort  (month)','cost=214.9..215.0 rows=12 width=40'],
+          ['  Hash Join','cost=182.1..214.4 rows=12 width=40'],
+          ['    CTE Scan on m a','cost=0.00..0.86 rows=43 width=40'],
+          ['    Hash → CTE Scan on m b','cost=0.86..0.86 rows=43 width=40'],
+          ['  CTE m → HashAggregate on payments','cost=90.5..91.0 rows=43 width=40']],
+    meta:{ rowCount:12, durationMs:31.7, attempts:2, retries:1, outcome:'answered', engine:'rag',
+      model:'gemini-2.5-flash', role:'manager', requestId:'c1d8e5a24f70', maxRows:500,
+      retrieval:{ mode:'topk', tables:['payments','reservations'],
+        ranking:[['payments',2.66],['reservations',1.44],['clients',0.79],['vehicles',0.55],['locations',0.44],['reviews',0.28],['maintenance_records',0.21],['employees',0.12],['vehicle_categories',0.09]],
+        valueMatches:[["'completed' → payments.status",0.93]] },
+      stages:{retrieval:38.9, generation:1614.0, validation:6.2, dry_run:9.8, execution:31.7, answer:902.4},
+      policy:{filters:[], denied:[]} },
+    attempts:[
+      {n:1, stage:'dry_run', ok:false,
+       sql:"SELECT DATE_TRUNC('month', p.paid_at) AS month, SUM(p.amount) …",
+       err:'column p.paid_at does not exist\nLINE 1: SELECT DATE_TRUNC(\'month\', p.paid_at) …\nHINT: perhaps you meant "p.payment_date".'},
+      {n:2, stage:'execution', ok:true, sql:'…rewritten with payments.payment_date; 12 rows in 31.7 ms'}
+    ],
+    answer:'2024 revenue from completed payments was **206,376.36**, up **13.9%** on 2023. Every month grew year over year; the strongest lift was February (+24.2%) and the weakest October (+8.1%). July was the single best month at 21,105.60.'
+  },
+
+  r_branch_method: {
+    title:'Revenue per branch by payment method', dataset:'car_rental',
+    question:'For each branch, show revenue from completed payments split by payment method.',
+    columns:['branch','credit_card','debit_card','cash'], types:['text','num','num','num'],
+    rows:[['Otopeni Airport',48210.55,21440.30,9120.75],['Băneasa',33180.10,17905.65,7840.20],
+          ['Cluj Center',29640.80,15220.40,8410.05],['Timișoara Gară',24115.25,12880.90,6650.40],
+          ['Iași Palas',21990.65,11450.10,5980.35],['Brașov Centru',20340.15,10870.25,6120.80],
+          ['Constanța Port',19875.40,9980.55,7310.60],['Sibiu Airport',16220.30,8640.75,4180.25],
+          ['Craiova Nord',13980.95,7120.40,3990.10],['Oradea Vest',12410.70,6480.15,3520.55]],
+    sql:"SELECT l.name AS branch,\n       COALESCE(SUM(p.amount) FILTER (WHERE p.payment_method = 'credit_card'), 0) AS credit_card,\n       COALESCE(SUM(p.amount) FILTER (WHERE p.payment_method = 'debit_card'),  0) AS debit_card,\n       COALESCE(SUM(p.amount) FILTER (WHERE p.payment_method = 'cash'),        0) AS cash\nFROM payments p\nJOIN reservations r ON r.id = p.reservation_id\nJOIN locations l    ON l.id = r.pickup_location\nWHERE p.status = 'completed'\nGROUP BY l.name\nORDER BY 2 DESC",
+    chart:{type:'bar', x:'branch', y:['credit_card','debit_card','cash'], stacked:true},
+    plan:[['Sort','cost=612.4..612.5 rows=10 width=76'],
+          ['  HashAggregate','cost=598.1..611.2 rows=10 width=76'],
+          ['    Hash Join (payments ⋈ reservations ⋈ locations)','cost=22.4..541.8 rows=2600 width=28']],
+    meta:{ rowCount:10, durationMs:44.9, attempts:1, retries:0, outcome:'answered', engine:'rag',
+      model:'gemini-2.5-flash', role:'manager', requestId:'9b21fe004c33', maxRows:500,
+      retrieval:{ mode:'topk', tables:['payments','reservations','locations'],
+        ranking:[['payments',2.72],['locations',2.10],['reservations',1.96],['clients',0.62],['vehicles',0.40],['employees',0.34],['reviews',0.22],['maintenance_records',0.15],['vehicle_categories',0.08]],
+        valueMatches:[["'credit_card' → payments.payment_method",0.97],["'cash' → payments.payment_method",0.91]] },
+      stages:{retrieval:44.1, generation:1102.8, validation:5.0, dry_run:11.2, execution:44.9, answer:770.6},
+      policy:{filters:[], denied:[]} },
+    answer:'Otopeni Airport is the largest branch at **78,771.60** in completed payments — 22% of company revenue. Card payments dominate everywhere (81% of the total), but cash share is highest at Constanța Port (19.6%) and lowest at Otopeni (11.0%).'
+  },
+
+  r_fleet: {
+    title:'Fleet condition and utilisation', dataset:'car_rental',
+    question:'For every vehicle, show mileage, lifetime maintenance cost, utilisation and idle days.',
+    columns:['license_plate','category','mileage','maintenance_cost','utilisation_pct','idle_days'],
+    types:['text','text','int','num','num','int'],
+    rows: fleetRows(),
+    sql:"SELECT v.license_plate,\n       vc.name AS category,\n       v.mileage,\n       COALESCE(SUM(m.cost), 0) AS maintenance_cost,\n       ROUND(100.0 * rented.days / 365, 1) AS utilisation_pct,\n       365 - rented.days AS idle_days\nFROM vehicles v\nJOIN vehicle_categories vc ON vc.id = v.category_id\nLEFT JOIN maintenance_records m ON m.vehicle_id = v.id\nLEFT JOIN LATERAL (\n  SELECT COUNT(DISTINCT d.day) AS days\n  FROM reservations r\n  CROSS JOIN LATERAL generate_series(r.pickup_date, r.return_date, INTERVAL '1 day') d(day)\n  WHERE r.vehicle_id = v.id AND r.status NOT IN ('cancelled','no_show')\n) rented ON TRUE\nGROUP BY v.id, vc.name, rented.days\nORDER BY maintenance_cost DESC\nLIMIT 500",
+    plan:[['Sort','cost=8841.2..8841.4 rows=64 width=52'],
+          ['  GroupAggregate','cost=8102.7..8836.9 rows=64 width=52'],
+          ['    Nested Loop Left Join (LATERAL generate_series)','cost=310.4..7940.2 rows=15600 width=40'],
+          ['    Index Scan using idx_maintenance_vehicle','cost=0.28..12.6 rows=20 width=10']],
+    chart:{type:'scatter', x:'mileage', y:['maintenance_cost'], series:'category', trendline:true},
+    meta:{ rowCount:64, durationMs:186.3, attempts:1, retries:0, outcome:'answered', engine:'rag',
+      model:'gemini-2.5-flash', role:'manager', requestId:'4e0aa7cd1182', maxRows:500,
+      retrieval:{ mode:'topk', tables:['vehicles','vehicle_categories','maintenance_records','reservations'],
+        ranking:[['vehicles',2.55],['maintenance_records',2.31],['reservations',1.88],['vehicle_categories',1.40],['locations',0.51],['payments',0.36],['reviews',0.24],['clients',0.14],['employees',0.11]],
+        valueMatches:[] },
+      stages:{retrieval:46.0, generation:1980.4, validation:8.9, dry_run:22.1, execution:186.3, answer:1010.2},
+      policy:{filters:[], denied:[]} },
+    answer:'Maintenance cost rises with mileage at roughly **0.031 RON per km** (R² = 0.71). Two vehicles sit far above the line — B-111-COM and B-147-VAN — both with engine repairs in the last quarter.'
+  },
+
+  r_top_clients: {
+    title:'Top clients by total spend', dataset:'car_rental',
+    question:'Care sunt cei mai buni clienți? → by total spend on completed payments',
+    columns:['client','reservations','total_spend','first_seen'], types:['text','int','num','date'],
+    rows:[['Andrei Popescu',14,18420.50,'2021-04-11'],['Maria Ionescu',11,16880.25,'2021-08-02'],
+          ['Radu Constantinescu',9,15340.80,'2022-01-19'],['Elena Dumitrescu',12,14990.15,'2021-02-27'],
+          ['Cristian Marin',8,13720.40,'2022-06-05'],['Ioana Stoica',10,12880.90,'2021-11-30'],
+          ['Vlad Georgescu',7,11450.65,'2023-03-14'],['Ana Munteanu',9,10990.30,'2022-09-08'],
+          ['Mihai Dobre',6,9840.75,'2023-07-21'],['Gabriela Nistor',8,9310.20,'2022-04-02']],
+    sql:"SELECT c.first_name || ' ' || c.last_name AS client,\n       COUNT(DISTINCT r.id) AS reservations,\n       SUM(p.amount) AS total_spend,\n       MIN(c.registration_date) AS first_seen\nFROM clients c\nJOIN reservations r ON r.client_id = c.id\nJOIN payments p    ON p.reservation_id = r.id\nWHERE p.status = 'completed'\nGROUP BY c.id\nORDER BY total_spend DESC\nLIMIT 10",
+    chart:{type:'hbar', x:'client', y:['total_spend']},
+    plan:[['Limit','cost=744.1..744.2 rows=10 width=48'],
+          ['  Sort (total_spend DESC)','cost=744.1..746.6 rows=400 width=48'],
+          ['    HashAggregate','cost=690.2..712.4 rows=400 width=48']],
+    meta:{ rowCount:10, durationMs:27.5, attempts:1, retries:0, outcome:'answered', engine:'rag',
+      model:'gemini-2.5-flash', role:'manager', requestId:'ba55701cc9e1', maxRows:500,
+      retrieval:{ mode:'topk', tables:['clients','reservations','payments'],
+        ranking:[['clients',2.48],['payments',2.02],['reservations',1.91],['reviews',0.66],['vehicles',0.30],['locations',0.27],['employees',0.14],['maintenance_records',0.10],['vehicle_categories',0.07]],
+        valueMatches:[] },
+      stages:{retrieval:39.5, generation:948.1, validation:4.2, dry_run:7.7, execution:27.5, answer:701.9},
+      policy:{filters:[], denied:[]} },
+    answer:'By total spend on completed payments the top client is **Andrei Popescu** (18,420.50 over 14 reservations). The top ten account for 22% of company revenue; note that ranking by *number of reservations* instead would promote Elena Dumitrescu above Maria Ionescu.'
+  },
+
+  r_territory: {
+    title:'Sales by territory, 2013', dataset:'adventureworks',
+    question:'What were 2013 sales by territory?',
+    columns:['territory','country','sales_2013','orders','avg_order'], types:['text','text','num','int','num'],
+    rows:[['Southwest','US',4088000,6242,655.0],['Canada','CA',3480000,4560,763.2],
+          ['Northwest','US',2900000,4128,702.5],['Australia','AU',2437000,3541,688.2],
+          ['United Kingdom','GB',1980000,2678,739.4],['France','FR',1720000,2311,744.3],
+          ['Germany','DE',1610000,2104,765.2],['Central','US',1450000,1980,732.3],
+          ['Southeast','US',1290000,1755,735.0],['Northeast','US',1120000,1522,735.9]],
+    sql:"SELECT st.name AS territory,\n       cr.countryregioncode AS country,\n       SUM(soh.subtotal) AS sales_2013,\n       COUNT(*)          AS orders,\n       ROUND(AVG(soh.subtotal), 1) AS avg_order\nFROM sales.salesorderheader soh\nJOIN sales.salesterritory st ON st.territoryid = soh.territoryid\nJOIN person.countryregion cr ON cr.countryregioncode = st.countryregioncode\nWHERE soh.orderdate >= DATE '2013-01-01'\n  AND soh.orderdate <  DATE '2014-01-01'\nGROUP BY st.name, cr.countryregioncode\nORDER BY sales_2013 DESC",
+    chart:{type:'geo', x:'territory', y:['sales_2013']},
+    plan:[['Sort','cost=4210.8..4211.0 rows=10 width=48'],
+          ['  HashAggregate','cost=4102.2..4188.4 rows=10 width=48'],
+          ['    Hash Join','cost=12.9..3944.1 rows=14182 width=24'],
+          ['      Index Scan using idx_soh_orderdate','cost=0.42..3120.5 rows=14182 width=16']],
+    meta:{ rowCount:10, durationMs:96.2, attempts:1, retries:0, outcome:'answered', engine:'rag',
+      model:'gemini-2.5-flash', role:'manager', requestId:'77c0be391aa5', maxRows:500,
+      retrieval:{ mode:'topk', tables:['sales.salesorderheader','sales.salesterritory','person.countryregion'],
+        ranking:[['sales.salesterritory',2.64],['sales.salesorderheader',2.38],['person.countryregion',1.72],['sales.customer',1.10],['person.stateprovince',0.94],['sales.salesorderdetail',0.71],['person.address',0.52],['production.product',0.22]],
+        valueMatches:[] },
+      stages:{retrieval:88.4, generation:1340.6, validation:7.1, dry_run:19.4, execution:96.2, answer:812.0},
+      policy:{filters:[], denied:[]} },
+    answer:'2013 sales totalled **22.08M** across ten territories. North America contributes 56%; Southwest alone is 18.5%. Germany has the highest average order value (765.20) on the lowest order count of the European group.'
+  },
+
+  r_aw_cat_month: {
+    title:'Monthly sales by product category', dataset:'adventureworks',
+    question:'Show monthly sales for each product category in 2012–2013.',
+    columns:['month','category','sales'], types:['month','text','num'],
+    rows: awCategoryMonths(),
+    sql:"SELECT TO_CHAR(DATE_TRUNC('month', soh.orderdate), 'YYYY-MM') AS month,\n       pc.name AS category,\n       SUM(sod.linetotal) AS sales\nFROM sales.salesorderheader soh\nJOIN sales.salesorderdetail sod ON sod.salesorderid = soh.salesorderid\nJOIN production.product p       ON p.productid = sod.productid\nJOIN production.productsubcategory psc ON psc.productsubcategoryid = p.productsubcategoryid\nJOIN production.productcategory pc     ON pc.productcategoryid = psc.productcategoryid\nWHERE soh.orderdate >= DATE '2012-01-01' AND soh.orderdate < DATE '2014-01-01'\nGROUP BY 1, 2\nORDER BY 1, 2",
+    plan:[['Sort','cost=18240.5..18241.0 rows=96 width=44'],
+          ['  HashAggregate','cost=17980.2..18190.4 rows=96 width=44'],
+          ['    Hash Join (5 relations)','cost=310.2..16420.8 rows=60112 width=28']],
+    chart:{type:'facet', x:'month', y:['sales'], series:'category'},
+    meta:{ rowCount:96, durationMs:412.8, attempts:1, retries:0, outcome:'answered', engine:'rag',
+      model:'gemini-2.5-flash', role:'manager', requestId:'e34901bb7c26', maxRows:500,
+      retrieval:{ mode:'topk', tables:['sales.salesorderheader','sales.salesorderdetail','production.product','production.productsubcategory','production.productcategory'],
+        ranking:[['production.productcategory',2.51],['sales.salesorderdetail',2.30],['production.product',2.12],['sales.salesorderheader',1.98],['production.productsubcategory',1.66],['sales.salesterritory',0.48],['sales.customer',0.31],['person.address',0.12]],
+        valueMatches:[] },
+      stages:{retrieval:91.0, generation:2210.5, validation:9.4, dry_run:41.0, execution:412.8, answer:1104.3},
+      policy:{filters:[], denied:[]} },
+    answer:'Bikes are 78% of revenue but the flattest series; Accessories more than doubled over the two years (+141%) off a small base. All four categories share the same seasonal shape, peaking in March and again in June.'
+  }
+};
+Object.keys(RESULTS).forEach(k => { RESULTS[k].id = k; });
+
+/* =========================================================================
+   3. Conversation threads
+   ========================================================================= */
+const THREADS = [
+  { id:'t1', dataset:'car_rental', title:'Vehicles per category', when:'now',
+    messages:[
+      {role:'user', text:'Câte vehicule sunt în fiecare categorie?'},
+      {role:'assistant', resultId:'r_veh_cat'}
+    ]},
+  { id:'t2', dataset:'car_rental', title:'Care sunt cei mai buni clienți?', when:'12 min',
+    messages:[
+      {role:'user', text:'Care sunt cei mai buni clienți?'},
+      {role:'clarify',
+       question:'“Best” can be measured three ways here, and they do not agree.',
+       body:'The generator stopped before writing SQL because the three readings return different clients. Pick one — the choice is stored with the answer so the query is reproducible.',
+       options:[
+         {k:'1', label:'By total spend on completed payments',
+          sql:'SUM(p.amount) WHERE p.status = \'completed\'', resultId:'r_top_clients'},
+         {k:'2', label:'By number of reservations',
+          sql:'COUNT(DISTINCT r.id)', resultId:'r_top_clients'},
+         {k:'3', label:'By tenure — earliest registration_date',
+          sql:'MIN(c.registration_date)', resultId:'r_top_clients'}
+       ]}
+    ]},
+  { id:'t3', dataset:'car_rental', title:'Revenue 2024 vs 2023', when:'1 h',
+    messages:[
+      {role:'user', text:'For each month of 2024, show revenue from completed payments and the percentage change versus the same month of 2023.'},
+      {role:'repair', resultId:'r_rev_yoy'},
+      {role:'assistant', resultId:'r_rev_yoy'}
+    ]},
+  { id:'t4', dataset:'car_rental', title:'Revenue per branch by method', when:'2 h',
+    messages:[
+      {role:'user', text:'Revenue per branch split by payment method, completed payments only.'},
+      {role:'assistant', resultId:'r_branch_method'}
+    ]},
+  { id:'t5', dataset:'car_rental', title:'Fleet condition', when:'yesterday',
+    messages:[
+      {role:'user', text:'Does maintenance cost track mileage? Show every vehicle.'},
+      {role:'assistant', resultId:'r_fleet'}
+    ]},
+  { id:'t6', dataset:'car_rental', title:'Salaries per branch (blocked)', when:'yesterday',
+    messages:[
+      {role:'user', text:'Care este salariul mediu pe filială?'},
+      {role:'blocked',
+       reason:"role 'agent' cannot read the data required: employees.salary is denied for this role",
+       role:'agent', sql:'SELECT l.name, AVG(e.salary) FROM employees e JOIN locations l …',
+       note:'Terminal by design — a policy refusal is never fed back to the model as a repair hint, so the model cannot look for a way around the rule.'}
+    ]},
+  { id:'t7', dataset:'adventureworks', title:'Sales by territory 2013', when:'yesterday',
+    messages:[
+      {role:'user', text:'What were 2013 sales by territory?'},
+      {role:'assistant', resultId:'r_territory'}
+    ]},
+  { id:'t8', dataset:'adventureworks', title:'Category sales 2012–2013', when:'2 d',
+    messages:[
+      {role:'user', text:'Show monthly sales for each product category in 2012 and 2013.'},
+      {role:'assistant', resultId:'r_aw_cat_month'}
+    ]}
+];
+
+const HISTORY = [
+  {q:'Câte vehicule sunt în fiecare categorie?', rid:'r_veh_cat', m:'5 rows · 18 ms · 1 attempt'},
+  {q:'Revenue per branch by payment method', rid:'r_branch_method', m:'10 rows · 45 ms · 1 attempt'},
+  {q:'Monthly revenue 2024 vs 2023', rid:'r_rev_yoy', m:'12 rows · 32 ms · 2 attempts'},
+  {q:'Fleet condition and utilisation', rid:'r_fleet', m:'64 rows · 186 ms · 1 attempt'},
+  {q:'Top clients by total spend', rid:'r_top_clients', m:'10 rows · 28 ms · 1 attempt'},
+  {q:'Sales by territory 2013', rid:'r_territory', m:'10 rows · 96 ms · 1 attempt'}
+];
+
+const STARTERS = {
+  car_rental:['Revenue per branch by payment method','Three-month moving average of revenue','Which vehicles idle the most?','Care sunt cei mai buni clienți?'],
+  adventureworks:['2013 sales by territory','Monthly sales per product category','Top 20 products by margin','Which resellers churned in 2013?']
+};
+
+/* =========================================================================
+   4. State
+   ========================================================================= */
+const state = {
+  dataset:'car_rental', role:'manager', engine:'rag', view:'chat',
+  threadId:'t1', resultId:'r_veh_cat',
+  tab:'chart',
+  specs:{},              // resultId -> chart spec
+  hidden:{},             // resultId -> {seriesName:true}
+  sort:{col:null, dir:1},
+  filter:'', group:'none',
+  crossfilter:null,
+  sqlEdited:false,
+  pinned:['r_veh_cat','r_rev_yoy','r_branch_method','r_fleet']
+};
+function spec(rid){
+  if (!state.specs[rid]) {
+    const c = RESULTS[rid].chart;
+    state.specs[rid] = Object.assign({stacked:false, trendline:false, movingAvg:0, bins:10,
+      normalize:false, sortBy:'none', topN:0, secondary:null, series:null}, c);
+  }
+  return state.specs[rid];
+}
+const res = () => RESULTS[state.resultId];
+
+/* =========================================================================
+   5. Result-shape inference → chart suggestions
+   ========================================================================= */
+function profile(r){
+  const cats = [], nums = [], times = [];
+  r.types.forEach((t, i) => {
+    // A date column is a time *axis* only when the result is ordered by it,
+    // which in practice means it is the leading column. `first_seen` sitting
+    // in column 4 of a ranking is a label, not a series index.
+    if (t === 'month' || (t === 'date' && i === 0)) times.push(r.columns[i]);
+    else if (t === 'int' || t === 'num') nums.push(r.columns[i]);
+    else cats.push(r.columns[i]);
+  });
+  const distinct = {};
+  r.columns.forEach((c, i) => { distinct[c] = new Set(r.rows.map(row => row[i])).size; });
+  return {cats, nums, times, distinct, n:r.rows.length};
+}
+function suggestions(r){
+  const p = profile(r), out = [];
+  // rank is "how well does this read for this shape" — lower is better; the
+  // list is sorted by it, so the first chip is what the pipeline would pick.
+  const add = (rank, type, label, why, extra) =>
+    out.push(Object.assign({rank, type, label, why}, extra || {}));
+  const many = p.n >= 20;
+
+  if (p.n === 1 && p.nums.length === 1 && p.cats.length === 0)
+    add(0, 'kpi', 'Big number', 'single scalar', {x:null, y:[p.nums[0]]});
+
+  if (p.times.length === 1 && p.cats.length === 1 && p.nums.length === 1) {
+    add(1, 'facet', 'Small multiples', p.distinct[p.cats[0]] + ' panels, shared scale',
+        {x:p.times[0], y:[p.nums[0]], series:p.cats[0]});
+    add(2, 'line', 'Multi-line', p.distinct[p.cats[0]] + ' series over time',
+        {x:p.times[0], y:[p.nums[0]], series:p.cats[0]});
+    add(5, 'heat', 'Heatmap', 'time × ' + p.cats[0] + ' matrix',
+        {x:p.times[0], y:[p.nums[0]], series:p.cats[0]});
+  } else if (p.times.length === 1 && p.nums.length >= 1) {
+    add(1, 'line', 'Line', p.nums.length + ' measure' + (p.nums.length>1?'s':'') + ' over time',
+        {x:p.times[0], y:p.nums.slice(0,3)});
+    if (p.nums.length >= 2)
+      add(2, 'combo', 'Dual axis', 'mixed units (' + p.nums[0] + ' vs ' + p.nums[p.nums.length-1] + ')',
+          {x:p.times[0], y:p.nums.slice(0, p.nums.length-1), secondary:p.nums[p.nums.length-1]});
+    add(4, 'area', 'Area', 'cumulative reading', {x:p.times[0], y:[p.nums[0]]});
+  }
+
+  if (p.nums.length >= 2 && many)
+    add(1, 'scatter', 'Scatter + trend', 'correlation over ' + p.n + ' rows',
+        {x:p.nums[0], y:[p.nums[1]], series:p.cats[1] || p.cats[0] || null, trendline:true});
+  if (p.nums.length >= 1 && many)
+    add(3, 'hist', 'Histogram', 'distribution of ' + p.nums[p.nums.length-1],
+        {x:null, y:[p.nums[p.nums.length-1]]});
+
+  if (!p.times.length && p.cats.length >= 1 && p.nums.length >= 1) {
+    const wide = p.distinct[p.cats[0]] > 8 || r.rows.some(row => String(row[0]).length > 14);
+    add(p.distinct[p.cats[0]] <= 15 ? 2 : 6, wide ? 'hbar' : 'bar', wide ? 'Bars (horizontal)' : 'Bars',
+        p.distinct[p.cats[0]] + ' categories, ' + (wide ? 'long labels' : '1 measure'),
+        {x:p.cats[0], y:[p.nums[0]]});
+    if (p.nums.length === 1 && p.n <= 6 && r.rows.every(row => row[r.columns.indexOf(p.nums[0])] >= 0))
+      add(4, 'pie', 'Donut', 'part-of-whole, ' + p.n + ' slices', {x:p.cats[0], y:[p.nums[0]]});
+  }
+  if (!p.times.length && p.cats.length >= 1 && p.nums.length >= 2 && p.distinct[p.cats[0]] <= 15) {
+    add(2, 'bar', 'Grouped bars', p.nums.length + ' measures per category', {x:p.cats[0], y:p.nums, stacked:false});
+    add(3, 'bar', 'Stacked bars', 'composition per category', {x:p.cats[0], y:p.nums, stacked:true});
+  }
+  if (p.cats.length && /territory|country|region|city|state|province/i.test(p.cats.join(' ')) && p.nums.length)
+    add(2, 'geo', 'Region map', 'geographic column: ' + p.cats[0], {x:p.cats[0], y:[p.nums[0]]});
+  if (!out.length) add(0, 'none', 'Table only', 'no numeric measure to plot', {});
+  return out.sort((a,b) => a.rank - b.rank);
+}
+
+/* =========================================================================
+   6. Chart engine (hand-rolled SVG, theme-reactive through CSS vars)
+   ========================================================================= */
+const W = 760, H = 330;
+
+function svgText(x, y, t, o){
+  o = o || {};
+  return '<text x="' + x + '" y="' + y + '" style="fill:' + (o.fill || 'var(--text-3)') + ';font-size:' +
+    (o.size || 11) + 'px;font-family:var(--font-sans)" text-anchor="' + (o.anchor || 'middle') +
+    '"' + (o.weight ? ' font-weight="' + o.weight + '"' : '') +
+    (o.rot ? ' transform="rotate(' + o.rot + ' ' + x + ' ' + y + ')"' : '') + '>' + esc(t) + '</text>';
+}
+function axes(m, xs, ys, opt){
+  opt = opt || {};
+  let s = '';
+  ys.forEach(t => {
+    const y = opt.yScale(t);
+    s += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + y + '" y2="' + y +
+         '" style="stroke:var(--grid)" stroke-width="1"/>';
+    s += svgText(m.l - 8, y + 4, opt.yFmt ? opt.yFmt(t) : fmtNum(t), {anchor:'end'});
+  });
+  return s;
+}
+function seriesOf(r, sp){
+  // returns {cats:[], series:[{name, vals:[], axis}]}
+  const ci = c => r.columns.indexOf(c);
+  if (sp.series) {
+    const xi = ci(sp.x), si = ci(sp.series), vi = ci(sp.y[0]);
+    const cats = [], keys = [];
+    r.rows.forEach(row => {
+      if (cats.indexOf(row[xi]) < 0) cats.push(row[xi]);
+      if (keys.indexOf(row[si]) < 0) keys.push(row[si]);
+    });
+    const map = {};
+    keys.forEach(k => { map[k] = cats.map(() => 0); });
+    r.rows.forEach(row => { map[row[si]][cats.indexOf(row[xi])] = row[vi]; });
+    return {cats, series:keys.map((k, i) => ({name:k, vals:map[k], axis:'left', ci:i}))};
+  }
+  const xi = ci(sp.x);
+  const cats = sp.x ? r.rows.map(row => row[xi]) : r.rows.map((_, i) => i + 1);
+  const ser = sp.y.map((c, i) => ({name:c, vals:r.rows.map(row => Number(row[ci(c)])), axis:'left', ci:i}));
+  if (sp.secondary) ser.push({name:sp.secondary, vals:r.rows.map(row => Number(row[ci(sp.secondary)])),
+                              axis:'right', ci:ser.length, line:true});
+  return {cats, series:ser};
+}
+function visible(rid, ser){ const h = state.hidden[rid] || {}; return ser.filter(s => !h[s.name]); }
+function movAvg(vals, n){
+  return vals.map((_, i) => {
+    const from = Math.max(0, i - n + 1), win = vals.slice(from, i + 1);
+    return win.reduce((a, b) => a + b, 0) / win.length;
+  });
+}
+function ols(xs, ys){
+  const n = xs.length, mx = xs.reduce((a,b)=>a+b,0)/n, my = ys.reduce((a,b)=>a+b,0)/n;
+  let num = 0, den = 0; for (let i=0;i<n;i++){ num += (xs[i]-mx)*(ys[i]-my); den += (xs[i]-mx)**2; }
+  const b = den ? num/den : 0, a = my - b*mx;
+  let ssr = 0, sst = 0;
+  for (let i=0;i<n;i++){ const p = a + b*xs[i]; ssr += (ys[i]-p)**2; sst += (ys[i]-my)**2; }
+  return {a, b, r2: sst ? 1 - ssr/sst : 0};
+}
+
+function renderChart(r, sp, opts){
+  opts = opts || {};
+  const h = opts.h || H, w = W;
+  const rid = r.id;
+  const t = sp.type;
+  if (t === 'none') return {svg:'<div class="muted" style="padding:40px 0;text-align:center">No chart for this shape — the result is scalar or text-only.</div>', legend:[], note:''};
+  if (t === 'kpi') {
+    const v = r.rows[0][r.columns.indexOf(sp.y[0])];
+    return {svg:'<div style="padding:44px 0;text-align:center"><div class="tile-kpi">' + fmtNum(v) +
+      '</div><div class="muted" style="margin-top:6px">' + esc(sp.y[0]) + '</div></div>', legend:[], note:''};
+  }
+  if (t === 'scatter')  return scatterChart(r, sp, h);
+  if (t === 'hist')     return histChart(r, sp, h);
+  if (t === 'pie')      return pieChart(r, sp, h);
+  if (t === 'geo')      return geoChart(r, sp, h);
+  if (t === 'heat')     return heatChart(r, sp, h);
+  if (t === 'facet')    return facetChart(r, sp, h);
+  return cartesian(r, sp, h);
+}
+
+/* --- bar / hbar / line / area / combo ------------------------------------ */
+function cartesian(r, sp, h){
+  const model = seriesOf(r, sp);
+  let ser = visible(r.id, model.series);
+  let cats = model.cats.slice();
+  const horiz = sp.type === 'hbar';
+
+  // sort / top-N controls
+  if (sp.sortBy && sp.sortBy !== 'none' && ser.length){
+    const idx = cats.map((c,i)=>i);
+    const key = i => ser.reduce((a,s)=>a + (s.vals[i]||0), 0);
+    idx.sort((a,b)=> sp.sortBy === 'desc' ? key(b)-key(a) : key(a)-key(b));
+    cats = idx.map(i=>cats[i]);
+    ser = ser.map(s => ({name:s.name, vals:idx.map(i=>s.vals[i]), axis:s.axis, ci:s.ci, line:s.line}));
+  }
+  if (sp.topN && cats.length > sp.topN){
+    cats = cats.slice(0, sp.topN);
+    ser = ser.map(s => ({name:s.name, vals:s.vals.slice(0, sp.topN), axis:s.axis, ci:s.ci, line:s.line}));
+  }
+
+  const left = ser.filter(s => s.axis === 'left'), right = ser.filter(s => s.axis === 'right');
+  const stacked = sp.stacked && (sp.type === 'bar' || sp.type === 'hbar' || sp.type === 'area');
+  const norm = sp.normalize && stacked;
+
+  let lv = [];
+  if (stacked){
+    for (let i = 0; i < cats.length; i++){
+      let acc = 0; left.forEach(s => acc += (Number(s.vals[i]) || 0));
+      lv.push(norm ? 100 : acc);
+    }
+  } else left.forEach(s => lv = lv.concat(s.vals.map(Number)));
+  const overlay = sp.movingAvg > 1 && left.length ? movAvg(left[0].vals.map(Number), sp.movingAvg) : null;
+  if (overlay) lv = lv.concat(overlay);
+
+  const lTicks = ticks(Math.min(0, Math.min.apply(null, lv)), Math.max.apply(null, lv), 5);
+  const rv = [].concat.apply([], right.map(s => s.vals.map(Number)));
+  const rTicks = right.length ? ticks(Math.min.apply(null, rv), Math.max.apply(null, rv), 5) : null;
+
+  const longLabels = cats.some(c => String(c).length > 8) && cats.length > 6;
+  const m = horiz
+    ? {l:Math.min(190, 8 + Math.max.apply(null, cats.map(c=>String(c).length))*7), r:52, t:12, b:34}
+    : {l:60, r:right.length ? 54 : 20, t:12, b: longLabels ? 62 : 34};
+  const plotW = W - m.l - m.r, plotH = h - m.t - m.b;
+
+  const yScale = v => m.t + plotH * (1 - (v - lTicks[0]) / (lTicks[lTicks.length-1] - lTicks[0]));
+  const y2Scale = v => rTicks ? m.t + plotH * (1 - (v - rTicks[0]) / (rTicks[rTicks.length-1] - rTicks[0])) : 0;
+  const xScale = v => m.l + plotW * (v - lTicks[0]) / (lTicks[lTicks.length-1] - lTicks[0]);
+  const band = (horiz ? plotH : plotW) / Math.max(1, cats.length);
+
+  let s = '';
+  // grid + value axis
+  if (horiz){
+    lTicks.forEach(t => {
+      const x = xScale(t);
+      s += '<line x1="'+x+'" x2="'+x+'" y1="'+m.t+'" y2="'+(m.t+plotH)+'" style="stroke:var(--grid)"/>';
+      s += svgText(x, h - m.b + 16, fmtNum(t));
+    });
+  } else {
+    s += axes(m, cats, lTicks, {yScale:yScale});
+    if (rTicks) rTicks.forEach(t => s += svgText(W - m.r + 8, y2Scale(t) + 4, fmtNum(t), {anchor:'start', fill:CV(right[0].ci)}));
+  }
+
+  // marks
+  if (sp.type === 'bar' || sp.type === 'hbar' || sp.type === 'combo'){
+    const groupN = stacked ? 1 : left.length;
+    const bw = Math.max(3, (band * 0.72) / Math.max(1, groupN));
+    cats.forEach((c, i) => {
+      let acc = 0;
+      const total = left.reduce((a, s2) => a + (Number(s2.vals[i]) || 0), 0) || 1;
+      left.forEach((s2, k) => {
+        let v = Number(s2.vals[i]) || 0;
+        if (norm) v = v / total * 100;
+        if (horiz){
+          const y0 = m.t + band*i + (band - bw*groupN)/2 + bw*(stacked?0:k);
+          const x0 = stacked ? xScale(acc) : xScale(0), x1 = stacked ? xScale(acc+v) : xScale(v);
+          s += '<rect x="'+Math.min(x0,x1)+'" y="'+y0+'" width="'+Math.max(1,Math.abs(x1-x0))+'" height="'+bw+
+               '" rx="2" style="fill:'+CV(s2.ci)+'" data-cat="'+esc(c)+'" class="mk"><title>'+esc(c)+' · '+esc(s2.name)+': '+fmtNum(v)+'</title></rect>';
+        } else {
+          const x0 = m.l + band*i + (band - bw*groupN)/2 + bw*(stacked?0:k);
+          const yTop = yScale(stacked ? acc + v : v), yBase = yScale(stacked ? acc : 0);
+          s += '<rect x="'+x0+'" y="'+Math.min(yTop,yBase)+'" width="'+bw+'" height="'+Math.max(1,Math.abs(yBase-yTop))+
+               '" rx="2" style="fill:'+CV(s2.ci)+'" data-cat="'+esc(c)+'" class="mk"><title>'+esc(c)+' · '+esc(s2.name)+': '+fmtNum(v)+'</title></rect>';
+        }
+        acc += v;
+      });
+    });
+  }
+  if (sp.type === 'line' || sp.type === 'area'){
+    left.forEach(s2 => {
+      const pts = s2.vals.map((v, i) => [m.l + band*i + band/2, yScale(Number(v) || 0)]);
+      if (sp.type === 'area'){
+        s += '<path d="M'+pts.map(p=>p[0]+','+p[1]).join(' L')+' L'+pts[pts.length-1][0]+','+yScale(lTicks[0])+
+             ' L'+pts[0][0]+','+yScale(lTicks[0])+' Z" style="fill:'+CV(s2.ci)+';opacity:.16"/>';
+      }
+      s += '<path d="M'+pts.map(p=>p[0]+','+p[1]).join(' L')+'" fill="none" style="stroke:'+CV(s2.ci)+
+           '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+      pts.forEach((p, i) => s += '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3" style="fill:'+CV(s2.ci)+
+        '" data-cat="'+esc(cats[i])+'" class="mk"><title>'+esc(cats[i])+' · '+esc(s2.name)+': '+fmtNum(s2.vals[i])+'</title></circle>');
+    });
+  }
+  right.forEach(s2 => {
+    const pts = s2.vals.map((v, i) => [m.l + band*i + band/2, y2Scale(Number(v) || 0)]);
+    s += '<path d="M'+pts.map(p=>p[0]+','+p[1]).join(' L')+'" fill="none" style="stroke:'+CV(s2.ci)+
+         '" stroke-width="2" stroke-dasharray="1 0"/>';
+    pts.forEach((p, i) => s += '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3.2" style="fill:var(--surface);stroke:'+CV(s2.ci)+
+      '" stroke-width="2"><title>'+esc(cats[i])+' · '+esc(s2.name)+': '+fmtNum(s2.vals[i])+'</title></circle>');
+  });
+  if (overlay){
+    const pts = overlay.map((v, i) => [m.l + band*i + band/2, yScale(v)]);
+    s += '<path d="M'+pts.map(p=>p[0]+','+p[1]).join(' L')+'" fill="none" style="stroke:var(--text-2)" ' +
+         'stroke-width="1.6" stroke-dasharray="5 4"/>';
+  }
+
+  // category axis
+  cats.forEach((c, i) => {
+    if (horiz) s += svgText(m.l - 8, m.t + band*i + band/2 + 4, c, {anchor:'end'});
+    else {
+      const x = m.l + band*i + band/2;
+      if (cats.length > 16 && i % 2) return;
+      s += svgText(x, h - m.b + (longLabels ? 14 : 18), c, longLabels ? {anchor:'end', rot:-38} : {});
+    }
+  });
+
+  const legend = ser.map(s2 => ({name:s2.name, color:CV(s2.ci), axis:s2.axis}))
+    .concat(overlay ? [{name:sp.movingAvg + '-period moving avg', color:'var(--text-2)', dash:true}] : []);
+  const notes = [];
+  if (stacked) notes.push(norm ? 'Stacked to 100% — composition, not level.' : 'Stacked — bar height is the category total.');
+  if (right.length) notes.push('Right axis: ' + sp.secondary + ' (different unit, so it never shares the left scale).');
+  if (overlay) notes.push('Dashed line: ' + sp.movingAvg + '-period trailing mean of ' + left[0].name + ', computed over the full series.');
+  return {svg:'<svg viewBox="0 0 '+W+' '+h+'" role="img">'+s+'</svg>', legend, note:notes.join(' ')};
+}
+
+/* --- scatter -------------------------------------------------------------- */
+function scatterChart(r, sp, h){
+  const xi = r.columns.indexOf(sp.x), yi = r.columns.indexOf(sp.y[0]);
+  const si = sp.series ? r.columns.indexOf(sp.series) : -1;
+  const m = {l:64, r:20, t:12, b:46}, plotW = W-m.l-m.r, plotH = h-m.t-m.b;
+  const xs = r.rows.map(row => Number(row[xi])), ys = r.rows.map(row => Number(row[yi]));
+  const xT = ticks(Math.min.apply(null,xs), Math.max.apply(null,xs), 5);
+  const yT = ticks(Math.min(0,Math.min.apply(null,ys)), Math.max.apply(null,ys), 5);
+  const X = v => m.l + plotW*(v-xT[0])/(xT[xT.length-1]-xT[0]);
+  const Y = v => m.t + plotH*(1-(v-yT[0])/(yT[yT.length-1]-yT[0]));
+  const keys = si >= 0 ? r.rows.map(row=>row[si]).filter((v,i,a)=>a.indexOf(v)===i) : ['all'];
+  const hid = state.hidden[r.id] || {};
+
+  let s = axes(m, null, yT, {yScale:Y});
+  xT.forEach(t => { s += '<line x1="'+X(t)+'" x2="'+X(t)+'" y1="'+m.t+'" y2="'+(m.t+plotH)+'" style="stroke:var(--grid)"/>';
+                    s += svgText(X(t), h-m.b+17, fmtNum(t)); });
+  // outlier band (±2σ of residuals)
+  const fit = ols(xs, ys);
+  const resid = xs.map((x,i)=>ys[i]-(fit.a+fit.b*x));
+  const sd = Math.sqrt(resid.reduce((a,b)=>a+b*b,0)/resid.length);
+  r.rows.forEach((row, i) => {
+    const k = si >= 0 ? row[si] : 'all';
+    if (hid[k]) return;
+    const out = Math.abs(resid[i]) > 2*sd;
+    s += '<circle cx="'+X(xs[i])+'" cy="'+Y(ys[i])+'" r="'+(out?5:3.6)+'" style="fill:'+CV(keys.indexOf(k))+
+         ';opacity:'+(out?1:.72)+(out?';stroke:var(--danger);stroke-width:1.6':'')+'" class="mk" data-cat="'+esc(row[0])+'">'+
+         '<title>'+esc(row[0])+' · '+esc(sp.x)+' '+fmtNum(xs[i])+' · '+esc(sp.y[0])+' '+fmtNum(ys[i])+(out?' (outlier)':'')+'</title></circle>';
+  });
+  let note = '';
+  if (sp.trendline){
+    s += '<line x1="'+X(xT[0])+'" y1="'+Y(fit.a+fit.b*xT[0])+'" x2="'+X(xT[xT.length-1])+'" y2="'+
+         Y(fit.a+fit.b*xT[xT.length-1])+'" style="stroke:var(--text-2)" stroke-width="1.8" stroke-dasharray="6 4"/>';
+    note = 'OLS fit: ' + sp.y[0] + ' = ' + fmtNum(fit.a) + ' + ' + fit.b.toFixed(4) + '·' + sp.x +
+           ' · R² = ' + fit.r2.toFixed(2) + '. Ringed points lie beyond ±2σ of the residuals.';
+  }
+  s += svgText(m.l+plotW/2, h-4, sp.x, {size:11, weight:600});
+  s += svgText(14, m.t+plotH/2, sp.y[0], {rot:-90, size:11, weight:600});
+  return {svg:'<svg viewBox="0 0 '+W+' '+h+'">'+s+'</svg>',
+          legend: si>=0 ? keys.map((k,i)=>({name:k,color:CV(i)})) : [], note};
+}
+
+/* --- histogram ------------------------------------------------------------ */
+function histChart(r, sp, h){
+  const yi = r.columns.indexOf(sp.y[0]);
+  const vals = r.rows.map(row => Number(row[yi])).sort((a,b)=>a-b);
+  const n = sp.bins || 10, lo = vals[0], hi = vals[vals.length-1], w = (hi-lo)/n || 1;
+  const counts = new Array(n).fill(0);
+  vals.forEach(v => { let k = Math.floor((v-lo)/w); if (k >= n) k = n-1; counts[k]++; });
+  const m = {l:52, r:20, t:12, b:44}, plotW = W-m.l-m.r, plotH = h-m.t-m.b;
+  const yT = ticks(0, Math.max.apply(null,counts), 4);
+  const Y = v => m.t + plotH*(1-(v-yT[0])/(yT[yT.length-1]-yT[0]));
+  let s = axes(m, null, yT, {yScale:Y});
+  const band = plotW/n;
+  counts.forEach((c,i)=>{
+    s += '<rect x="'+(m.l+band*i+1.5)+'" y="'+Y(c)+'" width="'+(band-3)+'" height="'+(Y(0)-Y(c))+
+         '" rx="2" style="fill:var(--c1)"><title>'+fmtNum(lo+i*w)+' – '+fmtNum(lo+(i+1)*w)+': '+c+' rows</title></rect>';
+    if (i % Math.ceil(n/8) === 0) s += svgText(m.l+band*i, h-m.b+17, fmtNum(lo+i*w));
+  });
+  // median + quartiles
+  const q = p => vals[Math.min(vals.length-1, Math.floor(p*vals.length))];
+  [[0.25,'Q1'],[0.5,'median'],[0.75,'Q3']].forEach(([p,lab])=>{
+    const x = m.l + plotW*(q(p)-lo)/(hi-lo||1);
+    s += '<line x1="'+x+'" x2="'+x+'" y1="'+m.t+'" y2="'+(m.t+plotH)+'" style="stroke:var(--c3)" stroke-width="1.4" stroke-dasharray="4 3"/>';
+    s += svgText(x, m.t+11, lab, {fill:'var(--c3)', size:10});
+  });
+  s += svgText(m.l+plotW/2, h-4, sp.y[0] + ' (' + n + ' bins)', {size:11, weight:600});
+  return {svg:'<svg viewBox="0 0 '+W+' '+h+'">'+s+'</svg>', legend:[],
+    note:'n = '+vals.length+' · min '+fmtNum(lo)+' · median '+fmtNum(q(0.5))+' · max '+fmtNum(hi)+
+         ' · IQR '+fmtNum(q(0.75)-q(0.25))+'. Bin width is a control, not a guess.'};
+}
+
+/* --- donut ---------------------------------------------------------------- */
+function pieChart(r, sp, h){
+  const xi = r.columns.indexOf(sp.x), yi = r.columns.indexOf(sp.y[0]);
+  const data = r.rows.map(row => ({k:row[xi], v:Number(row[yi])}));
+  const total = data.reduce((a,b)=>a+b.v,0);
+  const cx = W/2, cy = h/2, R = Math.min(h/2-14, 118), r0 = R*0.58;
+  let a0 = -Math.PI/2, s = '';
+  data.forEach((d,i)=>{
+    const a1 = a0 + (d.v/total)*Math.PI*2;
+    const big = a1-a0 > Math.PI ? 1 : 0;
+    const p = (rad,a)=>[cx+rad*Math.cos(a), cy+rad*Math.sin(a)];
+    const [x0,y0]=p(R,a0), [x1,y1]=p(R,a1), [x2,y2]=p(r0,a1), [x3,y3]=p(r0,a0);
+    s += '<path d="M'+x0+','+y0+' A'+R+','+R+' 0 '+big+' 1 '+x1+','+y1+' L'+x2+','+y2+' A'+r0+','+r0+' 0 '+big+' 0 '+x3+','+y3+
+         ' Z" style="fill:'+CV(i)+'" class="mk" data-cat="'+esc(d.k)+'"><title>'+esc(d.k)+': '+fmtNum(d.v)+
+         ' ('+(100*d.v/total).toFixed(1)+'%)</title></path>';
+    const [lx,ly]=p((R+r0)/2,(a0+a1)/2);
+    if (d.v/total > 0.06) s += svgText(lx, ly+4, (100*d.v/total).toFixed(0)+'%', {fill:'#fff', weight:700, size:11});
+    a0 = a1;
+  });
+  s += svgText(cx, cy-2, fmtNum(total), {fill:'var(--text)', size:22, weight:700});
+  s += svgText(cx, cy+16, 'total', {size:11});
+  return {svg:'<svg viewBox="0 0 '+W+' '+h+'">'+s+'</svg>',
+    legend:data.map((d,i)=>({name:d.k, color:CV(i)})),
+    note:'Ordered by share, largest first. A donut is only offered below 7 slices and for non-negative additive measures.'};
+}
+
+/* --- region tile map (geo preview, no external tiles) --------------------- */
+const TILE_LAYOUT = {
+  'Northwest':[0,1],'Central':[1,2],'Northeast':[0,3],'Southwest':[1,1],'Southeast':[2,3],
+  'Canada':[0,2],'United Kingdom':[0,5],'France':[1,5],'Germany':[1,6],'Australia':[2,7]
+};
+function geoChart(r, sp, h){
+  const xi = r.columns.indexOf(sp.x), yi = r.columns.indexOf(sp.y[0]);
+  const vals = r.rows.map(row => Number(row[yi]));
+  const lo = Math.min.apply(null,vals), hi = Math.max.apply(null,vals);
+  const known = r.rows.filter(row => TILE_LAYOUT[row[xi]]).length;
+  const useAtlas = known >= r.rows.length / 2;      // otherwise fall back to a plain grid
+  const cw = 82, ch = 58, ox = 40, oy = 20, gap = 6;
+  const placed = r.rows.map((row, gi) => useAtlas ? (TILE_LAYOUT[row[xi]] || [3, gi % 6])
+                                                  : [Math.floor(gi/5), gi % 5]);
+  const maxRow = Math.max.apply(null, placed.map(p2 => p2[0]));
+  h = Math.max(h, oy + (maxRow+1)*(ch+gap) + 40);
+  let s = '';
+  r.rows.forEach((row, gi) => {
+    const pos = placed[gi];
+    const v = Number(row[yi]), t = (v-lo)/(hi-lo||1);
+    const x = ox + pos[1]*(cw+gap), y = oy + pos[0]*(ch+gap);
+    s += '<rect x="'+x+'" y="'+y+'" width="'+cw+'" height="'+ch+'" rx="7" style="fill:var(--c1);opacity:'+
+         (0.16+0.8*t).toFixed(3)+'" class="mk" data-cat="'+esc(row[xi])+'"><title>'+esc(row[xi])+': '+fmtNum(v)+'</title></rect>';
+    s += svgText(x+cw/2, y+23, String(row[xi]).slice(0,13), {fill:t>0.55?'#fff':'var(--text)', size:10, weight:600});
+    s += svgText(x+cw/2, y+40, fmtNum(v), {fill:t>0.55?'#fff':'var(--text-2)', size:11, weight:700});
+  });
+  // legend ramp
+  const ry = oy + (maxRow+1)*(ch+gap) + 6;
+  for (let i=0;i<28;i++)
+    s += '<rect x="'+(ox+40+i*7)+'" y="'+ry+'" width="7" height="9" style="fill:var(--c1);opacity:'+(0.16+0.8*(i/27)).toFixed(3)+'"/>';
+  s += svgText(ox+34, ry+8, fmtNum(lo), {anchor:'end'});
+  s += svgText(ox+40+28*7+6, ry+8, fmtNum(hi), {anchor:'start'});
+  return {svg:'<svg viewBox="0 0 '+W+' '+h+'">'+s+'</svg>', legend:[],
+    note: (useAtlas
+      ? 'Tile cartogram — each territory gets equal area so small, high-value regions stay readable. Swap in a projected choropleth once person.address.spatiallocation is joined.'
+      : 'No region atlas entry matched these labels, so the tiles fall back to a plain grid. Only sales.salesterritory.name and person.countryregion are mapped today.')};
+}
+
+/* --- heatmap -------------------------------------------------------------- */
+function heatChart(r, sp, h){
+  const model = seriesOf(r, sp);
+  const cats = model.cats, keys = model.series;
+  const all = [].concat.apply([], keys.map(k=>k.vals));
+  const lo = Math.min.apply(null,all), hi = Math.max.apply(null,all);
+  const m = {l:110, r:16, t:12, b:46};
+  const cw = (W-m.l-m.r)/cats.length, chh = Math.min(34, (h-m.t-m.b)/keys.length);
+  let s = '';
+  keys.forEach((k,ri)=>{
+    s += svgText(m.l-8, m.t+ri*chh+chh/2+4, k.name, {anchor:'end'});
+    k.vals.forEach((v,ci)=>{
+      const t = (v-lo)/(hi-lo||1);
+      s += '<rect x="'+(m.l+ci*cw)+'" y="'+(m.t+ri*chh)+'" width="'+(cw-1.5)+'" height="'+(chh-1.5)+
+           '" rx="2" style="fill:var(--c1);opacity:'+(0.12+0.85*t).toFixed(3)+'" class="mk" data-cat="'+esc(cats[ci])+
+           '"><title>'+esc(k.name)+' · '+esc(cats[ci])+': '+fmtNum(v)+'</title></rect>';
+    });
+  });
+  cats.forEach((c,i)=>{ if (cats.length<=14 || i%3===0) s += svgText(m.l+i*cw+cw/2, m.t+keys.length*chh+16, String(c).slice(-5), {size:10}); });
+  return {svg:'<svg viewBox="0 0 '+W+' '+h+'">'+s+'</svg>', legend:[],
+    note:'Shared colour scale across all rows — comparable levels, but the seasonal shape is easier to read as small multiples.'};
+}
+
+/* --- small multiples ------------------------------------------------------ */
+function facetChart(r, sp, h){
+  const model = seriesOf(r, sp);
+  const cats = model.cats, keys = model.series;
+  const cols = 2, rows = Math.ceil(keys.length/cols);
+  const gw = W/cols, gh = Math.max(96, (h+40)/rows);
+  const all = [].concat.apply([], keys.map(k=>k.vals));
+  const yT = ticks(0, Math.max.apply(null,all), 3);
+  let s = '';
+  keys.forEach((k,i)=>{
+    const gx = (i%cols)*gw, gy = Math.floor(i/cols)*gh;
+    const m = {l:gx+50, r:14, t:gy+22, b:22};
+    const pw = gw-64, ph = gh-46;
+    const Y = v => m.t + ph*(1-(v-yT[0])/(yT[yT.length-1]-yT[0]));
+    yT.forEach(t=>{ s += '<line x1="'+m.l+'" x2="'+(m.l+pw)+'" y1="'+Y(t)+'" y2="'+Y(t)+'" style="stroke:var(--grid)"/>';
+                    if (i%cols===0) s += svgText(m.l-6, Y(t)+4, fmtNum(t), {anchor:'end', size:10}); });
+    const pts = k.vals.map((v,j)=>[m.l + (cats.length>1 ? pw*(j/(cats.length-1)) : pw/2), Y(Number(v)||0)]);
+    if (!pts.length) return;
+    s += '<path d="M'+pts.map(p=>p[0]+','+p[1]).join(' L')+' L'+pts[pts.length-1][0]+','+Y(yT[0])+' L'+pts[0][0]+','+Y(yT[0])+
+         ' Z" style="fill:'+CV(i)+';opacity:.14"/>';
+    s += '<path d="M'+pts.map(p=>p[0]+','+p[1]).join(' L')+'" fill="none" style="stroke:'+CV(i)+'" stroke-width="1.9"/>';
+    s += svgText(m.l, gy+14, k.name, {anchor:'start', fill:'var(--text)', weight:660, size:12});
+    const last = Number(k.vals[k.vals.length-1]), first = Number(k.vals[0]);
+    const d = first ? ((last-first)/first*100) : null;
+    if (d !== null && isFinite(d))
+      s += svgText(m.l+pw, gy+14, (d>=0?'+':'')+d.toFixed(0)+'%', {anchor:'end', fill:d>=0?'var(--ok)':'var(--danger)', weight:660, size:11});
+  });
+  return {svg:'<svg viewBox="0 0 '+W+' '+(rows*gh)+'">'+s+'</svg>', legend:[],
+    note:'One panel per ' + sp.series + ', shared y-scale so levels stay comparable. The % badge is first→last change.'};
+}
+
+/* =========================================================================
+   7. Rendering
+   ========================================================================= */
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.remove('on'), 2400);
+}
+
+function renderRail(){
+  const ts = THREADS.filter(t => t.dataset === state.dataset);
+  $('#threadList').innerHTML = ts.map(t => {
+    const last = t.messages[t.messages.length-1];
+    const kind = last.role === 'clarify' ? ['chip-warn','needs input']
+      : last.role === 'blocked' ? ['chip-danger','blocked'] : ['','answered'];
+    return '<button class="thread" data-thread="'+t.id+'" aria-current="'+(t.id===state.threadId)+'">' +
+      '<span class="thread-title">'+esc(t.title)+'</span>' +
+      '<span class="thread-meta"><span class="pill">'+kind[1]+'</span>'+esc(t.when)+'</span></button>';
+  }).join('');
+
+  const sc = SCHEMAS[state.dataset];
+  const used = (RESULTS[state.resultId] || {}).meta ? RESULTS[state.resultId].meta.retrieval.tables : [];
+  const f = $('#schemaFilter').value.toLowerCase();
+  $('#schemaCount').textContent = sc.tables.length + ' tables';
+  $('#schemaTree').innerHTML = sc.tables.filter(t =>
+      !f || t.n.toLowerCase().includes(f) || t.cols.some(c => c[0].toLowerCase().includes(f))
+    ).map(t =>
+    '<details class="tnode'+(used.indexOf(t.n)>=0?' used':'')+'"'+(f?' open':'')+'><summary class="trow">' +
+      '<span class="caret">▶</span><span class="mono">'+esc(t.n)+'</span>' +
+      '<span class="tcount">'+fmtNum(t.rows)+'</span></summary>' +
+      '<div class="tcols">' + t.cols.map(c =>
+        '<div class="tcol"><b>'+esc(c[0])+'</b><span class="ty">'+esc(c[1])+'</span>' +
+        (c[2]==='pk'?'<span class="pk">PK</span>':c[2]==='fk'?'<span class="fk">FK</span>':'') + '</div>').join('') +
+      '</div></details>').join('');
+
+  $('#histList').innerHTML = HISTORY.map(h =>
+    '<button class="hist-item" data-rerun="'+h.rid+'"><span class="htxt"><span class="hq">'+esc(h.q)+
+    '</span><span class="hm">'+esc(h.m)+'</span></span><span class="rerun">re-run</span></button>').join('');
+
+  $('#starters').innerHTML = STARTERS[state.dataset].map(s =>
+    '<button class="starter">'+esc(s)+'</button>').join('');
+}
+
+function provStrip(r){
+  const m = r.meta;
+  const total = Object.keys(m.stages).reduce((a,k)=>a+m.stages[k],0);
+  const tabs = m.retrieval.tables.map(t=>'<span class="mono">'+esc(t)+'</span>').join(', ');
+  return '<div class="prov">' +
+    '<span class="chip chip-ok"><span class="dot"></span>'+m.outcome+'</span>' +
+    '<span class="chip"><span class="dot"></span>'+m.rowCount+' rows</span>' +
+    '<span class="chip"><span class="dot"></span>'+m.durationMs.toFixed(1)+' ms SQL · '+(total/1000).toFixed(1)+' s total</span>' +
+    (m.attempts>1?'<span class="chip chip-warn"><span class="dot"></span>'+m.attempts+' attempts</span>':'') +
+    '<span class="prov-sep"></span>' +
+    '<span class="chip">'+tabs+'</span>' +
+    '<span class="chip"><span class="dot"></span>role '+m.role+'</span>' +
+    '<div style="flex:1"></div>' +
+    '<button class="chip" data-open="'+r.id+'" data-tab="sql">SQL</button>' +
+    '<button class="chip" data-open="'+r.id+'" data-tab="prov">Trace</button>' +
+  '</div>';
+}
+
+function miniPreview(r){
+  const sp = Object.assign({}, spec(r.id));
+  const out = renderChart(r, sp, {h:150});
+  return '<div class="rescard-preview">'+out.svg+'</div>';
+}
+
+function renderStream(){
+  const t = THREADS.find(x => x.id === state.threadId) || THREADS[0];
+  $('#streamInner').innerHTML = t.messages.map(msg => {
+    if (msg.role === 'user')
+      return '<div class="turn turn-user"><div class="bubble-user">'+esc(msg.text)+'</div>' +
+             '<div class="meta">'+esc(t.when)+' · <span class="mono">'+state.dataset+'</span> · role '+state.role+'</div></div>';
+
+    if (msg.role === 'clarify')
+      return '<div class="turn"><div class="clarify">' +
+        '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">' +
+          '<span class="chip ' + (msg.chosen ? 'chip-ok' : 'chip-warn') + '"><span class="dot"></span>' +
+          (msg.chosen ? 'disambiguated' : 'clarification') + '</span>' +
+          '<span class="muted" style="font-size:11px">no SQL was generated · 0 rows read</span></div>' +
+        '<h4>'+esc(msg.question)+'</h4><p>'+esc(msg.body)+'</p>' +
+        '<div class="opts">' + msg.options.map((o,i) =>
+          '<button class="opt" data-clarify="'+i+'"' +
+          (msg.chosen === o.label ? ' style="border-color:var(--ok);background:var(--ok-soft)"' : '') +
+          '><span class="k">'+(msg.chosen === o.label ? '✓' : o.k)+'</span><span class="b"><b>'+esc(o.label)+
+          '</b><span>'+esc(o.sql)+'</span></span></button>').join('') +
+        '</div><div style="margin-top:12px;display:flex;gap:8px;align-items:center">' +
+          '<input class="ctl" style="flex:1" placeholder="…or describe your own definition">' +
+          '<button class="btn btn-sm">Use this</button></div></div></div>';
+
+    if (msg.role === 'blocked')
+      return '<div class="turn"><details class="notice danger" open><summary class="notice-head">' +
+        '<span class="chip chip-danger"><span class="dot"></span>blocked by policy</span>' +
+        '<span>'+esc(msg.reason)+'</span></summary><div class="notice-body">' +
+        '<p style="margin-bottom:8px">'+esc(msg.note)+'</p>' +
+        '<div class="trail"><div class="trail-step fail"><span class="n">✕</span><div style="flex:1">' +
+        '<b style="font-size:12px">policy · AST rewrite</b><pre>'+esc(msg.sql)+'</pre>' +
+        '<span class="err">denied_columns: employees.salary · policy.yaml → roles.agent</span></div></div></div>' +
+        '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button class="btn btn-sm" data-role="manager">Retry as manager</button>' +
+        '<button class="btn btn-sm" data-toast="Requested access to employees.salary — sent to the workspace owner">Request access</button>' +
+        '<button class="btn btn-sm" data-toast="Rewritten without the denied column: headcount per branch">Ask a permitted variant</button>' +
+        '</div></div></details></div>';
+
+    if (msg.role === 'repair'){
+      const r = RESULTS[msg.resultId];
+      return '<div class="turn"><details class="notice warn"><summary class="notice-head">' +
+        '<span class="chip chip-warn"><span class="dot"></span>self-repair</span>' +
+        '<span>attempt 1 failed at dry-run · attempt 2 succeeded</span>' +
+        '<span class="muted" style="margin-left:auto;font-size:11px">show trail</span></summary>' +
+        '<div class="notice-body"><div class="trail">' + r.attempts.map(a =>
+          '<div class="trail-step '+(a.ok?'pass':'fail')+'"><span class="n">'+a.n+'</span><div style="flex:1">' +
+          '<b style="font-size:12px">'+esc(a.stage)+'</b><pre>'+esc(a.sql)+'</pre>' +
+          (a.err?'<span class="err">'+esc(a.err)+'</span>':'') + '</div></div>').join('') +
+        '</div><p class="chart-note" style="margin-top:10px">The verbatim PostgreSQL error is fed back to the model once per retry-budget slot. Retrieval is not re-run.</p>' +
+        '</div></details></div>';
+    }
+
+    const r = RESULTS[msg.resultId];
+    if (!r) return '';
+    return '<div class="turn"><div class="answer">' +
+      '<div class="prose">'+r.answer.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')+'</div>' +
+      provStrip(r) +
+      '<div class="rescard" data-open="'+r.id+'"><div class="rescard-head">' +
+        '<span class="ico">▤</span><span class="t"><b>'+esc(r.title)+'</b>' +
+        '<span>'+r.meta.rowCount+' rows × '+r.columns.length+' cols · '+spec(r.id).type+
+        ' · '+r.columns.map(esc).join(', ')+'</span></span>' +
+        '<span class="btn btn-sm">Open workbench →</span></div>' +
+        miniPreview(r) + '</div>' +
+      '</div></div>';
+  }).join('');
+}
+
+/* --- panel --------------------------------------------------------------- */
+function renderPanel(){
+  const r = res(), sp = spec(r.id), m = r.meta;
+  $('#pTitle').textContent = r.title;
+  $('#pSub').innerHTML = '<span class="mono">'+esc(r.dataset)+'</span> · ' + m.rowCount + ' rows · ' +
+    m.durationMs.toFixed(1) + ' ms' + (state.sqlEdited ? ' · <span class="chip chip-warn"><span class="dot"></span>edited</span>' : '');
+  $('#rowBadge').textContent = m.rowCount;
+  $$('#tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === state.tab));
+  $$('.pane').forEach(p => p.dataset.active = (p.dataset.pane === state.tab));
+  if (state.tab === 'chart') renderChartPane();
+  if (state.tab === 'table') renderTablePane();
+  if (state.tab === 'sql')   renderSqlPane();
+  if (state.tab === 'prov')  renderProvPane();
+}
+
+function renderChartPane(){
+  const r = res(), sp = spec(r.id), p = profile(r), sug = suggestions(r);
+  $('#suggest').innerHTML =
+    '<span class="shape">' + p.n + ' rows · ' + p.cats.length + ' categorical · ' + p.nums.length +
+    ' numeric · ' + p.times.length + ' temporal</span>' +
+    '<span class="prov-sep"></span>' +
+    sug.map((s,i) => '<button class="sg" data-sug="'+i+'" aria-pressed="'+(s.type===sp.type && (!s.series||s.series===sp.series) && (s.stacked||false)===(sp.stacked||false))+'">' +
+      esc(s.label) + ' <span class="why">'+esc(s.why)+'</span></button>').join('');
+  $('#suggest')._sug = sug;
+
+  const cols = r.columns, nums = p.nums;
+  const opt = (list, sel) => list.map(c => '<option'+(c===sel?' selected':'')+'>'+esc(c)+'</option>').join('');
+  let ctl = '';
+  ctl += '<div class="ctlgrp"><span>type</span><select class="ctl" data-set="type">' +
+    ['bar','hbar','line','area','combo','pie','scatter','hist','heat','facet','geo','kpi','none']
+      .map(t=>'<option'+(t===sp.type?' selected':'')+'>'+t+'</option>').join('') + '</select></div>';
+  if (sp.type !== 'hist' && sp.type !== 'kpi')
+    ctl += '<div class="ctlgrp"><span>x</span><select class="ctl" data-set="x">'+opt(cols, sp.x)+'</select></div>';
+  ctl += '<div class="ctlgrp"><span>y</span><select class="ctl" data-set="y0">'+opt(nums, sp.y[0])+'</select></div>';
+  if (['bar','hbar','line','area','heat','facet'].indexOf(sp.type) >= 0)
+    ctl += '<div class="ctlgrp"><span>split by</span><select class="ctl" data-set="series">' +
+      '<option value="">— none —</option>' + opt(p.cats.filter(c=>c!==sp.x), sp.series||'') + '</select></div>';
+  if (sp.type === 'combo')
+    ctl += '<div class="ctlgrp"><span>right axis</span><select class="ctl" data-set="secondary">'+opt(nums, sp.secondary)+'</select></div>';
+  if (sp.type === 'bar' || sp.type === 'hbar')
+    ctl += '<label class="toggle"><input type="checkbox" data-set="stacked"'+(sp.stacked?' checked':'')+'>stacked</label>' +
+           '<label class="toggle"><input type="checkbox" data-set="normalize"'+(sp.normalize?' checked':'')+'>100%</label>';
+  if (['bar','hbar','line','area'].indexOf(sp.type) >= 0)
+    ctl += '<div class="ctlgrp"><span>sort</span><select class="ctl" data-set="sortBy">' +
+      ['none','desc','asc'].map(v=>'<option'+(v===sp.sortBy?' selected':'')+'>'+v+'</option>').join('')+'</select></div>' +
+      '<div class="ctlgrp"><span>top N</span><select class="ctl" data-set="topN">' +
+      [0,5,10,20].map(v=>'<option value="'+v+'"'+(v===sp.topN?' selected':'')+'>'+(v||'all')+'</option>').join('')+'</select></div>';
+  if (['line','area','bar','combo'].indexOf(sp.type) >= 0)
+    ctl += '<div class="ctlgrp"><span>moving avg</span><select class="ctl" data-set="movingAvg">' +
+      [0,3,6,12].map(v=>'<option value="'+v+'"'+(v===sp.movingAvg?' selected':'')+'>'+(v?v+'-period':'off')+'</option>').join('')+'</select></div>';
+  if (sp.type === 'scatter')
+    ctl += '<label class="toggle"><input type="checkbox" data-set="trendline"'+(sp.trendline?' checked':'')+'>trendline + outliers</label>';
+  if (sp.type === 'hist')
+    ctl += '<div class="ctlgrp"><span>bins</span><select class="ctl" data-set="bins">' +
+      [5,10,16,24].map(v=>'<option value="'+v+'"'+(v===sp.bins?' selected':'')+'>'+v+'</option>').join('')+'</select></div>';
+  $('#chartCtls').innerHTML = ctl;
+
+  const out = renderChart(r, sp);
+  $('#chartHost').innerHTML = out.svg;
+  const hid = state.hidden[r.id] || {};
+  $('#legend').innerHTML = out.legend.map(l =>
+    '<button data-series="'+esc(l.name)+'" aria-pressed="'+(!hid[l.name])+'">' +
+    '<span class="sw" style="background:'+l.color+(l.dash?';opacity:.6':'')+'"></span>'+esc(l.name) +
+    (l.axis==='right'?' <span class="muted">(right)</span>':'') + '</button>').join('');
+  $('#chartNote').textContent = out.note;
+  renderCrossfilter();
+}
+function renderCrossfilter(){
+  const cf = state.crossfilter;
+  $('#crossfilter').hidden = !cf;
+  if (cf) $('#cfText').textContent = 'Filtered to ' + cf + ' — the table below and every pinned tile follow this selection.';
+}
+
+function colProfile(r, ci){
+  const vals = r.rows.map(row => row[ci]);
+  const t = r.types[ci];
+  if (t === 'int' || t === 'num'){
+    const nums = vals.map(Number), lo = Math.min.apply(null,nums), hi = Math.max.apply(null,nums);
+    const n = 14, counts = new Array(n).fill(0), w = (hi-lo)/n || 1;
+    nums.forEach(v => { let k = Math.floor((v-lo)/w); if (k>=n) k=n-1; counts[k]++; });
+    const mx = Math.max.apply(null,counts);
+    return '<svg class="prof" viewBox="0 0 '+(n*4)+' 12" preserveAspectRatio="none">' +
+      counts.map((c,i)=>'<rect x="'+(i*4)+'" y="'+(12-12*c/mx)+'" width="3" height="'+(12*c/mx)+'" style="fill:var(--c1);opacity:.5"/>').join('') +
+      '</svg>';
+  }
+  const freq = {}; vals.forEach(v => freq[v] = (freq[v]||0)+1);
+  const top = Object.keys(freq).sort((a,b)=>freq[b]-freq[a]).slice(0,6);
+  const mx = freq[top[0]];
+  return '<svg class="prof" viewBox="0 0 '+(top.length*6)+' 12" preserveAspectRatio="none">' +
+    top.map((k,i)=>'<rect x="'+(i*6)+'" y="'+(12-12*freq[k]/mx)+'" width="5" height="'+(12*freq[k]/mx)+'" style="fill:var(--c2);opacity:.5"/>').join('') +
+    '</svg>';
+}
+function renderTablePane(){
+  const r = res();
+  let rows = r.rows.slice();
+  if (state.crossfilter) rows = rows.filter(row => row.some(c => String(c) === state.crossfilter));
+  if (state.filter) {
+    const f = state.filter.toLowerCase();
+    rows = rows.filter(row => row.some(c => String(c).toLowerCase().indexOf(f) >= 0));
+  }
+  let cols = r.columns.slice(), types = r.types.slice();
+  if (state.group !== 'none'){
+    const gi = r.columns.indexOf(state.group);
+    const numIdx = r.types.map((t,i)=>(t==='int'||t==='num')?i:-1).filter(i=>i>=0);
+    const acc = {};
+    rows.forEach(row => {
+      const k = row[gi];
+      if (!acc[k]) { acc[k] = {n:0, s:numIdx.map(()=>0)}; }
+      acc[k].n++; numIdx.forEach((ix,j)=> acc[k].s[j] += Number(row[ix])||0);
+    });
+    cols = [state.group, 'rows'].concat(numIdx.map(i=>'sum_'+r.columns[i]));
+    types = ['text','int'].concat(numIdx.map(()=> 'num'));
+    rows = Object.keys(acc).map(k => [k, acc[k].n].concat(acc[k].s)).sort((a,b)=>b[2]-a[2]);
+  }
+  if (state.sort.col !== null && cols.indexOf(state.sort.col) >= 0){
+    const si = cols.indexOf(state.sort.col), d = state.sort.dir;
+    rows.sort((a,b) => (a[si] > b[si] ? 1 : a[si] < b[si] ? -1 : 0) * d);
+  }
+  const shown = rows.slice(0, 200);
+
+  $('#tblAgg').innerHTML = '<option value="none">No grouping</option>' +
+    r.types.map((t,i)=> t==='text' ? '<option value="'+esc(r.columns[i])+'"'+(state.group===r.columns[i]?' selected':'')+
+      '>Group by '+esc(r.columns[i])+'</option>' : '').join('');
+
+  $('#grid').innerHTML =
+    '<thead><tr>' + cols.map((c,i) =>
+      '<th data-col="'+esc(c)+'"><span class="th-in">'+esc(c)+
+      '<span class="ty">'+esc(types[i])+'</span>' +
+      (state.sort.col===c ? '<span class="sort">'+(state.sort.dir>0?'▲':'▼')+'</span>' : '') +
+      '</span>' + (state.group==='none' ? colProfile(r, r.columns.indexOf(c)) || '' : '') + '</th>').join('') +
+    '</tr></thead><tbody>' +
+    shown.map(row => '<tr'+(state.crossfilter && row.indexOf(state.crossfilter)>=0 ? ' class="hl"':'')+'>' +
+      row.map((c,i) => '<td class="'+((types[i]==='int'||types[i]==='num')?'num':'')+'">' +
+        (c===null?'<span class="null">null</span>':esc(typeof c==='number'?fmtNum(c):c)) + '</td>').join('') +
+      '</tr>').join('') + '</tbody>';
+
+  $('#tblFoot').innerHTML = 'Showing <b>'+shown.length+'</b> of '+rows.length+' rows' +
+    (rows.length < r.rows.length ? ' (filtered from '+r.rows.length+')' : '') +
+    ' · server cap <span class="mono">max_rows = '+r.meta.maxRows+'</span>' +
+    (r.meta.rowCount >= r.meta.maxRows ? ' <span class="chip chip-warn"><span class="dot"></span>truncated</span>' : '');
+}
+
+function renderSqlPane(){
+  const r = res();
+  if (!state.sqlEdited) $('#sqlText').value = r.sql;
+  $('#sqlBox').classList.toggle('edited', state.sqlEdited);
+  $('#revertSql').disabled = !state.sqlEdited;
+  $('#sqlNote').innerHTML = state.sqlEdited
+    ? 'Edited by you. Running re-validates through the same AST allowlist and policy rewrite as a generated query — an edit cannot escalate privileges.'
+    : 'Generated by ' + r.meta.model + ', validated by sqlglot, rewritten by policy for role <b>' + r.meta.role +
+      '</b>, dry-run with EXPLAIN, then executed. Edit and re-run without leaving the conversation.';
+}
+function renderProvPane(){
+  const r = res(), m = r.meta;
+  const st = m.stages, total = Object.keys(st).reduce((a,k)=>a+st[k],0);
+  const order = ['retrieval','generation','validation','dry_run','execution','answer'];
+  const bar = order.filter(k=>st[k]).map((k,i) =>
+    '<div style="width:'+(100*st[k]/total)+'%;background:'+CV(i)+'" title="'+k+' '+st[k]+' ms">' +
+    (st[k]/total > 0.09 ? Math.round(st[k]) + 'ms' : '') + '</div>').join('');
+  const key = order.filter(k=>st[k]).map((k,i) =>
+    '<span><i style="background:'+CV(i)+'"></i>'+k+' · '+st[k].toFixed(1)+' ms</span>').join('');
+  const rk = m.retrieval.ranking;
+  const mx = rk[0][1];
+
+  $('#provPane').innerHTML =
+    '<div class="pv-sec"><span class="label">Outcome</span>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+      '<span class="chip chip-ok"><span class="dot"></span>'+m.outcome+'</span>' +
+      '<span class="chip"><span class="dot"></span>'+(m.engine==='rag'?'RAG pipeline':'MCP tools')+'</span>' +
+      '<span class="chip"><span class="dot"></span>'+m.model+'</span>' +
+      '<span class="chip"><span class="dot"></span>role '+m.role+'</span>' +
+      (m.retries?'<span class="chip chip-warn"><span class="dot"></span>'+m.retries+' repair</span>':'') +
+      '</div></div>' +
+
+    '<div class="pv-sec"><span class="label">Stage latency · '+(total/1000).toFixed(2)+' s</span>' +
+      '<div class="stagebar">'+bar+'</div><div class="stagekey">'+key+'</div></div>' +
+
+    '<div class="pv-sec"><span class="label">Schema retrieval — mode '+m.retrieval.mode+', '+
+      m.retrieval.tables.length+' of '+SCHEMAS[r.dataset].tables.length+' tables sent to the model</span>' +
+      '<div class="rank">' + rk.map(([n,sc]) =>
+        '<div class="rank-row"><span class="nm'+(m.retrieval.tables.indexOf(n)>=0?' on':'')+'">'+esc(n)+'</span>' +
+        '<span class="bar"><i style="width:'+(100*sc/mx)+'%"></i></span><span class="sc">'+sc.toFixed(2)+'</span></div>').join('') +
+      '</div>' +
+      (m.retrieval.valueMatches.length ? '<p class="chart-note">Value index hits: ' +
+        m.retrieval.valueMatches.map(v=>'<span class="mono">'+esc(v[0])+'</span> ('+v[1]+')').join(', ') + '</p>' : '') +
+    '</div>' +
+
+    '<div class="pv-sec"><span class="label">Authorization</span>' +
+      '<dl class="kv"><dt>policy role</dt><dd>'+m.role+'</dd>' +
+      '<dt>row filters</dt><dd>'+(m.policy.filters.length?m.policy.filters.join(', '):'none applied')+'</dd>' +
+      '<dt>denied columns</dt><dd>'+(m.policy.denied.length?m.policy.denied.join(', '):'none touched')+'</dd>' +
+      '<dt>row cap</dt><dd>max_rows = '+m.maxRows+'</dd></dl></div>' +
+
+    '<div class="pv-sec"><span class="label">Telemetry record</span>' +
+      '<dl class="kv"><dt>request_id</dt><dd>'+m.requestId+'</dd>' +
+      '<dt>attempts</dt><dd>'+m.attempts+'</dd><dt>row_count</dt><dd>'+m.rowCount+'</dd>' +
+      '<dt>chart</dt><dd>'+spec(r.id).type+'</dd>' +
+      '<dt>sink</dt><dd>telemetry.jsonl</dd></dl>' +
+      '<p class="chart-note">Every field here is already written per request by <span class="mono">telemetry.RequestTrace</span>; the panel only surfaces it.</p></div>';
+}
+
+function renderBoard(){
+  const tiles = state.pinned.map(rid => {
+    const r = RESULTS[rid], sp = Object.assign({}, spec(rid));
+    const out = renderChart(r, sp, {h:190});
+    const m = r.meta;
+    return '<div class="tile"><div class="tile-head"><b>'+esc(r.title)+'</b>' +
+      '<button class="btn btn-ghost btn-sm" data-open="'+rid+'">Open</button>' +
+      '<button class="btn btn-ghost btn-sm" data-unpin="'+rid+'">✕</button></div>' +
+      out.svg +
+      '<p class="chart-note">'+m.rowCount+' rows · refreshed '+m.durationMs.toFixed(0)+' ms ago · <span class="mono">'+
+      m.retrieval.tables.join(', ')+'</span></p></div>';
+  }).join('');
+  $('#boardGrid').innerHTML =
+    '<div class="tile"><div class="tile-head"><b>2024 revenue, completed payments</b></div>' +
+    '<div class="tile-kpi">206.4k<span class="delta" style="color:var(--ok)">+13.9% YoY</span></div>' +
+    '<p class="chart-note">Derived from the pinned “Monthly revenue” query — one source of truth, no re-typed number.</p></div>' + tiles;
+}
+
+function renderAll(){ renderRail(); renderStream(); renderPanel(); renderBoard(); }
+
+/* =========================================================================
+   8. Events
+   ========================================================================= */
+function openResult(rid, tab){
+  state.resultId = rid; state.sqlEdited = false; state.sort = {col:null, dir:1};
+  state.filter = ''; state.group = 'none'; state.crossfilter = null;
+  if (tab) state.tab = tab;
+  document.body.classList.remove('panel-closed');
+  renderRail(); renderPanel();
+}
+
+$('#themeToggle').addEventListener('click', () => {
+  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem('nl2sql-theme', next); } catch(e){}
+});
+try { const t = localStorage.getItem('nl2sql-theme'); if (t) document.documentElement.dataset.theme = t; } catch(e){}
+
+$('#railToggle').addEventListener('click', () => document.body.classList.toggle('rail-closed'));
+$('#panelToggle').addEventListener('click', () => document.body.classList.toggle('panel-closed'));
+$('#panelClose').addEventListener('click', () => document.body.classList.add('panel-closed'));
+$('#scrim').addEventListener('click', () => document.body.classList.add('panel-closed'));
+
+$('#datasetSel').addEventListener('change', e => {
+  state.dataset = e.target.value;
+  const t = THREADS.find(x => x.dataset === state.dataset);
+  state.threadId = t.id;
+  const first = t.messages.find(m => m.resultId);
+  if (first) { state.resultId = first.resultId; state.sqlEdited = false; }
+  state.pinned = state.dataset === 'car_rental'
+    ? ['r_veh_cat','r_rev_yoy','r_branch_method','r_fleet']
+    : ['r_territory','r_aw_cat_month'];
+  renderAll();
+});
+$('#roleSel').addEventListener('change', e => {
+  state.role = e.target.value;
+  $('#roleChip').innerHTML = '<span class="dot"></span>' + state.role;
+  toast('Role → ' + state.role + '. policy.yaml row filters and denied columns re-apply on the next query.');
+});
+$('#engineSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  state.engine = b.dataset.engine;
+  $$('#engineSeg button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  $('#engineChip').innerHTML = '<span class="dot"></span>' + (state.engine==='rag'?'RAG pipeline':'MCP tools');
+  toast(state.engine === 'rag' ? 'RAG: retrieve → generate → validate → authorize → dry-run → execute'
+                               : 'MCP: tool-calling agent over the read-only Postgres server');
+});
+$('#viewSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  state.view = b.dataset.view;
+  $$('#viewSeg button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  document.body.dataset.view = state.view;
+});
+$('#schemaFilter').addEventListener('input', renderRail);
+
+$('#rail').addEventListener('click', e => {
+  const th = e.target.closest('[data-thread]');
+  if (th){
+    state.threadId = th.dataset.thread;
+    const t = THREADS.find(x => x.id === state.threadId);
+    const first = t.messages.find(m => m.resultId);
+    if (first) { state.resultId = first.resultId; state.sqlEdited = false; }
+    if (window.innerWidth < 820) document.body.classList.add('rail-closed');
+    renderRail(); renderStream(); renderPanel();
+    return;
+  }
+  const rr = e.target.closest('[data-rerun]');
+  if (rr){
+    openResult(rr.dataset.rerun);
+    toast('Re-ran stored SQL · ' + RESULTS[rr.dataset.rerun].meta.rowCount + ' rows · same plan, no model call');
+  }
+});
+
+$('#streamInner').addEventListener('click', e => {
+  const op = e.target.closest('[data-open]');
+  if (op){ openResult(op.dataset.open, op.dataset.tab); return; }
+  const cl = e.target.closest('[data-clarify]');
+  if (cl){
+    const t = THREADS.find(x => x.id === state.threadId);
+    const idx = t.messages.findIndex(m => m.role === 'clarify');
+    const opt = t.messages[idx].options[+cl.dataset.clarify];
+    t.messages.splice(idx + 1, t.messages.length, {role:'chose', text:opt.label},
+      {role:'assistant', resultId:opt.resultId});
+    t.messages[idx] = Object.assign({}, t.messages[idx], {chosen:opt.label});
+    // render the choice as a user turn
+    t.messages[idx+1] = {role:'user', text:opt.label};
+    renderStream(); openResult(opt.resultId, 'chart');
+    toast('Interpretation recorded with the answer — the SQL is reproducible from it.');
+    return;
+  }
+  const rl = e.target.closest('[data-role]');
+  if (rl){ state.role = rl.dataset.role; $('#roleSel').value = state.role;
+           $('#roleChip').innerHTML = '<span class="dot"></span>' + state.role;
+           toast('Re-ran as manager — employees.salary is readable for this role'); return; }
+  const ts = e.target.closest('[data-toast]');
+  if (ts) toast(ts.dataset.toast);
+});
+
+$('#tabs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  state.tab = b.dataset.tab; renderPanel();
+});
+
+$('#suggest').addEventListener('click', e => {
+  const b = e.target.closest('[data-sug]'); if (!b) return;
+  const s = $('#suggest')._sug[+b.dataset.sug];
+  const sp = spec(state.resultId);
+  Object.assign(sp, {type:s.type, x:s.x !== undefined ? s.x : sp.x, y:s.y || sp.y,
+    series:s.series || null, stacked:!!s.stacked, secondary:s.secondary || null,
+    trendline:!!s.trendline, movingAvg:0});
+  state.hidden[state.resultId] = {};
+  renderChartPane(); renderStream();
+});
+$('#chartCtls').addEventListener('change', e => {
+  const el = e.target.closest('[data-set]'); if (!el) return;
+  const sp = spec(state.resultId), k = el.dataset.set;
+  const v = el.type === 'checkbox' ? el.checked : el.value;
+  if (k === 'y0') sp.y = [v];
+  else if (k === 'series') sp.series = v || null;
+  else if (k === 'topN' || k === 'movingAvg' || k === 'bins') sp[k] = +v;
+  else sp[k] = v;
+  if (k === 'type'){ state.hidden[state.resultId] = {}; if (v === 'combo' && !sp.secondary) sp.secondary = profile(res()).nums.slice(-1)[0]; }
+  renderChartPane(); renderStream();
+});
+$('#legend').addEventListener('click', e => {
+  const b = e.target.closest('[data-series]'); if (!b) return;
+  const h = state.hidden[state.resultId] = state.hidden[state.resultId] || {};
+  h[b.dataset.series] = !h[b.dataset.series];
+  renderChartPane();
+});
+$('#chartHost').addEventListener('click', e => {
+  const mk = e.target.closest('.mk'); if (!mk || !mk.dataset.cat) return;
+  state.crossfilter = state.crossfilter === mk.dataset.cat ? null : mk.dataset.cat;
+  renderCrossfilter(); if (state.tab === 'table') renderTablePane();
+  if (state.crossfilter) toast('Cross-filter: ' + state.crossfilter);
+});
+$('#cfClear').addEventListener('click', () => { state.crossfilter = null; renderCrossfilter(); renderTablePane(); });
+$('#cfDrill').addEventListener('click', () => {
+  toast('Drill-down: generated SELECT … WHERE ' + (spec(state.resultId).x || 'key') + " = '" + state.crossfilter + "' — opens as a new turn");
+});
+
+$('#grid').addEventListener('click', e => {
+  const th = e.target.closest('th'); if (!th) return;
+  const c = th.dataset.col;
+  state.sort = {col:c, dir: state.sort.col === c ? -state.sort.dir : -1};
+  renderTablePane();
+});
+$('#tblFilter').addEventListener('input', e => { state.filter = e.target.value; renderTablePane(); });
+$('#tblAgg').addEventListener('change', e => { state.group = e.target.value; state.sort = {col:null,dir:1}; renderTablePane(); });
+$('#tblReset').addEventListener('click', () => {
+  state.filter = ''; state.group = 'none'; state.sort = {col:null,dir:1}; state.crossfilter = null;
+  $('#tblFilter').value = ''; renderTablePane(); renderCrossfilter();
+});
+
+$('#sqlText').addEventListener('input', () => {
+  state.sqlEdited = $('#sqlText').value.trim() !== res().sql.trim();
+  $('#sqlBox').classList.toggle('edited', state.sqlEdited);
+  $('#revertSql').disabled = !state.sqlEdited;
+});
+$('#runSql').addEventListener('click', () => {
+  const r = res(), txt = $('#sqlText').value;
+  const lim = /limit\s+(\d+)/i.exec(txt);
+  const n = lim ? Math.min(+lim[1], r.rows.length) : r.meta.rowCount;
+  toast('Validated → policy-rewritten → executed · ' + n + ' rows · ' + (r.meta.durationMs*0.92).toFixed(1) + ' ms');
+  renderPanel();
+});
+$('#revertSql').addEventListener('click', () => { state.sqlEdited = false; renderSqlPane(); toast('Reverted to the generated query'); });
+$('#copySql').addEventListener('click', () => { try{ navigator.clipboard.writeText($('#sqlText').value); }catch(e){} toast('SQL copied'); });
+$('#formatSql').addEventListener('click', () => toast('Formatted with sqlglot — the same parser the validator uses'));
+$('#explainSql').addEventListener('click', () => {
+  const r = res();
+  $('#explainOut').innerHTML = '<span class="label">EXPLAIN (dry run, no rows fetched)</span>' +
+    r.plan.map(p => '<div class="explain-row"><span>'+esc(p[0])+'</span><span class="cost">'+esc(p[1])+'</span></div>').join('');
+});
+
+$('#exportBtn').addEventListener('click', () => {
+  const r = res();
+  toast('Export: ' + r.title + '.xlsx — sheet “Data” (' + r.meta.rowCount + '×' + r.columns.length +
+        ') + sheet “Chart” (' + spec(r.id).type + '), plus CSV, PNG and a Markdown brief');
+});
+$('#pinBtn').addEventListener('click', () => {
+  if (state.pinned.indexOf(state.resultId) < 0) state.pinned.push(state.resultId);
+  renderBoard(); toast('Pinned to the board — it keeps its own SQL, filters and chart spec');
+});
+$('#boardGrid').addEventListener('click', e => {
+  const op = e.target.closest('[data-open]');
+  if (op){ state.view = 'chat'; document.body.dataset.view = 'chat';
+           $$('#viewSeg button').forEach(x => x.setAttribute('aria-pressed', x.dataset.view === 'chat'));
+           openResult(op.dataset.open); return; }
+  const un = e.target.closest('[data-unpin]');
+  if (un){ state.pinned = state.pinned.filter(x => x !== un.dataset.unpin); renderBoard(); }
+});
+$('#board').addEventListener('click', e => {
+  const ts = e.target.closest('[data-toast]'); if (ts) toast(ts.dataset.toast);
+});
+
+$('#composer').addEventListener('input', e => {
+  e.target.style.height = 'auto';
+  e.target.style.height = Math.min(180, e.target.scrollHeight) + 'px';
+});
+$('#composer').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); $('#sendBtn').click(); }
+});
+$('#sendBtn').addEventListener('click', () => {
+  const v = $('#composer').value.trim();
+  if (!v) return;
+  $('#composer').value = ''; $('#composer').style.height = 'auto';
+  toast('Static mockup — pick one of the saved conversations on the left to see a full turn.');
+});
+$('#starters').addEventListener('click', e => {
+  const b = e.target.closest('.starter'); if (!b) return;
+  $('#composer').value = b.textContent; $('#composer').focus();
+});
+$('#newChat').addEventListener('click', () => toast('New conversation — the dataset, role and engine above carry over.'));
+
+/* On narrow viewports the panel and rail are overlays, so they start closed
+   and the conversation keeps the full width. */
+if (window.innerWidth < 1180) document.body.classList.add('panel-closed');
+if (window.innerWidth < 820)  document.body.classList.add('rail-closed');
+document.body.dataset.view = 'chat';
+renderAll();
+</script>
+</body>
+</html>

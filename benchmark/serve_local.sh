@@ -41,14 +41,19 @@ case "${1:-}" in
     # ladder: same base model as qwen36-27b-*, one eighth the file.
     M=$MODELS/lmstudio-community/Bonsai-27B-GGUF/Bonsai-27B-Q1_0.gguf; NGL=99 ;;
   qwen36-27b-iq3)
-    # The largest Qwen3.6-27B quant that still (just) fits: 11.99 GiB of weights
-    # against 11.94 GiB of usable VRAM, so a few layers still spill once the KV
-    # cache is allocated. Lower CTX if it OOMs rather than cutting NGL further.
-    M=$MODELS/unsloth/Qwen3.6-27B-GGUF/Qwen3.6-27B-UD-IQ3_XXS.gguf; NGL=58 ;;
+    # 11.99 GiB of weights against ~11.1 GiB of usable VRAM. NGL=auto: the
+    # hand-computed 58 here assumed the weights were the only thing competing
+    # for the card and OOMed on the KV cache before the first token
+    # ("cudaMalloc failed" allocating 960 MiB). llama.cpp sizes this correctly
+    # itself, and its number is measured against actual free memory rather than
+    # derived from a file size, so it is also the one that survives a change of
+    # CTX or a desktop session holding a different amount of VRAM.
+    M=$MODELS/unsloth/Qwen3.6-27B-GGUF/Qwen3.6-27B-UD-IQ3_XXS.gguf; NGL=auto ;;
   qwen36-27b-q4)
-    # The Q4 baseline Bonsai is a compression of. 16.8 GiB: roughly two thirds
-    # of the layers on the GPU, the rest on the CPU.
-    M=$MODELS/unsloth/Qwen3.6-27B-GGUF/Qwen3.6-27B-Q4_K_M.gguf; NGL=40 ;;
+    # The Q4 baseline Bonsai is a compression of, at 16.8 GiB: most of it has to
+    # live in system RAM. NGL=auto for the same reason as above -- the fixed 40
+    # OOMed too, and a fixed number cannot be right for both quants anyway.
+    M=$MODELS/unsloth/Qwen3.6-27B-GGUF/Qwen3.6-27B-Q4_K_M.gguf; NGL=auto ;;
   qwen36-35b-moe)
     # 35B total, ~3B active per token. For a MoE the right split is not "fewer
     # layers" but "experts on the CPU, attention on the GPU" -- --n-cpu-moe does
@@ -65,5 +70,11 @@ esac
 [ -f "$M" ] || { echo "missing model file: $M" >&2; exit 1; }
 echo "serving $(basename "$M")  ngl=$NGL ctx=$CTX port=$PORT"
 export LD_LIBRARY_PATH=$B:$V
+# "auto" means: pass no -ngl at all, so llama.cpp's own common_fit_params picks
+# the split against real free VRAM. Passing -ngl explicitly disables that fit
+# entirely -- the server says so and then aborts -- which is how two models came
+# to OOM on numbers that looked reasonable on paper.
+NGL_ARG=(-ngl "$NGL")
+[ "$NGL" = auto ] && NGL_ARG=()
 exec "$B/llama-server" -m "$M" --host 127.0.0.1 --port "$PORT" \
-     -ngl "$NGL" -c "$CTX" --device CUDA0 --alias "$1" ${EXTRA:-}
+     "${NGL_ARG[@]}" -c "$CTX" --device CUDA0 --alias "$1" ${EXTRA:-}

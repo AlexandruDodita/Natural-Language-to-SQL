@@ -49,9 +49,30 @@ If the question cannot be answered from this schema, respond with exactly: NO_SQ
 """
 
 
+_FENCE_RE = re.compile(r"```[a-zA-Z]*\n(.*?)```", re.DOTALL)
+
+
 def _strip_fences(text: str) -> str:
+    """Recover the SQL from whatever wrapping the model put around it.
+
+    Every arm's prompt asks for bare SQL and no fences, and the hosted models
+    comply, so for them this is a no-op. Reasoning-tuned local models are the
+    reason it has to do more: Arctic-Text2SQL-R1 narrates its derivation and
+    then puts the finished query in a trailing ```sql block, and reading that
+    whole narration as the prediction scores a model 0% for a query it in fact
+    got right. Taking the LAST fenced block is what makes the local rows
+    measure SQL quality rather than instruction-following on output format.
+
+    The two shapes the hosted arms actually produce - bare SQL, and one fenced
+    block that is the entire reply - both come back byte-identical to what the
+    previous leading-fence-only version returned, so no hosted number moves.
+    """
     t = text.strip()
+    blocks = _FENCE_RE.findall(t)
+    if blocks:
+        return blocks[-1].strip()
     if t.startswith("```"):
+        # An unterminated fence: the reply was cut off at the token limit.
         t = re.sub(r"^```[a-zA-Z]*\n?", "", t)
         t = re.sub(r"\n?```$", "", t).strip()
     return t
@@ -76,16 +97,24 @@ def _single_shot_arm(prompt: str, complete) -> Callable[[dict], dict]:
             sql, err = "", f"{type(e).__name__}: {e}"
         dt = (time.perf_counter() - t0) * 1000
         no_sql = sql.strip().upper() == "NO_SQL" or not sql
+        # A reply the server cut off at max_tokens is not a refusal, and it is
+        # certainly not the model recognising an ambiguous question. Local
+        # reasoning models hit the cap often enough that conflating the two put
+        # six truncated Qwen3.5-9B answers into the ambiguity column, which
+        # flattered a metric the thesis actually argues from. Truncation gets
+        # its own name, and is left out of `clarified` entirely.
+        truncated = bool(usage and usage.finish_reason == "length")
         return {
             "sql": None if no_sql else sql,
             # The naive arm has no notion of asking a question back; refusing to
             # emit SQL is the closest thing it has to recognising ambiguity, and
             # scoring it as such is generous to the baseline rather than unfair.
-            "clarified": no_sql and not err,
+            "clarified": no_sql and not err and not truncated,
             "latency_ms": round(dt, 1),
-            "error": err,
+            "error": err or ("output truncated at max_tokens" if truncated
+                             and no_sql else None),
             "usage": usage.as_dict() if usage else None,
-            "extra": {"prompt_chars": len(prompt)},
+            "extra": {"prompt_chars": len(prompt), "truncated": truncated},
         }
 
     return run

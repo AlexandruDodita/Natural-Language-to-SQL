@@ -483,3 +483,119 @@ here, so those rows have no cost column rather than an invented one.
 - **car_rental only.** Neither agent arm has been run against adventureworks, so
   nothing here says whether the agent penalty grows or shrinks with schema size.
   That is the obvious next measurement.
+
+## Local models: three harness faults the hosted arms never exposed
+
+Running the local models required fixing three things in the harness first. All
+three had been latent since the first wave, and each one was silently
+subtracting accuracy from local models only -- which is exactly the shape of
+error that produces a confident, wrong conclusion about local models being
+unusable.
+
+**1. Output-format assumptions.** `_strip_fences` stripped a fence only when the
+reply *began* with one. That covers every hosted model, because they comply with
+"respond with ONLY the SQL". It does not cover a reasoning-tuned local model:
+Arctic-Text2SQL-R1 narrates its derivation in prose and puts the finished query
+in a trailing ```sql block. The whole narration was being handed to Postgres as
+the prediction, so the model scored 0/2 on questions it had in fact answered
+correctly. The extractor now takes the *last* fenced block when one is present.
+Both shapes the hosted arms actually produce -- bare SQL, and a single fenced
+block that is the entire reply -- return byte-identical results to the previous
+version, so no hosted number moves.
+
+**2. A token budget that was scoring as incompetence.** `LOCAL_MAX_TOKENS`
+defaulted to 2,048, raised to 4,096 for the first sweep. A model that reasons
+before it answers spends most of its budget getting to the query. At 4,096,
+Qwen3.5-9B was cut off mid-derivation on 6 of 44 car_rental questions. Those
+6 were counted as wrong. Raising the budget to 8,192 -- which still fits the
+largest prompt in this benchmark, AdventureWorks at 6,967 tokens, inside the
+16,384-token context, so it costs no VRAM -- moved that model from 68.2% to
+70.5% on car_rental and from **57.1% to 67.3% on AdventureWorks**. Ten points
+of apparent inability were a cap. The first sweep was discarded and every model
+re-run at 8,192 rather than patching the affected rows, so that every row in
+the table below was produced under identical settings.
+
+**3. Truncation was being counted as ambiguity handling.** The arm computed
+`clarified = not sql`, on the reasoning that a naive one-shot model refusing to
+emit SQL is the closest thing it has to recognising an ambiguous question. That
+is defensible for a refusal. It is not defensible for a reply the server cut off
+at the token limit, and it put those 6 truncated Qwen answers into the
+`ambiguous_clarified` column -- flattering the one metric this thesis argues
+from most directly. Truncation is now detected from `finish_reason == "length"`,
+recorded separately in `extra.truncated`, and excluded from `clarified`.
+
+Result files written before fix 3 carry no `extra.truncated` key at all, which
+`benchmark/local_table.py` uses as a staleness marker: such a file is reported
+as stale rather than averaged into the table.
+
+### The dialect finding
+
+The dominant failure mode of the SQL-specialist model is not reasoning. It is
+dialect. Of Arctic-Text2SQL-R1's 10 execution errors on car_rental, 8 are
+SQLite builtins that PostgreSQL does not have -- `strftime`, `julianday`,
+`date(...)` used as a date constructor, and date-minus-integer arithmetic. The
+model was trained on Spider and BIRD, both of which ship SQLite, and it emits
+SQLite datetime functions despite a prompt that says "PostgreSQL" and a schema
+rendered in PostgreSQL types.
+
+This matters for the thesis in two directions. It means a leaderboard figure
+(Arctic reports 68.5% on BIRD) does not transfer to another engine, so
+"specialist model" is a claim about a dialect as much as about a task. And it
+means the local-model column has a headroom figure that a single deterministic
+rewriting pass would recover, which the `ceiling if dialect fixed` column in the
+table reports. That column is **not an accuracy figure and must not be quoted as
+one** -- it is the size of the dialect problem, measured.
+
+### Local model results
+
+Hardware: RTX 5070, 12 GiB VRAM; 31 GiB system RAM; i9-14900K. Backend:
+llama.cpp (LM Studio's CUDA build, `cb295bf`), 16,384-token context, 8,192-token
+output budget, temperature 0, served over the OpenAI-compatible endpoint. The
+arm is byte-identical to `naive` in prompt and contract, so a local row and a
+hosted row differ only in which model answered. Regenerate the tables with
+`.venv/bin/python benchmark/local_table.py` -- every figure is read back out of
+`benchmark/results/`.
+
+`ceiling if dialect fixed` is **not an accuracy figure**: it is what the model
+would reach if every failure that is purely a SQLite builtin were rewritten to
+its PostgreSQL equivalent. It is reported to size the dialect problem, not to
+credit the model.
+
+<!-- TABLES: qwen36-27b-iq3 and qwen36-27b-q4 still running; regenerate with
+     benchmark/local_table.py and replace this block when the sweep completes -->
+
+### What the local rows say
+
+**A 35B MoE on a 12 GiB consumer card matches the best cloud agent arm.**
+Qwen3.6-35B-A3B at Q4, with 28 layers' worth of experts held in system RAM
+(`--n-cpu-moe 28`), scores 93.2% on car_rental -- the same as `claude-agent`
+driving Sonnet 5 (41/44), and above every other agent arm measured, including
+Opus 5 at 81.8%. On AdventureWorks it scores 85.7%, which no agent arm has been
+run against for comparison. It sustains ~47 tokens/s in that configuration.
+This is the single most consequential local result: the sparse-activation
+architecture is what makes it possible, because only ~3B parameters are active
+per token, so the PCIe round trip to the CPU-resident experts is paid on a small
+fraction of the weights.
+
+**The MoE is the only local model that clears the second wave.** Every dense
+local model lands between 55% and 71%, and the gap to the MoE is 23 points --
+far larger than any gap between the dense models themselves. The hard questions
+added in the second wave separate local models from each other much more
+cleanly than they separate the hosted models, three of which are still at 100%.
+
+**Quantisation is not where the accuracy went.** Arctic-Text2SQL-R1 at Q8_0
+(8.10 GiB) scores *below* the same weights at Q4_K_M (4.68 GiB) on car_rental
+(63.6% vs 65.9%) and identically on AdventureWorks (55.1% both), while running
+at 60% of the speed. Doubling the bits bought nothing on this benchmark. At the
+other extreme, Bonsai-27B at Q1_0 -- 1.125 bits per weight, a 3.80 GiB file --
+scores 63.6% and 69.4%, beating both Arctic quants on AdventureWorks and
+matching Arctic Q8 on car_rental. The ladder from 1.125 bits to 8 bits spans
+about six accuracy points; the ladder from a dense model to a sparse one spans
+twenty-three.
+
+**Verbosity is a real cost for the small models.** Even at an 8,192-token
+budget, Bonsai-27B was still cut off on 7 of 44 car_rental questions and 3 of
+49 AdventureWorks questions, and Qwen3.5-9B on 5 and 1. Those are counted as
+failures in the table above, which is the honest treatment -- a query the system
+never finishes emitting is a query the user does not get -- but it means part of
+the dense models' deficit is output discipline rather than SQL knowledge.
