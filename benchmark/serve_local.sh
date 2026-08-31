@@ -37,8 +37,11 @@ case "${1:-}" in
     # have a comparable row.
     M=$MODELS/lmstudio-community/Qwen3.5-9B-GGUF/Qwen3.5-9B-Q4_K_M.gguf; NGL=99 ;;
   bonsai-27b-q1)
-    # 27B at 1.125 bits per weight. The interesting end of the quantisation
-    # ladder: same base model as qwen36-27b-*, one eighth the file.
+    # 27B at 1.125 bits per weight, in a 3.80 GiB file. NOT a quantisation of
+    # Qwen3.6-27B, despite sharing its architecture (qwen35, 64 blocks, 27B) --
+    # its GGUF basename is prism-ml_Bonsai and it carries no base_model link,
+    # so it is a separate model and belongs in the table as its own row, not as
+    # a point on the Qwen quantisation ladder.
     M=$MODELS/lmstudio-community/Bonsai-27B-GGUF/Bonsai-27B-Q1_0.gguf; NGL=99 ;;
   qwen36-27b-iq3)
     # 11.99 GiB of weights against ~11.1 GiB of usable VRAM. NGL=auto: the

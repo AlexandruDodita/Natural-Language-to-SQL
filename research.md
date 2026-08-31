@@ -348,6 +348,9 @@ substitute for running it.
 | Excel report quality, 5 hosted models | `report-gemini-*.json` | done |
 | `claude-agent`, 4 models, car_rental | `claude-agent-claude-*.json` | haiku 84.1%, sonnet 93.2%, opus 81.8% done; **fable partial, see below** |
 | `codex-agent`, 3 models, car_rental | `codex-agent-gpt-*.json` | luna 86.4%, terra 90.9%, sol 95.5% -- all done |
+| `local`, 5 models, car_rental | `local-{arctic-7b-q4,arctic-7b-q8,qwen35-9b,bonsai-27b-q1,qwen36-35b-moe}.json` | done, 63.6%-93.2% |
+| `local`, 5 models, adventureworks | `adventureworks/local-*.json`, same five | done, 55.1%-85.7% |
+| `local`, `qwen36-27b-iq3`, car_rental | `local-qwen36-27b-iq3.json` | done, 90.9% |
 
 **Stale** -- scored against the old question set, must be re-run before being
 cited next to anything above:
@@ -355,10 +358,10 @@ cited next to anything above:
 | file | why it is stuck |
 | --- | --- |
 | `pipeline.json` (80.8%) | needs `rag-service` on :8100; not running |
-| `local-qwen3.5-9b.json` (69.2%) | needs `llama-server` on :1234 |
-| `local-bonsai-27b-q1_0-vulkan.json` (76.9%) | same |
-| `local-*-limit10.json` (2) | same; also truncated runs, kept only for the backend note |
-| `report-qwen3.5-9b.json` (15.4% chart), `report-bonsai-27b-q1_0.json` (96.2%) | same |
+| `local-qwen3.5-9b.json` (69.2%) | superseded by `local-qwen35-9b.json` on the current set |
+| `local-bonsai-27b-q1_0-vulkan.json` (76.9%) | superseded by `local-bonsai-27b-q1.json`; kept for the Vulkan-vs-CUDA backend note |
+| `local-*-limit10.json` (2) | truncated runs, kept only for the backend note |
+| `report-qwen3.5-9b.json` (15.4% chart), `report-bonsai-27b-q1_0.json` (96.2%) | needs `llama-server` on :1234; not re-run in the local sweep, which measured SQL only |
 | `naive.json` | superseded by the per-model `naive-gemini-*` files |
 | `repeat/naive-gemini-2.5-flash-run{3..6}.json` | the sampling-noise study, four runs of the old set |
 | `variance.json` | the six-run variance study, old set |
@@ -373,9 +376,12 @@ if it widened, some of the differences reported above are noise. The
 number at all, which is the one row a thesis cannot leave stale.
 
 **Never measured:** Excel report quality on adventureworks (`report_score.py`
-has only ever been run against car_rental), and both agent arms on
-adventureworks -- the agent arms are car_rental-only so far, so nothing yet says
-whether an agent's disadvantage grows or shrinks with schema size.
+has only ever been run against car_rental); both agent arms on adventureworks --
+the agent arms are car_rental-only so far, so nothing yet says whether an
+agent's disadvantage grows or shrinks with schema size; Excel report quality for
+any local model on the current question set (the local sweep scored SQL only);
+and the two dense-27B cells discussed under *The dense-27B cost*, which were
+stopped deliberately rather than left undone by accident.
 
 ### What the category grouping shows
 
@@ -561,8 +567,30 @@ would reach if every failure that is purely a SQLite builtin were rewritten to
 its PostgreSQL equivalent. It is reported to size the dialect problem, not to
 credit the model.
 
-<!-- TABLES: qwen36-27b-iq3 and qwen36-27b-q4 still running; regenerate with
-     benchmark/local_table.py and replace this block when the sweep completes -->
+### car_rental
+
+| model | acc | correct/n | exec err | of which dialect | ceiling if dialect fixed | no SQL | trunc | tok/s | med lat |
+|---|---|---|---|---|---|---|---|---|---|
+| qwen36-35b-moe | 93.2% | 41/44 | 2 | 0 | 93.2% | 3 | 0 | 50 | 39.5s |
+| qwen36-27b-iq3 | 90.9% | 40/44 | 3 | 0 | 90.9% | 1 | 0 | 8 | 268.5s |
+| qwen35-9b | 70.5% | 31/44 | 0 | 0 | 70.5% | 7 | 5 | 92 | 8.7s |
+| arctic-7b-q4 | 65.9% | 29/44 | 10 | 8 | 84.1% | 1 | 0 | 112 | 4.0s |
+| arctic-7b-q8 | 63.6% | 28/44 | 9 | 6 | 77.3% | 3 | 0 | 71 | 6.1s |
+| bonsai-27b-q1 | 63.6% | 28/44 | 6 | 0 | 63.6% | 8 | 7 | 53 | 47.2s |
+
+Not run: `qwen36-27b-q4` -- see *The dense-27B cost* below.
+
+### adventureworks
+
+| model | acc | correct/n | exec err | of which dialect | ceiling if dialect fixed | no SQL | trunc | tok/s | med lat |
+|---|---|---|---|---|---|---|---|---|---|
+| qwen36-35b-moe | 85.7% | 42/49 | 1 | 0 | 85.7% | 1 | 0 | 49 | 45.9s |
+| bonsai-27b-q1 | 69.4% | 34/49 | 7 | 0 | 69.4% | 3 | 3 | 51 | 50.9s |
+| qwen35-9b | 67.3% | 33/49 | 4 | 0 | 67.3% | 1 | 1 | 88 | 6.9s |
+| arctic-7b-q4 | 55.1% | 27/49 | 11 | 7 | 69.4% | 2 | 0 | 103 | 3.5s |
+| arctic-7b-q8 | 55.1% | 27/49 | 14 | 7 | 69.4% | 2 | 1 | 66 | 5.2s |
+
+Not run: `qwen36-27b-iq3`, `qwen36-27b-q4` -- see *The dense-27B cost* below.
 
 ### What the local rows say
 
@@ -583,15 +611,23 @@ far larger than any gap between the dense models themselves. The hard questions
 added in the second wave separate local models from each other much more
 cleanly than they separate the hosted models, three of which are still at 100%.
 
-**Quantisation is not where the accuracy went.** Arctic-Text2SQL-R1 at Q8_0
-(8.10 GiB) scores *below* the same weights at Q4_K_M (4.68 GiB) on car_rental
+**Quantisation is not where the accuracy went.** The only clean quantisation
+comparison in this table is Arctic-Text2SQL-R1, where the *same weights* are
+measured twice: Q8_0 (8.10 GiB) scores *below* Q4_K_M (4.68 GiB) on car_rental
 (63.6% vs 65.9%) and identically on AdventureWorks (55.1% both), while running
-at 60% of the speed. Doubling the bits bought nothing on this benchmark. At the
-other extreme, Bonsai-27B at Q1_0 -- 1.125 bits per weight, a 3.80 GiB file --
-scores 63.6% and 69.4%, beating both Arctic quants on AdventureWorks and
-matching Arctic Q8 on car_rental. The ladder from 1.125 bits to 8 bits spans
-about six accuracy points; the ladder from a dense model to a sparse one spans
-twenty-three.
+at 60% of the speed. Doubling the bits bought nothing here.
+
+Bonsai-27B at Q1_0 -- 1.125 bits per weight, a 3.80 GiB file -- scores 63.6%
+and 69.4%, beating both Arctic quants on AdventureWorks. It is worth being
+precise about what that does and does not show. Bonsai shares Qwen3.6-27B's
+architecture exactly (`qwen35`, 64 blocks, 27B) but its GGUF `general.basename`
+is `prism-ml_Bonsai` and it declares no `base_model` link, whereas the Qwen3.6
+files declare `Qwen/Qwen3.6-27B`. It is a *different model*, not a one-eighth
+compression of the one two rows below it, and the 27-point gap between it and
+Qwen3.6-27B-IQ3_XXS is therefore a model difference with a quantisation
+difference folded into it, not a measurement of what 1-bit quantisation costs.
+An earlier version of this file and of `serve_local.sh` asserted otherwise; the
+GGUF metadata says no.
 
 **Verbosity is a real cost for the small models.** Even at an 8,192-token
 budget, Bonsai-27B was still cut off on 7 of 44 car_rental questions and 3 of
@@ -599,3 +635,61 @@ budget, Bonsai-27B was still cut off on 7 of 44 car_rental questions and 3 of
 failures in the table above, which is the honest treatment -- a query the system
 never finishes emitting is a query the user does not get -- but it means part of
 the dense models' deficit is output discipline rather than SQL knowledge.
+
+### The dense-27B cost, and why the MoE is the finding
+
+Two cells in the tables above are empty on purpose, and the reason is the
+result rather than an omission from it.
+
+Qwen3.6-27B is a *dense* model. Every one of its 27 billion parameters is read
+for every token generated. At Q4_K_M the file is 16.0 GiB against ~11.1 GiB of
+usable VRAM, so roughly 5 GiB of weights live in system RAM and cross the bus on
+every single token: **4.0 tokens/s**. At IQ3_XXS the file is 12.0 GiB, the spill
+is smaller, and it manages **8.2 tokens/s** -- still slow enough that a single
+second-wave question with a long derivation takes seventeen minutes, and the
+44-question car_rental set took just under four hours.
+
+Qwen3.6-35B-A3B is a *sparse* model. Its file is **larger** (21.1 GiB, so
+*more* of it is in system RAM) and it runs at **47 tokens/s** -- twelve times
+faster than the dense 27B -- because only ~3B of its 35B parameters are active
+for any given token, so the RAM-resident experts are mostly not touched. Held
+there deliberately with `--n-cpu-moe 28`.
+
+That inversion is the practical finding of this whole section. On a 12 GiB
+consumer card the binding constraint is not how large the model file is; it is
+how much of the model each token has to read. A 35B sparse model is both more
+accurate (93.2% vs 90.9%) and an order of magnitude faster than a 27B dense one
+that is a third smaller on disk. For a system that has to answer a user in
+interactive time, the dense 27B rows are not a viable configuration on this
+hardware at any accuracy, and that is what their tokens/s column is there to
+say.
+
+Given that, `qwen36-27b-q4` was stopped after 16 of 44 car_rental questions and
+`qwen36-27b-iq3` was not run against adventureworks. Between them those two
+cells were about nine hours of wall clock for one point on a quantisation
+ladder whose neighbouring rungs -- Arctic Q4_K_M vs Q8_0, at 65.9% and 63.6% --
+show a spread of about two points. `run.py` writes its result file only on
+completion, so neither leaves a partial file behind; `benchmark/local_table.py`
+prints them as not run.
+
+### Where this leaves the local-versus-hosted comparison
+
+The best local model now sits inside the band the hosted models occupy on this
+benchmark rather than below it. On car_rental, `qwen36-35b-moe` at 93.2% is
+level with the best agent arm measured (`claude-agent` on Sonnet 5, 41/44) and
+above every other agentic row: `codex-agent` on Terra (90.9%) and Luna (86.4%),
+`claude-agent` on Haiku 4.5 (84.1%) and Opus 5 (81.8%), and `mcp-postgres`
+(79.5%). It also clears the weakest hosted one-shot row, `gemini-2.5-flash` at
+88.6%. What it does not clear is the top of the naive arm, where three of the
+five hosted models are still at 100% -- so the ceiling this benchmark was
+rebuilt to break is still standing for the strongest hosted models, and the
+local result is a statement about the middle of the field, not the top of it.
+
+What it costs to get there is the honest counterweight. The hosted naive arm
+answers in a median 2.8 seconds for $0.37 per hundred questions; the local MoE
+takes a median 39.5 seconds and no per-token fee, on hardware already bought.
+The thesis claim this supports is narrow and defensible: on a schema of this
+size, a locally served sparse model reaches accuracy competitive with hosted
+agentic systems, at roughly an order of magnitude more latency and no
+marginal cost -- which is the trade that matters when the data cannot leave the
+building.
