@@ -1,0 +1,5 @@
+# The 11 SQLite databases, 1.4 GB, downloaded from
+# https://bird-bench.oss-cn-beijing.aliyuncs.com/dev.zip and immutable upstream.
+# Same reasoning as the AdventureWorks CSVs: a published, unchanging artefact is
+# fetched, not committed. prepare.py rebuilds everything derived from them.
+dev_20240627/

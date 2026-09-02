@@ -37,14 +37,14 @@ case "${1:-}" in
     # have a comparable row.
     M=$MODELS/lmstudio-community/Qwen3.5-9B-GGUF/Qwen3.5-9B-Q4_K_M.gguf; NGL=99 ;;
   bonsai-27b-q1)
-    # 27B at 1.125 bits per weight, in a 3.80 GiB file. NOT a quantisation of
+    # 27B at 1.125 bits per weight, in a 3.5 GiB file. NOT a quantisation of
     # Qwen3.6-27B, despite sharing its architecture (qwen35, 64 blocks, 27B) --
     # its GGUF basename is prism-ml_Bonsai and it carries no base_model link,
     # so it is a separate model and belongs in the table as its own row, not as
     # a point on the Qwen quantisation ladder.
     M=$MODELS/lmstudio-community/Bonsai-27B-GGUF/Bonsai-27B-Q1_0.gguf; NGL=99 ;;
   qwen36-27b-iq3)
-    # 11.99 GiB of weights against ~11.1 GiB of usable VRAM. NGL=auto: the
+    # 11.2 GiB of weights against ~11.1 GiB of usable VRAM. NGL=auto: the
     # hand-computed 58 here assumed the weights were the only thing competing
     # for the card and OOMed on the KV cache before the first token
     # ("cudaMalloc failed" allocating 960 MiB). llama.cpp sizes this correctly
@@ -53,9 +53,11 @@ case "${1:-}" in
     # CTX or a desktop session holding a different amount of VRAM.
     M=$MODELS/unsloth/Qwen3.6-27B-GGUF/Qwen3.6-27B-UD-IQ3_XXS.gguf; NGL=auto ;;
   qwen36-27b-q4)
-    # The Q4 baseline Bonsai is a compression of, at 16.8 GiB: most of it has to
-    # live in system RAM. NGL=auto for the same reason as above -- the fixed 40
-    # OOMed too, and a fixed number cannot be right for both quants anyway.
+    # The top of the Qwen3.6-27B quantisation ladder, at 15.7 GiB: most of it
+    # has to live in system RAM. (An earlier comment here called Bonsai a
+    # compression of this file -- the GGUF metadata says otherwise, see above.)
+    # NGL=auto for the same reason as the IQ3 row -- the fixed 40 OOMed too, and
+    # a fixed number cannot be right for both quants anyway.
     M=$MODELS/unsloth/Qwen3.6-27B-GGUF/Qwen3.6-27B-Q4_K_M.gguf; NGL=auto ;;
   qwen36-35b-moe)
     # 35B total, ~3B active per token. For a MoE the right split is not "fewer

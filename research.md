@@ -237,6 +237,19 @@ arguably should not score the same.
 - In-context-learning error types — https://arxiv.org/abs/2501.09310
 - EDBT 2025, SQL understanding — https://openproceedings.org/2025/conf/edbt/paper-211.pdf
 
+Artefacts this benchmark actually runs against, as opposed to reads:
+
+- Arctic-Text2SQL-R1 (the SQL specialist local model) — https://arxiv.org/abs/2505.20315 ·
+  weights https://huggingface.co/Snowflake/Arctic-Text2SQL-R1-7B
+- BIRD dev question revision 2026-11-06 — https://huggingface.co/datasets/birdsql/bird_sql_dev_20251106 ·
+  databases https://bird-bench.oss-cn-beijing.aliyuncs.com/dev.zip
+- AdventureWorks, PostgreSQL port — https://github.com/NorfolkDataSci/adventure-works-postgres
+  @ afcfd2dfcf031af91f03f536c1ade349cfcb3ad6. Ships no question set; the 56 here are ours.
+- llama.cpp — https://github.com/ggml-org/llama.cpp
+
+The full per-artefact table, including every GGUF quantisation benchmarked and
+the hosted model identifiers, is §12 of benchmark.md.
+
 ---
 
 # Second-wave results (measured 2026-08-30)
@@ -613,11 +626,11 @@ cleanly than they separate the hosted models, three of which are still at 100%.
 
 **Quantisation is not where the accuracy went.** The only clean quantisation
 comparison in this table is Arctic-Text2SQL-R1, where the *same weights* are
-measured twice: Q8_0 (8.10 GiB) scores *below* Q4_K_M (4.68 GiB) on car_rental
+measured twice: Q8_0 (7.5 GiB) scores *below* Q4_K_M (4.4 GiB) on car_rental
 (63.6% vs 65.9%) and identically on AdventureWorks (55.1% both), while running
 at 60% of the speed. Doubling the bits bought nothing here.
 
-Bonsai-27B at Q1_0 -- 1.125 bits per weight, a 3.80 GiB file -- scores 63.6%
+Bonsai-27B at Q1_0 -- 1.125 bits per weight, a 3.5 GiB file -- scores 63.6%
 and 69.4%, beating both Arctic quants on AdventureWorks. It is worth being
 precise about what that does and does not show. Bonsai shares Qwen3.6-27B's
 architecture exactly (`qwen35`, 64 blocks, 27B) but its GGUF `general.basename`
@@ -642,14 +655,14 @@ Two cells in the tables above are empty on purpose, and the reason is the
 result rather than an omission from it.
 
 Qwen3.6-27B is a *dense* model. Every one of its 27 billion parameters is read
-for every token generated. At Q4_K_M the file is 16.0 GiB against ~11.1 GiB of
+for every token generated. At Q4_K_M the file is 15.7 GiB against ~11.1 GiB of
 usable VRAM, so roughly 5 GiB of weights live in system RAM and cross the bus on
-every single token: **4.0 tokens/s**. At IQ3_XXS the file is 12.0 GiB, the spill
+every single token: **4.0 tokens/s**. At IQ3_XXS the file is 11.2 GiB, the spill
 is smaller, and it manages **8.2 tokens/s** -- still slow enough that a single
 second-wave question with a long derivation takes seventeen minutes, and the
 44-question car_rental set took just under four hours.
 
-Qwen3.6-35B-A3B is a *sparse* model. Its file is **larger** (21.1 GiB, so
+Qwen3.6-35B-A3B is a *sparse* model. Its file is **larger** (20.6 GiB, so
 *more* of it is in system RAM) and it runs at **47 tokens/s** -- twelve times
 faster than the dense 27B -- because only ~3B of its 35B parameters are active
 for any given token, so the RAM-resident experts are mostly not touched. Held

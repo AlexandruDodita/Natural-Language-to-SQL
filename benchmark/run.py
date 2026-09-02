@@ -32,6 +32,7 @@ import json
 import os
 import pathlib
 import sys
+import time
 
 import yaml
 
@@ -44,10 +45,21 @@ import datasets as datasets_mod  # noqa: E402
 from score import result_sets_match, summarise  # noqa: E402
 
 STATEMENT_TIMEOUT_MS = 15_000
+CHECKPOINT_EVERY = 50
 
 
 def load_questions(path: pathlib.Path) -> list[dict]:
-    return yaml.safe_load(path.read_text())["questions"]
+    """The question set, from YAML or JSON.
+
+    The hand-written sets are YAML because a human maintains them. A generated
+    set is JSON: `questions_bird_dev.json` is 1,534 entries built by a script,
+    and pushing 2 MB of that through the YAML parser costs seconds per run for
+    no benefit. YAML is a superset of JSON, so this is a speed choice rather
+    than a format one.
+    """
+    text = path.read_text()
+    doc = json.loads(text) if path.suffix == ".json" else yaml.safe_load(text)
+    return doc["questions"]
 
 
 def ensure_database(database_url: str | None, repo: pathlib.Path,
@@ -79,9 +91,13 @@ def ensure_database(database_url: str | None, repo: pathlib.Path,
     return uri
 
 
-def schema_text(repo: pathlib.Path, ds: datasets_mod.Dataset) -> str:
-    """Whole-schema dump for the naive arm: its defining characteristic."""
-    return ds.schema_text(repo)
+def schema_text(repo: pathlib.Path, ds: datasets_mod.Dataset):
+    """Whole-schema dump for the naive arm: its defining characteristic.
+
+    A string for a one-database dataset, a `question -> schema` callable for a
+    multi-database one. The arms accept either.
+    """
+    return ds.schema_for(repo)
 
 
 def cost_block(model: str, usage: dict, n_questions: int, local: bool = False) -> dict:
@@ -114,13 +130,97 @@ def cost_block(model: str, usage: dict, n_questions: int, local: bool = False) -
     }
 
 
-def execute(conn, sql: str):
-    # statement_timeout is set once at session level in main(), not with SET
-    # LOCAL here: the connection is in autocommit, so each execute is its own
-    # transaction and a LOCAL setting would expire before the query it guards.
-    with conn.cursor() as cur:
-        cur.execute(sql)
-        return cur.fetchall()
+class Fixture:
+    """The evaluation database, and the single place model SQL is executed.
+
+    Introduced when BIRD arrived, because until then "the database" was one
+    PostgreSQL connection held open for the whole run. BIRD is 11 SQLite files
+    and the right one is a property of the question, so the choice of connection
+    had to move somewhere. Putting execution behind this interface keeps that
+    choice out of the scoring loop, which is identical for every backend and
+    should stay that way -- the metric must not vary with the engine.
+
+    Both implementations are read-only and time-bounded. That is not a detail:
+    the SQL comes from a language model, and the harness must not be the thing
+    that lets one of them lock or mutate the fixture.
+    """
+
+    def execute(self, q: dict, sql: str):
+        raise NotImplementedError
+
+    def close(self) -> None:
+        pass
+
+
+class PostgresFixture(Fixture):
+    def __init__(self, uri: str, ds: datasets_mod.Dataset):
+        import psycopg
+        self.uri = uri
+        self.conn = psycopg.connect(uri, autocommit=True)
+        self.conn.execute("SET default_transaction_read_only = on")
+        self.conn.execute(f"SET statement_timeout = {STATEMENT_TIMEOUT_MS}")
+        if ds.search_path:
+            self.conn.execute(f"SET search_path = {ds.search_path}")
+
+    def execute(self, q: dict, sql: str):
+        # statement_timeout is set once at session level above, not with SET
+        # LOCAL here: the connection is in autocommit, so each execute is its
+        # own transaction and a LOCAL setting would expire before the query it
+        # guards.
+        with self.conn.cursor() as cur:
+            cur.execute(sql)
+            return cur.fetchall()
+
+    def close(self) -> None:
+        self.conn.close()
+
+
+class SqliteFixture(Fixture):
+    """One read-only connection per database, opened on first use and kept.
+
+    SQLite has no `statement_timeout`, so the bound is a progress handler that
+    aborts the running statement once a wall-clock deadline passes. Without it
+    a single model-generated cross join against the 600 MB football database
+    stalls the run indefinitely, which on a 1,534-question set means losing a
+    whole overnight to one bad query.
+    """
+
+    def __init__(self, ds, repo: pathlib.Path):
+        self.ds, self.repo = ds, repo
+        self.conns: dict[str, "sqlite3.Connection"] = {}
+
+    def _conn(self, db_id: str):
+        import sqlite3
+        if db_id not in self.conns:
+            path = self.ds.sqlite_path(self.repo, db_id)
+            if not path.exists():
+                raise SystemExit(
+                    f"missing database {path}. Run benchmark_data/bird/prepare.py "
+                    f"after unpacking the BIRD dev bundle.")
+            self.conns[db_id] = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+        return self.conns[db_id]
+
+    def execute(self, q: dict, sql: str):
+        conn = self._conn(q["db_id"])
+        end = time.perf_counter() + STATEMENT_TIMEOUT_MS / 1000
+        conn.set_progress_handler(
+            lambda: 1 if time.perf_counter() > end else 0, 10_000)
+        try:
+            return conn.execute(sql).fetchall()
+        finally:
+            conn.set_progress_handler(None, 0)
+
+    def close(self) -> None:
+        for c in self.conns.values():
+            c.close()
+
+
+def open_fixture(args, repo: pathlib.Path, ds: datasets_mod.Dataset) -> Fixture:
+    if ds.backend == "sqlite":
+        if args.database_url:
+            raise SystemExit(f"--database-url does not apply to {ds.name} (SQLite)")
+        return SqliteFixture(ds, repo)
+    return PostgresFixture(ensure_database(args.database_url, repo, ds), ds)
 
 
 def main() -> int:
@@ -152,16 +252,24 @@ def main() -> int:
     if args.limit:
         questions = questions[: args.limit]
 
-    import psycopg
-
-    uri = ensure_database(args.database_url, repo, ds)
+    fixture = open_fixture(args, repo, ds)
+    # The agent arms drive an MCP server that speaks to PostgreSQL over a URI.
+    # There is no such server for the SQLite datasets, and silently running them
+    # against the wrong database would be worse than refusing.
+    if args.arm in ("claude-agent", "codex-agent", "mcp-postgres", "pipeline") \
+            and ds.backend != "postgres":
+        raise SystemExit(f"the {args.arm} arm needs a PostgreSQL fixture; "
+                         f"{ds.name} is {ds.backend}")
+    uri = getattr(fixture, "uri", None)
 
     if args.arm == "naive":
-        arm = arms_mod.make_naive_arm(schema_text(repo, ds), domain=ds.domain)
+        arm = arms_mod.make_naive_arm(schema_text(repo, ds), domain=ds.domain,
+                                      dialect=ds.dialect)
         model_label = clients.gemini_model_name()
     elif args.arm == "local":
         arm = arms_mod.make_local_arm(schema_text(repo, ds), args.local_base_url,
-                                      args.local_model, domain=ds.domain)
+                                      args.local_model, domain=ds.domain,
+                                      dialect=ds.dialect)
         model_label = args.local_model
     elif args.arm == "pipeline":
         arm = arms_mod.make_pipeline_arm(args.base_url)
@@ -194,13 +302,21 @@ def main() -> int:
         arm = arms_mod.make_mcp_postgres_arm()
         model_label = clients.gemini_model_name()
 
+    # car_rental keeps writing results/<arm>.json so existing files and the
+    # table generator are untouched; other datasets get their own subdirectory.
+    default_out = (HERE / "results" / f"{args.arm}.json" if args.dataset == datasets_mod.DEFAULT
+                   else HERE / "results" / args.dataset / f"{args.arm}.json")
+    out_path = args.out or default_out
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    # A 1,534-question run is hours long and used to write nothing until the
+    # last question returned, so a crash at question 1,500 threw away the
+    # entire API spend. The checkpoint is answers-only: it is a crash bag to
+    # re-score from, never a results file, which is why it is written to a
+    # different name and deleted the moment the real one lands.
+    ckpt_path = out_path.with_suffix(".partial.json")
+
     results: list[dict] = []
-    # Read-only: model-generated SQL must not be able to change the fixture.
-    with psycopg.connect(uri, autocommit=True) as conn:
-        conn.execute("SET default_transaction_read_only = on")
-        conn.execute(f"SET statement_timeout = {STATEMENT_TIMEOUT_MS}")
-        if ds.search_path:
-            conn.execute(f"SET search_path = {ds.search_path}")
+    try:
         for i, q in enumerate(questions, 1):
             out = arm(q)
             rec = {
@@ -210,6 +326,8 @@ def main() -> int:
                 "clarified": out["clarified"], "usage": out.get("usage"),
                 "extra": out.get("extra") or {},
             }
+            if q.get("db_id"):
+                rec["db_id"] = q["db_id"]
 
             if q["gold_sql"] is None:
                 # Ambiguous: correctness is "did it ask rather than guess".
@@ -221,28 +339,52 @@ def main() -> int:
                 rec["correct"] = False
                 rec["exec_error"] = None
                 if out["sql"]:
+                    # Gold and prediction are executed in separate blocks so
+                    # their failures cannot be confused. A gold that will not
+                    # run is a broken question -- it costs every arm the same
+                    # point and says nothing about any model -- whereas a
+                    # prediction that will not run is the result being
+                    # measured. Collapsing both into `exec_error` would report
+                    # the first as the second, and `invalid_sql` in the summary
+                    # would count questions no model got wrong.
+                    gold = None
                     try:
-                        gold = execute(conn, q["gold_sql"])
-                        if not gold:
-                            # A gold query returning nothing makes the question
-                            # unscoreable rather than hard: the comparison sees
-                            # two empty result sets and matches them, so any
-                            # query that returns no rows -- including a wrong
-                            # one -- is marked correct. Fail loudly instead of
-                            # quietly inflating the score.
-                            raise SystemExit(
-                                f"{q['id']}: gold SQL returns zero rows against "
-                                f"{args.dataset}. An empty gold is trivially "
-                                f"matchable; fix the question or the fixture.")
-                        pred = execute(conn, out["sql"])
-                        rec["correct"] = result_sets_match(gold, pred, q.get("ordered", False))
-                        rec["gold_rows"], rec["pred_rows"] = len(gold), len(pred)
+                        gold = fixture.execute(q, q["gold_sql"])
                     except Exception as e:
-                        rec["exec_error"] = str(e).splitlines()[0][:200]
+                        rec["gold_error"] = str(e).splitlines()[0][:200]
+                    if gold is not None and not gold:
+                        # A gold query returning nothing makes the question
+                        # unscoreable rather than hard: the comparison sees
+                        # two empty result sets and matches them, so any
+                        # query that returns no rows -- including a wrong
+                        # one -- is marked correct. Fail loudly instead of
+                        # quietly inflating the score.
+                        raise SystemExit(
+                            f"{q['id']}: gold SQL returns zero rows against "
+                            f"{args.dataset}. An empty gold is trivially "
+                            f"matchable; fix the question or the fixture.")
+                    if gold:
+                        try:
+                            pred = fixture.execute(q, out["sql"])
+                            rec["correct"] = result_sets_match(
+                                gold, pred, q.get("ordered", False))
+                            rec["gold_rows"], rec["pred_rows"] = len(gold), len(pred)
+                        except Exception as e:
+                            rec["exec_error"] = str(e).splitlines()[0][:200]
                 results.append(rec)
-                mark = "ok " if rec["correct"] else ("ERR" if rec["exec_error"] else "MISS")
+                mark = ("ok " if rec["correct"] else
+                        "GOLD?" if rec.get("gold_error") else
+                        "ERR" if rec["exec_error"] else "MISS")
 
-            print(f"  [{i:>2}/{len(questions)}] {q['id']} {mark:<8} {q['question'][:52]}")
+            print(f"  [{i:>4}/{len(questions)}] {q['id']} {mark:<8} "
+                  f"{q['question'][:52]}", flush=True)
+            if i % CHECKPOINT_EVERY == 0:
+                ckpt_path.write_text(json.dumps(
+                    {"arm": args.arm, "dataset": args.dataset, "model": model_label,
+                     "answered": i, "of": len(questions), "results": results},
+                    indent=1, default=str))
+    finally:
+        fixture.close()
 
     summary = summarise(results)
     summary["usage"] = clients.aggregate_usage([r.get("usage") for r in results])
@@ -259,12 +401,6 @@ def main() -> int:
             sum(billed) / len(billed) * 100, 4)
         summary["cost"]["measured_questions"] = len(billed)
 
-    # car_rental keeps writing results/<arm>.json so existing files and the
-    # table generator are untouched; other datasets get their own subdirectory.
-    default_out = (HERE / "results" / f"{args.arm}.json" if args.dataset == datasets_mod.DEFAULT
-                   else HERE / "results" / args.dataset / f"{args.arm}.json")
-    out_path = args.out or default_out
-    out_path.parent.mkdir(parents=True, exist_ok=True)
     payload = {"arm": args.arm, "dataset": args.dataset, "model": model_label,
                "questions_fingerprint": fingerprint,
                "summary": summary, "results": results}
@@ -272,6 +408,7 @@ def main() -> int:
         payload["backend"] = clients.LOCAL_BACKEND or "unspecified ($LOCAL_BACKEND not set)"
         payload["endpoint"] = args.local_base_url
     out_path.write_text(json.dumps(payload, indent=2, default=str))
+    ckpt_path.unlink(missing_ok=True)
 
     print(f"\n=== {args.arm} ===")
     print(f"execution accuracy : {summary['execution_accuracy']:.1%} "

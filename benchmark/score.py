@@ -112,6 +112,11 @@ def summarise(results: list[dict]) -> dict:
         },
         "invalid_sql": sum(1 for r in scored if r.get("exec_error")),
         "no_sql_produced": sum(1 for r in scored if not r.get("sql")),
+        # Questions whose own gold SQL would not execute. They count as wrong
+        # for every arm alike, so they depress the whole column by the same
+        # amount rather than separating any two rows -- but a reader comparing
+        # against a published figure needs to know they are in the denominator.
+        "gold_unscoreable": sum(1 for r in scored if r.get("gold_error")),
         # Ambiguous questions are not scored for accuracy; what matters is
         # whether the system asked instead of guessing.
         "ambiguous_total": len(ambiguous),

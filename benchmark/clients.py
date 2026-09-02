@@ -67,15 +67,48 @@ def gemini_model_name() -> str:
     return os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 
 
+# A transient API failure used to cost a question permanently: the arm catches
+# the exception, records it, and moves on. On a 44-question set that was a
+# tolerable rarity. On BIRD's 1,534 -- three of them running at once for hours --
+# a rate-limit burst would silently subtract several points from a row, and the
+# lost questions would be indistinguishable from questions the model got wrong.
+RETRY_ATTEMPTS = int(os.environ.get("GEMINI_RETRY_ATTEMPTS", "4"))
+RETRY_BASE_S = float(os.environ.get("GEMINI_RETRY_BASE_S", "2.0"))
+# Substrings of the exceptions worth retrying. A safety block or a malformed
+# request will fail identically however many times it is sent, and retrying
+# those would just multiply the wait before recording the real error.
+_TRANSIENT = ("429", "500", "502", "503", "504", "deadline", "timeout",
+              "unavailable", "resource has been exhausted", "internal error",
+              "connection", "quota")
+
+
+def _is_transient(e: Exception) -> bool:
+    s = f"{type(e).__name__}: {e}".lower()
+    return any(k in s for k in _TRANSIENT)
+
+
 def gemini_complete(prompt: str, model: Optional[str] = None) -> tuple[str, Usage]:
-    """One non-streaming completion. Returns the text and its usage record."""
+    """One non-streaming completion. Returns the text and its usage record.
+
+    Retries transient failures with exponential backoff. The latency recorded is
+    that of the attempt that succeeded, not of the whole retry sequence: the
+    throughput column measures how fast the model answers, and folding a
+    backoff sleep into it would make a rate-limited run look like a slow model.
+    """
     import google.generativeai as genai
 
     genai.configure(api_key=os.environ["GEMINI_API_KEY"])
     name = model or gemini_model_name()
-    t0 = time.perf_counter()
-    resp = genai.GenerativeModel(name).generate_content(prompt)
-    dt = (time.perf_counter() - t0) * 1000
+    for attempt in range(RETRY_ATTEMPTS):
+        try:
+            t0 = time.perf_counter()
+            resp = genai.GenerativeModel(name).generate_content(prompt)
+            dt = (time.perf_counter() - t0) * 1000
+            break
+        except Exception as e:
+            if attempt == RETRY_ATTEMPTS - 1 or not _is_transient(e):
+                raise
+            time.sleep(RETRY_BASE_S * (2 ** attempt))
 
     um = getattr(resp, "usage_metadata", None)
     prompt_tok = int(getattr(um, "prompt_token_count", 0) or 0)

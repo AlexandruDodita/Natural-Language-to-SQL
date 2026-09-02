@@ -43,10 +43,17 @@ NAIVE_PROMPT = """You are a SQL expert for {domain}.
 
 {schema}
 
-Write a single PostgreSQL SELECT query answering the user's question.
+Write a single {dialect} SELECT query answering the user's question.
 Respond with ONLY the SQL. No markdown fences, no explanation.
 If the question cannot be answered from this schema, respond with exactly: NO_SQL
 """
+
+# BIRD's questions are not answerable without the external-knowledge hint that
+# ships with them ("Free meal rate = Free Meal Count (K-12) / Enrollment
+# (K-12)"), so it is part of the task definition rather than a hint this arm
+# invented. It is appended per question, immediately before the question, and is
+# omitted entirely when a question carries none.
+EVIDENCE_BLOCK = "\nExternal knowledge you must use: {evidence}\n"
 
 
 _FENCE_RE = re.compile(r"```[a-zA-Z]*\n(.*?)```", re.DOTALL)
@@ -78,20 +85,30 @@ def _strip_fences(text: str) -> str:
     return t
 
 
-def _single_shot_arm(prompt: str, complete) -> Callable[[dict], dict]:
+def _single_shot_arm(prompt: str | Callable[[dict], str],
+                    complete) -> Callable[[dict], dict]:
     """The naive contract, parameterised only by which model answers.
 
     `complete` is a `prompt -> (text, Usage)` callable from clients.py. Both the
     hosted and the local arm are built from this function, which is what
     guarantees the two are comparable: same prompt, same one call, same
     interpretation of a refusal.
+
+    `prompt` is normally the one constant string every question is asked
+    against. It may instead be a `question -> prompt` callable, which is what a
+    multi-database dataset needs: BIRD's 1,534 questions are spread over 11
+    schemas, so the schema in the prompt is a property of the question and not
+    of the run. The single-string case builds the prompt exactly once, as
+    before, so no existing arm changes behaviour.
     """
+    build = prompt if callable(prompt) else (lambda q: prompt)
 
     def run(q: dict) -> dict:
         t0 = time.perf_counter()
         usage: Optional[clients.Usage] = None
+        prompt_text = build(q)
         try:
-            text, usage = complete(f"{prompt}\n\nQuestion: {q['question']}")
+            text, usage = complete(f"{prompt_text}\n\nQuestion: {q['question']}")
             sql, err = _strip_fences(text), None
         except Exception as e:  # network, quota, safety block, local server down
             sql, err = "", f"{type(e).__name__}: {e}"
@@ -114,7 +131,7 @@ def _single_shot_arm(prompt: str, complete) -> Callable[[dict], dict]:
             "error": err or ("output truncated at max_tokens" if truncated
                              and no_sql else None),
             "usage": usage.as_dict() if usage else None,
-            "extra": {"prompt_chars": len(prompt), "truncated": truncated},
+            "extra": {"prompt_chars": len(prompt_text), "truncated": truncated},
         }
 
     return run
@@ -123,25 +140,52 @@ def _single_shot_arm(prompt: str, complete) -> Callable[[dict], dict]:
 DEFAULT_DOMAIN = "a car rental company database"
 
 
-def make_naive_arm(schema_text: str, domain: str = DEFAULT_DOMAIN) -> Callable[[dict], dict]:
-    prompt = NAIVE_PROMPT.format(schema=schema_text, domain=domain)
-    return _single_shot_arm(prompt, clients.gemini_complete)
+DEFAULT_DIALECT = "PostgreSQL"
+
+
+def naive_prompt_builder(schema_text: str | Callable[[dict], str],
+                         domain: str = DEFAULT_DOMAIN,
+                         dialect: str = DEFAULT_DIALECT) -> Callable[[dict], str]:
+    """`question -> prompt`, shared by the naive and local arms.
+
+    Both arms must ask exactly the same thing or the hosted-versus-local rows
+    stop being a one-variable comparison, so the prompt is built here once
+    rather than assembled twice.
+    """
+    const = (None if callable(schema_text)
+             else NAIVE_PROMPT.format(schema=schema_text, domain=domain, dialect=dialect))
+
+    def build(q: dict) -> str:
+        base = const if const is not None else NAIVE_PROMPT.format(
+            schema=schema_text(q), domain=domain, dialect=dialect)
+        ev = q.get("evidence")
+        return (base + EVIDENCE_BLOCK.format(evidence=ev)) if ev else base
+
+    return build
+
+
+def make_naive_arm(schema_text: str | Callable[[dict], str],
+                   domain: str = DEFAULT_DOMAIN,
+                   dialect: str = DEFAULT_DIALECT) -> Callable[[dict], dict]:
+    return _single_shot_arm(naive_prompt_builder(schema_text, domain, dialect),
+                            clients.gemini_complete)
 
 
 def make_local_arm(
-    schema_text: str,
+    schema_text: str | Callable[[dict], str],
     base_url: str = clients.DEFAULT_LOCAL_BASE_URL,
     model: str = clients.DEFAULT_LOCAL_MODEL,
     domain: str = DEFAULT_DOMAIN,
+    dialect: str = DEFAULT_DIALECT,
 ) -> Callable[[dict], dict]:
     """The naive arm, answered by a model running on this machine.
 
     Any OpenAI-compatible server will do (llama.cpp's llama-server, LM Studio,
     vLLM, Ollama); the arm only needs `POST {base_url}/chat/completions`.
     """
-    prompt = NAIVE_PROMPT.format(schema=schema_text, domain=domain)
     return _single_shot_arm(
-        prompt, lambda p: clients.local_complete(p, base_url=base_url, model=model))
+        naive_prompt_builder(schema_text, domain, dialect),
+        lambda p: clients.local_complete(p, base_url=base_url, model=model))
 
 
 def make_pipeline_arm(base_url: str) -> Callable[[dict], dict]:
