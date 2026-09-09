@@ -306,23 +306,20 @@ add_notes(s, "Conducta proprie selectează tabelele relevante prin căutare lexi
 
 # --- act break: from the system to the measurements -----------------------
 s = prs.slides.add_slide(blank); set_bg(s, NAVY)
-title(s, "Sistemul funcționează.\nDar este construit cum trebuie?", "Partea a doua", dark=True)
-add_text(s, "Tot ce am arătat până aici este o alegere de proiectare, nu un rezultat "
-            "măsurat. Restul lucrării verifică fiecare alegere pe rând.",
-         0.72, 2.36, 5.30, 1.10, 16, "B8CAD8")
-rounded(s, 0.72, 3.62, 5.40, 0.72, "173F5F", "35556F")
-add_text(s, "Capitolul 4 — evaluarea experimentală", 1.02, 3.62, 4.90, 0.72, 14, GOLD, True,
-         valign=MSO_ANCHOR.MIDDLE)
+title(s, "Sistemul funcționează.\nEste însă arhitectura potrivită?", "Partea a doua", dark=True)
+add_text(s, "Arhitectura prezentată până aici constituie o alegere de proiectare, nu un "
+            "rezultat măsurat. Fiecare decizie este verificată experimental în continuare.",
+         0.72, 2.36, 5.30, 1.50, 17, "B8CAD8")
 for i, (n, q, c) in enumerate([
     ("01", "Cum ar trebui generat SQL-ul?", BLUE),
     ("02", "Cât costă fiecare variantă?", CORAL),
     ("03", "Pe ce date se poate măsura credibil?", GREEN),
-    ("04", "Ce face sistemul când întrebarea e ambiguă?", GOLD),
+    ("04", "Cum se tratează întrebările ambigue?", GOLD),
 ]):
-    y = 1.62 + i * 1.28
+    y = 1.80 + i * 1.24
     rounded(s, 6.75, y, 5.86, 1.02, "173F5F", "35556F")
     add_text(s, n, 7.10, y, 0.55, 1.02, 15, c, True, valign=MSO_ANCHOR.MIDDLE)
-    add_text(s, q, 7.72, y, 4.60, 1.02, 16, WHITE, True, valign=MSO_ANCHOR.MIDDLE)
+    add_text(s, q, 7.72, y, 4.62, 1.02, 16, WHITE, True, valign=MSO_ANCHOR.MIDDLE)
 footer(s, dark=True)
 add_notes(s, "Până în acest punct am descris o arhitectură care funcționează. Nu am arătat însă că este arhitectura potrivită. Partea a doua a lucrării tratează fiecare decizie ca pe o ipoteză de verificat: modul de generare a SQL-ului, costul fiecărei variante, datele pe care măsurarea rămâne credibilă și comportamentul în fața întrebărilor ambigue.")
 
@@ -372,12 +369,12 @@ add_notes(s, "Două interogări diferite textual pot fi ambele corecte. De aceea
 
 # --- the three evaluation sets -------------------------------------------
 s = prs.slides.add_slide(blank); set_bg(s)
-title(s, "Trei seturi, două feluri de dificultate", "Datele de evaluare")
+title(s, "Trei seturi, două tipuri de dificultate", "Datele de evaluare")
 add_text(s, "Aceeași configurație A, același prompt. Se schimbă doar baza de date.",
          0.72, 1.46, 9.60, 0.30, 14, MUTED, True)
 
 sets = [
-    ("car_rental", "generată de mine", "9 tabele · 8.026 rânduri",
+    ("car_rental", "elaborată de autor", "9 tabele · 8.026 rânduri",
      "51 de întrebări · autor propriu",
      "What is the longest run of consecutive calendar days on which at least "
      "one reservation was picked up at the Downtown Hub branch?",
@@ -417,15 +414,19 @@ for i, (name, prov, size, qs, example, evidence, acc, c, tint) in enumerate(sets
 
 rounded(s, 0.72, 5.96, 11.94, 1.00, NAVY, NAVY)
 add_rich_text(s, [
-    ("Primele două sunt grele la SQL. A treia e grea la ", {"bold": True, "color": WHITE, "size": 14}),
-    ("date", {"bold": True, "color": GOLD, "size": 14}),
+    ("În primele două seturi dificultatea este ", {"bold": True, "color": WHITE, "size": 14}),
+    ("sintactică", {"bold": True, "color": GOLD, "size": 14}),
+    ("; în al treilea este ", {"bold": True, "color": WHITE, "size": 14}),
+    ("semantică", {"bold": True, "color": GOLD, "size": 14}),
     (".", {"bold": True, "color": WHITE, "size": 14}),
 ], 1.04, 6.06, 11.30, 0.32)
 add_rich_text(s, [
+    ("Coloana ", {"color": "9FB4C6", "size": 11}),
     ("A11", {"color": GOLD, "size": 11, "font": "Consolas"}),
-    (" nu se poate ghici din schemă, iar „north Bohemia” nu se potrivește cu „North Bohemia”. "
-     "Volumul nu explică scorul: 61 de puncte dispersie între cele 11 baze BIRD, "
-     "față de 8 puncte între modele.", {"color": "9FB4C6", "size": 11}),
+    (" nu poate fi dedusă din schemă, iar valoarea „north Bohemia” nu corespunde formei "
+     "„North Bohemia”. Volumul nu explică diferența de scor: dispersia este de 61 de puncte "
+     "între cele 11 baze BIRD, față de 8 puncte între modele.",
+     {"color": "9FB4C6", "size": 11}),
 ], 1.04, 6.42, 11.30, 0.48)
 footer(s, "car_rental și AdventureWorks: gemini-3.7-flash. BIRD-SQL dev: aceeași rulare, DDL brut")
 add_notes(s, "Cele trei seturi nu sunt comparabile ca dificultate, iar diferența nu vine din volum. Primele două conțin întrebări pe care le-am formulat eu, peste scheme pe care le cunoșteam bine: dificultatea este sintactică, adică SQL complex, serii de zile consecutive sau medii ponderate. Pe acestea modelele bune ajung la sută la sută. BIRD schimbă natura dificultății: întrebarea este formulată de altcineva, uneori agramatical, coloanele au nume opace precum A11, iar semantica lor este livrată într-un dicționar ținut separat de schemă. Eșecurile nu sunt de construcție a interogării, ci de ancorare în date. Numărul mare de întrebări nu coboară scorul, ci restabilește puterea de discriminare: pe patruzeci și patru de întrebări, trei modele erau egale la sută la sută.")
