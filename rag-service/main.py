@@ -96,6 +96,14 @@ class ValidateRequest(BaseModel):
     user: Optional[UserIn] = None
 
 
+class ExecuteRequest(BaseModel):
+    """Run a SQL string the user supplied (workbench SQL tab, history re-run)."""
+
+    sql: str
+    user: Optional[UserIn] = None
+    explain: bool = False
+
+
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
@@ -143,6 +151,43 @@ async def validate(req: ValidateRequest):
         payload["policy"] = policy_result.to_dict()
         payload["sql"] = policy_result.sql if policy_result.ok else None
     return payload
+
+
+@app.post("/execute")
+async def execute(req: ExecuteRequest):
+    """Execute (or EXPLAIN) user-edited SQL without a model call.
+
+    Goes through ``Pipeline.run_sql``, i.e. the same validator and the same
+    policy rewrite as a generated query, so an edited query cannot read more
+    than the role is allowed to.
+    """
+    if not req.sql or not req.sql.strip():
+        raise HTTPException(status_code=400, detail="No SQL provided")
+    ctx: UserContext = state.user_context(req.user.model_dump() if req.user else None)
+    outcome = await pipeline.run_sql(req.sql, ctx, explain=req.explain)
+    return outcome.to_dict()
+
+
+@app.get("/roles")
+async def roles():
+    """The authorization roles as they are defined in policy.yaml."""
+    if state.policy is None:
+        return {"default": settings.default_user_role, "roles": []}
+    out = []
+    for name in sorted(state.policy.roles):
+        role = state.policy.role(name)
+        out.append(
+            {
+                "name": name,
+                "description": (role.description or "").strip() or None,
+                "max_rows": role.max_rows,
+                "requires": list(role.requires),
+                "denied_columns": list(role.denied_columns),
+                "denied_tables": list(role.denied_tables),
+                "row_filter_tables": sorted(role.row_filters),
+            }
+        )
+    return {"default": state.policy.default_role, "roles": out}
 
 
 @app.post("/admin/reindex")

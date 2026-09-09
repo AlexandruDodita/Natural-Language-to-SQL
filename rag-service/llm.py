@@ -32,7 +32,11 @@ CLARIFICATION_INSTRUCTIONS = """If the question is genuinely under-specified —
 different SQL queries would be equally defensible and they would give different
 answers (for example "who are the best clients?": by total spend, by number of
 reservations, or by how long they have been customers) — do NOT guess. Return:
-{"clarification": "a single short question that asks the user to pick an interpretation", "sql": null, "chart": null}
+{"clarification": "a single short question that asks the user to pick an interpretation", "options": [{"label": "By total spend", "measure": "SUM(p.amount) WHERE p.status = 'completed'", "question": "the same question, rewritten so it states this reading"}], "sql": null, "chart": null}
+Each option names one reading: `label` is what the user picks, `measure` is the
+SQL expression that reading would aggregate on (so the choice is reproducible),
+and `question` restates the original question unambiguously — it is sent back
+verbatim when the user picks that option. Give two to four options.
 Use this sparingly: only when the ambiguity changes the result, never for
 questions that have one natural reading.
 """

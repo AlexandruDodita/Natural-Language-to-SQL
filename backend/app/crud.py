@@ -60,6 +60,20 @@ def delete_conversation(db: Session, conversation_id: str) -> bool:
         return True
     return False
 
+def rename_conversation(db: Session, conversation_id: str, title: str) -> Optional[models.Conversation]:
+    """Persist the title derived from the first question.
+
+    Without this the title lived only in React state, so every stored thread
+    came back as "New Chat" after a reload.
+    """
+    db_conversation = get_conversation(db, conversation_id)
+    if db_conversation is None:
+        return None
+    db_conversation.title = title
+    db.commit()
+    db.refresh(db_conversation)
+    return db_conversation
+
 def update_conversation_timestamp(db: Session, conversation_id: str):
     db_conversation = get_conversation(db, conversation_id)
     if db_conversation:
@@ -87,6 +101,14 @@ def create_message(db: Session, conversation_id: str, message: schemas.MessageCr
         )
         db.add(db_sql_meta)
 
+    if message.artifact and (message.artifact.payload or message.artifact.meta):
+        db.add(models.MessageArtifact(
+            message_id=db_message.id,
+            payload=message.artifact.payload,
+            meta=message.artifact.meta,
+            expires_at=datetime.utcnow() + timedelta(hours=SQL_META_TTL_HOURS),
+        ))
+
     db.commit()
     db.refresh(db_message)
 
@@ -105,6 +127,8 @@ def get_messages(db: Session, conversation_id: str) -> List[models.Message]:
     for msg in messages:
         if msg.sql_meta and msg.sql_meta.expires_at < now:
             msg.sql_meta = None
+        if msg.artifact and msg.artifact.expires_at < now:
+            msg.artifact = None
 
     return messages
 
@@ -120,8 +144,12 @@ def delete_message(db: Session, conversation_id: str, message_id: str) -> bool:
     return True
 
 def delete_expired_sql_meta(db: Session) -> int:
+    now = datetime.utcnow()
     deleted = db.query(models.MessageSqlMeta).filter(
-        models.MessageSqlMeta.expires_at < datetime.utcnow()
+        models.MessageSqlMeta.expires_at < now
+    ).delete()
+    deleted += db.query(models.MessageArtifact).filter(
+        models.MessageArtifact.expires_at < now
     ).delete()
     db.commit()
     return deleted

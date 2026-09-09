@@ -79,6 +79,17 @@ def get_conversation(
         raise HTTPException(status_code=404, detail="Conversation not found")
     return db_conversation
 
+@app.patch("/conversations/{conversation_id}", response_model=schemas.Conversation)
+def rename_conversation(
+    conversation_id: str,
+    update: schemas.ConversationUpdate,
+    db: Session = Depends(get_db)
+):
+    db_conversation = crud.rename_conversation(db, conversation_id, update.title)
+    if db_conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    return db_conversation
+
 @app.delete("/conversations/{conversation_id}/messages/{message_id}")
 def delete_message(
     conversation_id: str,
