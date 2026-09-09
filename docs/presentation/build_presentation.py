@@ -132,7 +132,10 @@ def title(slide, text, kicker=None, dark=False):
              30, fg, True)
 
 
-def footer(slide, number, source=None, dark=False):
+def footer(slide, source=None, dark=False):
+    # Numbered from the deck itself: hard-coded numbers silently desync the
+    # moment a slide is inserted.
+    number = len(prs.slides)
     color = "A8B6C4" if dark else MUTED
     if source:
         add_text(slide, source, 0.68, 7.13, 10.8, 0.18, 8.5, color)
@@ -235,7 +238,7 @@ rounded(s, 3.15, 5.37, 7.04, 0.88, CORAL_LIGHT, CORAL_LIGHT)
 add_rich_text(s, [("Blocajul: ", {"bold": True, "color": CORAL}),
                   ("managerul nu cunoaște SQL și nu poate aștepta pentru fiecare întrebare de rutină.", {"color": INK})],
               3.40, 5.60, 6.55, 0.38, 17)
-footer(s, 2)
+footer(s)
 add_notes(s, "Punctul de plecare este unul organizațional. Managerii și personalul de decizie au întrebări recurente despre vânzări, costuri, clienți sau operațiuni, însă datele sunt accesibile prin SQL. Pentru fiecare răspuns trebuie solicitat ajutorul unui analist, ceea ce introduce un timp de așteptare și întrerupe activitatea ambelor persoane.")
 
 
@@ -255,7 +258,7 @@ for i, (n, h1, body, c) in enumerate(steps):
 rounded(s, 1.48, 5.22, 10.36, 0.95, NAVY, NAVY)
 add_text(s, "Răspunsuri de zi cu zi, fără bariera SQL — cu control, trasabilitate și acces numai în citire.",
          1.80, 5.49, 9.72, 0.40, 18, WHITE, True, align=PP_ALIGN.CENTER)
-footer(s, 3)
+footer(s)
 add_notes(s, "Scopul este democratizarea accesului la date pentru întrebările de zi cu zi, nu eliminarea rolului analistului. Sistemul preia întrebarea, găsește informațiile relevante, generează o interogare sigură și livrează un rezultat ușor de interpretat. Analistul rămâne necesar pentru analize complexe, modelare și guvernanță.")
 
 
@@ -278,7 +281,7 @@ for i, (h1, body, c) in enumerate([
     shape(s, MSO_SHAPE.OVAL, 9.52, y + 0.04, 0.22, 0.22, c, c)
     add_text(s, h1, 9.88, y - 0.06, 2.46, 0.46, 13.5, WHITE, True)
     add_text(s, body, 9.88, y + 0.48, 2.44, 0.74, 11.5, "B8CAD8")
-footer(s, 4, dark=True)
+footer(s, dark=True)
 add_notes(s, "Aceasta este interfața sistemului. Utilizatorul discută cu aplicația, iar rezultatul poate fi deschis ca artefact: grafic, tabel și raport. În spate, răspunsul este legat de SQL-ul executat, astfel încât să poată fi verificat și refolosit.")
 
 
@@ -297,8 +300,31 @@ for i, (n, text_value, c) in enumerate([
     y = 2.63 + i * 0.77
     add_text(s, n, 9.65, y, 0.42, 0.28, 10, c, True)
     add_text(s, text_value, 10.16, y - 0.03, 1.98, 0.50, 12.5, WHITE, True)
-footer(s, 5, "Configurația RAG implementată în proiect")
+footer(s, "Configurația RAG implementată în proiect")
 add_notes(s, "Conducta proprie selectează tabelele relevante prin căutare lexicală, embeddings și potrivirea valorilor din întrebare. Modelul generează SQL, iar validatorul blochează operațiile de modificare sau accesul nepermis. Execuția are loc cu un utilizator read-only și limite explicite.")
+
+
+# --- act break: from the system to the measurements -----------------------
+s = prs.slides.add_slide(blank); set_bg(s, NAVY)
+title(s, "Sistemul funcționează.\nDar este construit cum trebuie?", "Partea a doua", dark=True)
+add_text(s, "Tot ce am arătat până aici este o alegere de proiectare, nu un rezultat "
+            "măsurat. Restul lucrării verifică fiecare alegere pe rând.",
+         0.72, 2.36, 5.30, 1.10, 16, "B8CAD8")
+rounded(s, 0.72, 3.62, 5.40, 0.72, "173F5F", "35556F")
+add_text(s, "Capitolul 4 — evaluarea experimentală", 1.02, 3.62, 4.90, 0.72, 14, GOLD, True,
+         valign=MSO_ANCHOR.MIDDLE)
+for i, (n, q, c) in enumerate([
+    ("01", "Cum ar trebui generat SQL-ul?", BLUE),
+    ("02", "Cât costă fiecare variantă?", CORAL),
+    ("03", "Pe ce date se poate măsura credibil?", GREEN),
+    ("04", "Ce face sistemul când întrebarea e ambiguă?", GOLD),
+]):
+    y = 1.62 + i * 1.28
+    rounded(s, 6.75, y, 5.86, 1.02, "173F5F", "35556F")
+    add_text(s, n, 7.10, y, 0.55, 1.02, 15, c, True, valign=MSO_ANCHOR.MIDDLE)
+    add_text(s, q, 7.72, y, 4.60, 1.02, 16, WHITE, True, valign=MSO_ANCHOR.MIDDLE)
+footer(s, dark=True)
+add_notes(s, "Până în acest punct am descris o arhitectură care funcționează. Nu am arătat însă că este arhitectura potrivită. Partea a doua a lucrării tratează fiecare decizie ca pe o ipoteză de verificat: modul de generare a SQL-ului, costul fiecărei variante, datele pe care măsurarea rămâne credibilă și comportamentul în fața întrebărilor ambigue.")
 
 
 # 6 — Three arms
@@ -322,7 +348,7 @@ for i, (letter, h1, body, c, tag) in enumerate(configs):
     add_text(s, "→ SQL", x + 0.34, 5.10, 2.95, 0.30, 13, c, True)
 add_text(s, "Între configurațiile comparate se modifică o singură variabilă.",
          2.28, 6.25, 8.76, 0.38, 17, NAVY, True, align=PP_ALIGN.CENTER)
-footer(s, 6)
+footer(s)
 add_notes(s, "Am comparat trei configurații. A primește schema completă și răspunde o singură dată. B nu primește schema, ci explorează baza prin unelte MCP. C este identică procedural cu A, dar rulează un model local. Această separare face rezultatele interpretabile.")
 
 
@@ -340,8 +366,69 @@ for i, (num, label) in enumerate(stats):
 rounded(s, 8.66, 5.10, 3.57, 1.12, BLUE_LIGHT, BLUE_LIGHT)
 add_text(s, "Nu comparăm textul SQL.\nComparăm rezultatele obținute.", 8.93, 5.36, 3.03, 0.60,
          15, BLUE, True, align=PP_ALIGN.CENTER)
-footer(s, 7, "Baze: car_rental, AdventureWorks și BIRD-SQL dev")
+footer(s, "Baze: car_rental, AdventureWorks și BIRD-SQL dev")
 add_notes(s, "Două interogări diferite textual pot fi ambele corecte. De aceea, interogarea prezisă și cea de referință sunt executate, apoi sunt comparate seturile de rezultate. Cadrul păstrează separat erorile modelului și erorile de referință și verifică amprenta setului de întrebări.")
+
+
+# --- the three evaluation sets -------------------------------------------
+s = prs.slides.add_slide(blank); set_bg(s)
+title(s, "Trei seturi, două feluri de dificultate", "Datele de evaluare")
+add_text(s, "Aceeași configurație A, același prompt. Se schimbă doar baza de date.",
+         0.72, 1.46, 9.60, 0.30, 14, MUTED, True)
+
+sets = [
+    ("car_rental", "generată de mine", "9 tabele · 8.026 rânduri",
+     "51 de întrebări · autor propriu",
+     "What is the longest run of consecutive calendar days on which at least "
+     "one reservation was picked up at the Downtown Hub branch?",
+     None, "100 %", BLUE, BLUE_LIGHT),
+    ("adventureworks", "OLTP public, Microsoft", "68 tabele · ≈761.000 rânduri",
+     "56 de întrebări · autor propriu",
+     "For each product category, what is the value-weighted average discount "
+     "rate on its sales order lines — the sum of unitpricediscount × unitprice "
+     "× quantity, divided by the sum of unitprice × quantity?",
+     None, "100 %", CORAL, CORAL_LIGHT),
+    ("BIRD-SQL dev", "11 baze, autor extern", "75 tabele · 3.932.735 rânduri",
+     "1.534 de întrebări · autor extern",
+     "List out the account numbers of female clients who are oldest and has "
+     "lowest average salary, calculate the gap between this lowest average "
+     "salary with the highest average salary?",
+     "A11 refers to average salary; if person A's birthdate > B's birthdate, "
+     "person B is order than person A.",
+     "63,6 %", GREEN, GREEN_LIGHT),
+]
+for i, (name, prov, size, qs, example, evidence, acc, c, tint) in enumerate(sets):
+    x = 0.72 + i * 4.06
+    rounded(s, x, 1.86, 3.86, 3.94, WHITE, LINE)
+    shape(s, MSO_SHAPE.RECTANGLE, x, 1.86 + CORNER, 0.08, 3.94 - 2 * CORNER, c, c)
+    add_text(s, name, x + 0.32, 2.04, 3.30, 0.30, 15, NAVY, True, font="Consolas")
+    add_text(s, prov, x + 0.32, 2.38, 3.30, 0.24, 10.5, c, True)
+    add_text(s, size, x + 0.32, 2.70, 3.36, 0.24, 11, INK)
+    add_text(s, qs, x + 0.32, 2.96, 3.36, 0.24, 11, INK)
+    add_text(s, "ÎNTREBARE DIFICILĂ DIN SET", x + 0.32, 3.32, 3.30, 0.20, 8.5, MUTED, True)
+    rounded(s, x + 0.30, 3.56, 3.40, 1.60, tint, tint)
+    add_text(s, "„" + example + "”", x + 0.44, 3.66, 3.12,
+             0.86 if evidence else 1.40, 9.5, INK, italic=True)
+    if evidence:
+        add_text(s, "+ dicționar extern: " + evidence, x + 0.44, 4.52, 3.12, 0.60,
+                 8.5, c, True)
+    add_text(s, acc, x + 0.32, 5.20, 3.30, 0.48, 24, c, True)
+    add_text(s, "acuratețe de execuție", x + 0.32, 5.58, 3.30, 0.20, 9, MUTED)
+
+rounded(s, 0.72, 5.96, 11.94, 1.00, NAVY, NAVY)
+add_rich_text(s, [
+    ("Primele două sunt grele la SQL. A treia e grea la ", {"bold": True, "color": WHITE, "size": 14}),
+    ("date", {"bold": True, "color": GOLD, "size": 14}),
+    (".", {"bold": True, "color": WHITE, "size": 14}),
+], 1.04, 6.06, 11.30, 0.32)
+add_rich_text(s, [
+    ("A11", {"color": GOLD, "size": 11, "font": "Consolas"}),
+    (" nu se poate ghici din schemă, iar „north Bohemia” nu se potrivește cu „North Bohemia”. "
+     "Volumul nu explică scorul: 61 de puncte dispersie între cele 11 baze BIRD, "
+     "față de 8 puncte între modele.", {"color": "9FB4C6", "size": 11}),
+], 1.04, 6.42, 11.30, 0.48)
+footer(s, "car_rental și AdventureWorks: gemini-3.7-flash. BIRD-SQL dev: aceeași rulare, DDL brut")
+add_notes(s, "Cele trei seturi nu sunt comparabile ca dificultate, iar diferența nu vine din volum. Primele două conțin întrebări pe care le-am formulat eu, peste scheme pe care le cunoșteam bine: dificultatea este sintactică, adică SQL complex, serii de zile consecutive sau medii ponderate. Pe acestea modelele bune ajung la sută la sută. BIRD schimbă natura dificultății: întrebarea este formulată de altcineva, uneori agramatical, coloanele au nume opace precum A11, iar semantica lor este livrată într-un dicționar ținut separat de schemă. Eșecurile nu sunt de construcție a interogării, ci de ancorare în date. Numărul mare de întrebări nu coboară scorul, ci restabilește puterea de discriminare: pe patruzeci și patru de întrebări, trei modele erau egale la sută la sută.")
 
 
 # 8 — Main result
@@ -359,7 +446,7 @@ for i, (num, label, c) in enumerate([
     add_text(s, label, 9.66, y + 0.55, 2.44, 0.25, 11.5, "C8D7E4")
 add_text(s, "Toate primele patru poziții folosesc cea mai simplă configurație.",
          9.64, 5.78, 2.48, 0.54, 13, WHITE, True)
-footer(s, 8, "Acuratețe de execuție pe car_rental, 44 de întrebări punctate")
+footer(s, "Acuratețe de execuție pe car_rental, 44 de întrebări punctate")
 add_notes(s, "Rezultatul central este contraintuitiv. Trei modele cu apel unic ating 100%. Cel mai bun agent obține 95,5%, iar cel mai bun model local 93,2%. Accesul la unelte este fezabil, dar nu a depășit reperul simplu cu schema în prompt.")
 
 
@@ -371,7 +458,7 @@ rounded(s, 9.64, 1.53, 2.86, 2.12, CORAL_LIGHT, CORAL_LIGHT)
 add_text(s, "9–63×", 9.64, 1.93, 2.86, 0.63, 31, CORAL, True, align=PP_ALIGN.CENTER)
 add_text(s, "mai scump / 100 întrebări", 9.90, 2.70, 2.34, 0.36, 12, CORAL, True, align=PP_ALIGN.CENTER)
 card(s, 9.64, 4.05, 2.86, 1.94, "De ce?", "La fiecare pas, agentul retrimite contextul acumulat și promptul propriu.", NAVY)
-footer(s, 9, "Costuri măsurate; axa costului este logaritmică")
+footer(s, "Costuri măsurate; axa costului este logaritmică")
 add_notes(s, "Diferența de cost este mai mare decât diferența de acuratețe. Configurațiile agentice măsurate sunt între 9 și 63 de ori mai scumpe pentru o sută de întrebări. Cauza este bucla agentului: fiecare apel retrimite contextul acumulat.")
 
 
@@ -386,7 +473,7 @@ add_text(s, "RTX 5070 · 12 GiB", 9.92, 3.24, 2.28, 0.32, 12.5, MUTED, True, ali
 for i, txt in enumerate(["Datele rămân local", "Fără tarif per token", "Model rar: viteză mai bună"]):
     add_text(s, "✓", 9.98, 4.05 + i * 0.55, 0.25, 0.25, 13, GREEN, True)
     add_text(s, txt, 10.32, 4.02 + i * 0.55, 1.70, 0.34, 11.5, INK, True)
-footer(s, 10, "Modele locale servite prin llama.cpp")
+footer(s, "Modele locale servite prin llama.cpp")
 add_notes(s, "Modelul local Qwen 35B MoE obține 93,2%, egal cu cel mai bun agent Claude din măsurători. Rulează pe o placă de consum cu 12 GiB. Experimentele arată și că densitatea este mai importantă decât dimensiunea fișierului: un model rar poate fi mai mare pe disc, dar mai rapid la inferență.")
 
 
@@ -408,7 +495,7 @@ rounded(s, 5.40, 6.10, 6.86, 0.68, CORAL_LIGHT, CORAL_LIGHT)
 add_text(s, "Apelurile unice au preferat să ghicească; agenții au cerut mai des clarificări.",
          5.62, 6.10, 6.42, 0.68, 13, CORAL, True, align=PP_ALIGN.CENTER,
          valign=MSO_ANCHOR.MIDDLE)
-footer(s, 11)
+footer(s)
 add_notes(s, "Pe întrebările SQL bine precizate, modelele de vârf sunt aproape de plafon. Diferența apare când întrebarea pare validă, dar are mai multe interpretări. Toate modelele cu apel unic au ales o interpretare fără să întrebe. Agenții, având un proces deliberativ, au solicitat clarificări mai des.")
 
 
@@ -429,7 +516,7 @@ for i, (h1, body, c) in enumerate([
     shape(s, MSO_SHAPE.OVAL, 9.10, y, 0.20, 0.20, c, c)
     add_text(s, h1, 9.46, y - 0.06, 2.58, 0.27, 12.5, NAVY, True)
     add_text(s, body, 9.46, y + 0.28, 2.58, 0.46, 10.5, MUTED)
-footer(s, 12, "BIRD-SQL dev, evaluare pe întregul set")
+footer(s, "BIRD-SQL dev, evaluare pe întregul set")
 add_notes(s, "Pentru a evita concluziile dependente de întrebările formulate în proiect, am evaluat modelele și pe întregul BIRD-SQL dev. Aici scorurile scad puternic și setul rămâne discriminatoriu. Validarea externă confirmă că un rezultat perfect pe o bază curată nu înseamnă că problema text-to-SQL este rezolvată în general.")
 
 
@@ -452,7 +539,7 @@ for i, (n, h1, body, c) in enumerate(conclusions):
 rounded(s, 2.07, 6.15, 9.20, 0.66, WHITE, WHITE)
 add_text(s, "Un sistem bun nu doar generează SQL — știe și când trebuie să întrebe.",
          2.35, 6.32, 8.64, 0.30, 17, NAVY, True, align=PP_ALIGN.CENTER)
-footer(s, 13, dark=True)
+footer(s, dark=True)
 add_notes(s, "În concluzie, proiectul demonstrează atât utilitatea practică a unei interfețe în limbaj natural, cât și necesitatea unei evaluări riguroase. Configurația agentică este fezabilă, însă nu este automat superioară. Modelele locale sunt deja competitive. Direcția cea mai valoroasă este interacțiunea: sistemul trebuie să poată clarifica intenția înainte de a produce un răspuns convingător, dar greșit.")
 
 
