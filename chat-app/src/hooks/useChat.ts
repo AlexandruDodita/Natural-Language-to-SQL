@@ -1,392 +1,369 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { Message, Conversation, QueryEngine } from '../types';
+import type {
+  ArtifactData,
+  Conversation,
+  HistoryEntry,
+  Message,
+  QueryEngine,
+  SqlMeta,
+  UserContext,
+} from '../types';
 import { streamChat } from '../services/api';
 import { backendApi } from '../services/backend-api';
+
+const HISTORY_KEY = 'nl2sql-history';
+const HISTORY_MAX = 40;
+
+function loadHistory(): HistoryEntry[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    return raw ? (JSON.parse(raw) as HistoryEntry[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(entries: HistoryEntry[]) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(entries.slice(0, HISTORY_MAX)));
+  } catch {
+    // storage unavailable (private window): history is a convenience, not state
+  }
+}
+
+/**
+ * A transport failure is not a pipeline outcome. `generation_failed` and the
+ * rest arrive as a normal answer with a meta record; only a dead socket or a
+ * non-200 lands here, and only here is "try again" the right advice.
+ */
+function transportMessage(error: unknown): string {
+  const detail = error instanceof Error ? error.message : String(error);
+  return `The request did not reach the pipeline: ${detail}`;
+}
 
 export function useChat() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [history, setHistory] = useState<HistoryEntry[]>(loadHistory);
 
   const currentConversation = conversations.find(c => c.id === currentConversationId);
 
-  // Load conversations from backend on mount
   useEffect(() => {
     const loadConversations = async () => {
       try {
-        const data = await backendApi.getConversations();
-        setConversations(data);
+        setConversations(await backendApi.getConversations());
       } catch (error) {
         console.error('Error loading conversations:', error);
       } finally {
         setIsLoading(false);
       }
     };
-
     loadConversations();
   }, []);
 
+  const recordHistory = useCallback((entry: HistoryEntry) => {
+    setHistory(prev => {
+      const next = [entry, ...prev.filter(e => e.sql !== entry.sql)].slice(0, HISTORY_MAX);
+      saveHistory(next);
+      return next;
+    });
+  }, []);
+
+  const clearHistory = useCallback(() => {
+    setHistory([]);
+    saveHistory([]);
+  }, []);
+
   const createNewConversation = useCallback(async () => {
-    try {
-      const newConversation = await backendApi.createConversation({ title: 'New Chat' });
-      setConversations(prev => [newConversation, ...prev]);
-      setCurrentConversationId(newConversation.id);
-      return newConversation.id;
-    } catch (error) {
-      console.error('Error creating conversation:', error);
-      throw error;
-    }
+    const newConversation = await backendApi.createConversation({ title: 'New Chat' });
+    setConversations(prev => [newConversation, ...prev]);
+    setCurrentConversationId(newConversation.id);
+    return newConversation.id;
   }, []);
 
   const updateConversationTitle = useCallback((conversationId: string, firstMessage: string) => {
     const title = firstMessage.slice(0, 50) + (firstMessage.length > 50 ? '...' : '');
     setConversations(prev =>
-      prev.map(conv =>
-        conv.id === conversationId ? { ...conv, title } : conv
-      )
+      prev.map(conv => (conv.id === conversationId ? { ...conv, title } : conv)),
     );
+    // The title has to reach the database too, or every stored thread comes
+    // back as "New Chat" and the rail becomes a list of identical rows.
+    backendApi.renameConversation(conversationId, title).catch(error => {
+      console.error('Error renaming conversation:', error);
+    });
   }, []);
 
+  const patchMessage = useCallback(
+    (conversationId: string, messageId: string, patch: Partial<Message>) => {
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.id === conversationId
+            ? {
+                ...conv,
+                messages: conv.messages.map(m => (m.id === messageId ? { ...m, ...patch } : m)),
+              }
+            : conv,
+        ),
+      );
+    },
+    [],
+  );
+
+  /** Shared by `sendMessage` and `retryLastMessage`. */
+  const consume = useCallback(
+    async (
+      conversationId: string,
+      assistantMessageId: string,
+      messagesToSend: Message[],
+      engine: QueryEngine,
+      user: UserContext,
+      question: string,
+    ) => {
+      let content = '';
+      let meta: SqlMeta | undefined;
+      let artifact: ArtifactData | undefined;
+
+      for await (const chunk of streamChat(messagesToSend, engine, user)) {
+        if (chunk.done) break;
+
+        if (chunk.sqlMeta !== undefined) {
+          meta = chunk.sqlMeta;
+          patchMessage(conversationId, assistantMessageId, { sqlMeta: meta });
+          continue;
+        }
+        if (chunk.artifact !== undefined) {
+          artifact = chunk.artifact;
+          patchMessage(conversationId, assistantMessageId, { artifact });
+          continue;
+        }
+
+        content += chunk.chunk;
+        patchMessage(conversationId, assistantMessageId, { content });
+      }
+
+      // A blocked or failed turn still carries the last attempted SQL; only a
+      // query that actually ran is worth offering as a re-run.
+      if (meta?.sql && meta.outcome === 'answered') {
+        recordHistory({
+          id: meta.request_id || assistantMessageId,
+          question,
+          sql: meta.sql,
+          rowCount: meta.row_count,
+          durationMs: meta.duration_ms,
+          outcome: meta.outcome,
+          role: meta.role || user.role,
+          at: Date.now(),
+        });
+      }
+
+      if (content || meta || artifact) {
+        const saved = await backendApi.createMessage(conversationId, {
+          role: 'assistant',
+          content,
+          sql_meta: meta
+            ? {
+                sql_query: meta.sql ?? null,
+                row_count: meta.row_count ?? null,
+                duration_ms: meta.duration_ms ?? null,
+                blocked: meta.blocked ?? null,
+              }
+            : null,
+          artifact:
+            artifact || meta ? { payload: artifact ?? null, meta: meta ?? null } : null,
+        });
+        // Swap the placeholder UUID for the DB-assigned id.
+        patchMessage(conversationId, assistantMessageId, { id: saved.id });
+      }
+    },
+    [patchMessage, recordHistory],
+  );
+
   const sendMessage = useCallback(
-    async (content: string, engine: QueryEngine = 'rag') => {
+    async (content: string, engine: QueryEngine, user: UserContext) => {
       if (!content.trim() || isStreaming) return;
 
       let conversationId = currentConversationId;
-      let assistantMessageId: string | null = null;
+      const assistantMessageId = crypto.randomUUID();
 
       try {
-        // Create a new conversation if none exists
         if (!conversationId) {
           conversationId = await createNewConversation();
         }
 
-        // Save user message to backend
         const userMessage = await backendApi.createMessage(conversationId, {
           role: 'user',
           content: content.trim(),
         });
 
-        // Add user message to local state
         setConversations(prev =>
           prev.map(conv =>
             conv.id === conversationId
               ? { ...conv, messages: [...conv.messages, userMessage] }
-              : conv
-          )
+              : conv,
+          ),
         );
 
-        // Update conversation title if it's the first message
+        // `conversations` is a snapshot from before this render, so a thread
+        // created a moment ago is not in it yet — that counts as empty.
         const conversation = conversations.find(c => c.id === conversationId);
-        if (conversation && conversation.messages.length === 0) {
-          updateConversationTitle(conversationId, content);
+        if (!conversation || conversation.messages.length === 0) {
+          updateConversationTitle(conversationId, content.trim());
         }
 
-        // Create assistant message placeholder
-        assistantMessageId = crypto.randomUUID();
-      const assistantMessage: Message = {
-        id: assistantMessageId,
-        role: 'assistant',
-        content: '',
-        timestamp: new Date(),
-      };
-
-      // Add assistant message placeholder
-      setConversations(prev =>
-        prev.map(conv =>
-          conv.id === conversationId
-            ? { ...conv, messages: [...conv.messages, assistantMessage] }
-            : conv
-        )
-      );
+        const assistantMessage: Message = {
+          id: assistantMessageId,
+          role: 'assistant',
+          content: '',
+          timestamp: new Date(),
+        };
+        setConversations(prev =>
+          prev.map(conv =>
+            conv.id === conversationId
+              ? { ...conv, messages: [...conv.messages, assistantMessage] }
+              : conv,
+          ),
+        );
 
         setIsStreaming(true);
 
-        // Get updated conversation messages for API call
-        const updatedConversation = conversations.find(c => c.id === conversationId);
-        const messagesToSend = updatedConversation
-          ? [...updatedConversation.messages, userMessage]
-          : [userMessage];
-
-        let accumulatedContent = '';
-
-        // Stream the response
-        for await (const { chunk, done, sqlMeta, artifact } of streamChat(messagesToSend, engine)) {
-          if (done) break;
-
-          if (sqlMeta !== undefined) {
-            setConversations(prev =>
-              prev.map(conv =>
-                conv.id === conversationId
-                  ? {
-                      ...conv,
-                      messages: conv.messages.map(msg =>
-                        msg.id === assistantMessageId ? { ...msg, sqlMeta } : msg
-                      ),
-                    }
-                  : conv
-              )
-            );
-            continue;
-          }
-
-          if (artifact !== undefined) {
-            setConversations(prev =>
-              prev.map(conv =>
-                conv.id === conversationId
-                  ? {
-                      ...conv,
-                      messages: conv.messages.map(msg =>
-                        msg.id === assistantMessageId ? { ...msg, artifact } : msg
-                      ),
-                    }
-                  : conv
-              )
-            );
-            continue;
-          }
-
-          accumulatedContent += chunk;
-
-          // Update assistant message content in local state
-          setConversations(prev =>
-            prev.map(conv =>
-              conv.id === conversationId
-                ? {
-                    ...conv,
-                    messages: conv.messages.map(msg =>
-                      msg.id === assistantMessageId
-                        ? { ...msg, content: accumulatedContent }
-                        : msg
-                    ),
-                  }
-                : conv
-            )
-          );
-        }
-
-        // Save assistant message to backend after streaming is complete
-        if (accumulatedContent) {
-          const currentMsgs = conversations.find(c => c.id === conversationId)?.messages ?? [];
-          const assistantMsg = currentMsgs.find(m => m.id === assistantMessageId);
-          const meta = assistantMsg?.sqlMeta;
-          const savedMessage = await backendApi.createMessage(conversationId, {
-            role: 'assistant',
-            content: accumulatedContent,
-            sql_meta: meta ? {
-              sql_query: meta.sql ?? null,
-              row_count: meta.row_count ?? null,
-              duration_ms: meta.duration_ms ?? null,
-              blocked: meta.blocked ?? null,
-            } : null,
-          });
-          // Replace placeholder UUID with the real DB-assigned ID
-          setConversations(prev =>
-            prev.map(conv =>
-              conv.id === conversationId
-                ? {
-                    ...conv,
-                    messages: conv.messages.map(msg =>
-                      msg.id === assistantMessageId ? { ...msg, id: savedMessage.id } : msg
-                    ),
-                  }
-                : conv
-            )
-          );
-        }
+        const messagesToSend = [...(conversation?.messages ?? []), userMessage];
+        await consume(
+          conversationId,
+          assistantMessageId,
+          messagesToSend,
+          engine,
+          user,
+          content.trim(),
+        );
       } catch (error) {
         console.error('Error sending message:', error);
-
-        const errorContent = 'Sorry, there was an error processing your request. Please try again.';
-
-        // Update assistant message with error in local state
-        if (conversationId && assistantMessageId) {
-          setConversations(prev =>
-            prev.map(conv =>
-              conv.id === conversationId
-                ? {
-                    ...conv,
-                    messages: conv.messages.map(msg =>
-                      msg.id === assistantMessageId
-                        ? { ...msg, content: errorContent, isError: true }
-                        : msg
-                    ),
-                  }
-                : conv
-            )
-          );
-
-          // Try to save error message to backend
-          try {
-            await backendApi.createMessage(conversationId, {
-              role: 'assistant',
-              content: errorContent,
-            });
-          } catch (backendError) {
-            console.error('Error saving error message to backend:', backendError);
-          }
+        if (conversationId) {
+          patchMessage(conversationId, assistantMessageId, {
+            content: transportMessage(error),
+            isError: true,
+            transportError: error instanceof Error ? error.message : String(error),
+          });
         }
       } finally {
         setIsStreaming(false);
       }
     },
-    [currentConversationId, isStreaming, conversations, createNewConversation, updateConversationTitle]
+    [
+      currentConversationId,
+      isStreaming,
+      conversations,
+      createNewConversation,
+      updateConversationTitle,
+      consume,
+      patchMessage,
+    ],
   );
 
-  const retryLastMessage = useCallback(async (engine: QueryEngine = 'rag') => {
-    if (!currentConversationId || isStreaming) return;
+  const retryLastMessage = useCallback(
+    async (engine: QueryEngine, user: UserContext) => {
+      if (!currentConversationId || isStreaming) return;
 
-    const conversation = conversations.find(c => c.id === currentConversationId);
-    if (!conversation || conversation.messages.length === 0) return;
+      const conversation = conversations.find(c => c.id === currentConversationId);
+      if (!conversation || conversation.messages.length === 0) return;
 
-    // Find the last user message
-    const messages = conversation.messages;
-    let lastUserMsgIdx = -1;
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].role === 'user') { lastUserMsgIdx = i; break; }
-    }
-    if (lastUserMsgIdx === -1) return;
-
-    // Delete any messages that came after it (assistant response) from backend
-    const toDelete = messages.slice(lastUserMsgIdx + 1);
-    for (const msg of toDelete) {
-      try {
-        await backendApi.deleteMessage(currentConversationId, msg.id);
-      } catch (e) {
-        console.error('Error deleting message for retry:', e);
-      }
-    }
-
-    const assistantMessageId = crypto.randomUUID();
-    const trimmedMessages = [
-      ...messages.slice(0, lastUserMsgIdx + 1),
-      { id: assistantMessageId, role: 'assistant' as const, content: '', timestamp: new Date() },
-    ];
-
-    setConversations(prev =>
-      prev.map(conv =>
-        conv.id === currentConversationId ? { ...conv, messages: trimmedMessages } : conv
-      )
-    );
-    setIsStreaming(true);
-
-    const messagesToSend = messages.slice(0, lastUserMsgIdx + 1);
-    let accumulatedContent = '';
-    let capturedSqlMeta: Message['sqlMeta'] = undefined;
-
-    try {
-      for await (const { chunk, done, sqlMeta, artifact } of streamChat(messagesToSend, engine)) {
-        if (done) break;
-
-        if (sqlMeta !== undefined) {
-          capturedSqlMeta = sqlMeta;
-          setConversations(prev =>
-            prev.map(conv =>
-              conv.id === currentConversationId
-                ? { ...conv, messages: conv.messages.map(m => m.id === assistantMessageId ? { ...m, sqlMeta } : m) }
-                : conv
-            )
-          );
-          continue;
+      const messages = conversation.messages;
+      let lastUserMsgIdx = -1;
+      for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i].role === 'user') {
+          lastUserMsgIdx = i;
+          break;
         }
+      }
+      if (lastUserMsgIdx === -1) return;
 
-        if (artifact !== undefined) {
-          setConversations(prev =>
-            prev.map(conv =>
-              conv.id === currentConversationId
-                ? { ...conv, messages: conv.messages.map(m => m.id === assistantMessageId ? { ...m, artifact } : m) }
-                : conv
-            )
-          );
-          continue;
+      for (const msg of messages.slice(lastUserMsgIdx + 1)) {
+        try {
+          await backendApi.deleteMessage(currentConversationId, msg.id);
+        } catch (e) {
+          console.error('Error deleting message for retry:', e);
         }
-
-        accumulatedContent += chunk;
-        setConversations(prev =>
-          prev.map(conv =>
-            conv.id === currentConversationId
-              ? { ...conv, messages: conv.messages.map(m => m.id === assistantMessageId ? { ...m, content: accumulatedContent } : m) }
-              : conv
-          )
-        );
       }
 
-      if (accumulatedContent) {
-        const savedMessage = await backendApi.createMessage(currentConversationId, {
-          role: 'assistant',
-          content: accumulatedContent,
-          sql_meta: capturedSqlMeta ? {
-            sql_query: capturedSqlMeta.sql ?? null,
-            row_count: capturedSqlMeta.row_count ?? null,
-            duration_ms: capturedSqlMeta.duration_ms ?? null,
-            blocked: capturedSqlMeta.blocked ?? null,
-          } : null,
-        });
-        // Replace placeholder UUID with the real DB-assigned ID
-        setConversations(prev =>
-          prev.map(conv =>
-            conv.id === currentConversationId
-              ? {
-                  ...conv,
-                  messages: conv.messages.map(msg =>
-                    msg.id === assistantMessageId ? { ...msg, id: savedMessage.id } : msg
-                  ),
-                }
-              : conv
-          )
-        );
-      }
-    } catch (error) {
-      console.error('Error retrying message:', error);
-      const errorContent = 'Sorry, there was an error processing your request. Please try again.';
+      const assistantMessageId = crypto.randomUUID();
+      const messagesToSend = messages.slice(0, lastUserMsgIdx + 1);
+
       setConversations(prev =>
         prev.map(conv =>
           conv.id === currentConversationId
             ? {
                 ...conv,
-                messages: conv.messages.map(msg =>
-                  msg.id === assistantMessageId
-                    ? { ...msg, content: errorContent, isError: true }
-                    : msg
-                ),
+                messages: [
+                  ...messagesToSend,
+                  {
+                    id: assistantMessageId,
+                    role: 'assistant' as const,
+                    content: '',
+                    timestamp: new Date(),
+                  },
+                ],
               }
-            : conv
-        )
+            : conv,
+        ),
       );
-    } finally {
-      setIsStreaming(false);
-    }
-  }, [currentConversationId, isStreaming, conversations]);
+      setIsStreaming(true);
+
+      try {
+        await consume(
+          currentConversationId,
+          assistantMessageId,
+          messagesToSend,
+          engine,
+          user,
+          messages[lastUserMsgIdx].content,
+        );
+      } catch (error) {
+        console.error('Error retrying message:', error);
+        patchMessage(currentConversationId, assistantMessageId, {
+          content: transportMessage(error),
+          isError: true,
+          transportError: error instanceof Error ? error.message : String(error),
+        });
+      } finally {
+        setIsStreaming(false);
+      }
+    },
+    [currentConversationId, isStreaming, conversations, consume, patchMessage],
+  );
 
   const selectConversation = useCallback(async (conversationId: string) => {
     setCurrentConversationId(conversationId);
-
-    // Load messages for the selected conversation
     try {
       const conversation = await backendApi.getConversation(conversationId);
       setConversations(prev =>
         prev.map(conv =>
-          conv.id === conversationId
-            ? { ...conv, messages: conversation.messages }
-            : conv
-        )
+          conv.id === conversationId ? { ...conv, messages: conversation.messages } : conv,
+        ),
       );
     } catch (error) {
       console.error('Error loading conversation messages:', error);
     }
   }, []);
 
-  const deleteConversation = useCallback(async (conversationId: string) => {
-    try {
-      await backendApi.deleteConversation(conversationId);
-      setConversations(prev => prev.filter(c => c.id !== conversationId));
-      if (currentConversationId === conversationId) {
-        setCurrentConversationId(null);
+  const deleteConversation = useCallback(
+    async (conversationId: string) => {
+      try {
+        await backendApi.deleteConversation(conversationId);
+        setConversations(prev => prev.filter(c => c.id !== conversationId));
+        if (currentConversationId === conversationId) setCurrentConversationId(null);
+      } catch (error) {
+        console.error('Error deleting conversation:', error);
       }
-    } catch (error) {
-      console.error('Error deleting conversation:', error);
-    }
-  }, [currentConversationId]);
+    },
+    [currentConversationId],
+  );
+
+  const startNewConversation = useCallback(() => {
+    // Nothing is written until the first message: an empty thread in the rail
+    // is noise.
+    setCurrentConversationId(null);
+  }, []);
 
   return {
     conversations,
@@ -394,10 +371,13 @@ export function useChat() {
     currentConversationId,
     isStreaming,
     isLoading,
+    history,
     sendMessage,
     retryLastMessage,
     createNewConversation,
+    startNewConversation,
     selectConversation,
     deleteConversation,
+    clearHistory,
   };
 }
