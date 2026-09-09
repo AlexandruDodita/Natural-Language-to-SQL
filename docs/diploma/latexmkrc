@@ -1,0 +1,3 @@
+# Overleaf reads this file: it selects LuaLaTeX automatically, so the
+# compiler does not have to be set by hand in the project menu.
+$pdf_mode = 4;

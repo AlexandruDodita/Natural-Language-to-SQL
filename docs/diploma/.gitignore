@@ -1,0 +1,9 @@
+# artefacte de compilare LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.xdv
+*.fls
+*.fdb_latexmk
+__pycache__/

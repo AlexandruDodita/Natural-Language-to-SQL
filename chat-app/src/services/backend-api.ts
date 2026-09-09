@@ -1,4 +1,4 @@
-import type { Conversation, Message } from '../types';
+import type { ArtifactData, Conversation, Message, SqlMeta } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -21,6 +21,14 @@ export interface MessageCreate {
     duration_ms: number | null;
     blocked: string | null;
   } | null;
+  /**
+   * The result set and the whole pipeline metadata. Without this a reloaded
+   * conversation loses every table, chart and provenance record it had.
+   */
+  artifact?: {
+    payload: ArtifactData | null;
+    meta: SqlMeta | null;
+  } | null;
 }
 
 export interface ConversationCreate {
@@ -28,18 +36,27 @@ export interface ConversationCreate {
   user_id?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapMessage(msg: any): Message {
+  // The stored `meta` is the full pipeline record; the four legacy columns are
+  // the fallback for messages written before results were persisted.
+  const stored: SqlMeta | undefined = msg.artifact?.meta ?? undefined;
+  const legacy: SqlMeta | undefined = msg.sql_meta
+    ? {
+        sql: msg.sql_meta.sql_query,
+        row_count: msg.sql_meta.row_count,
+        duration_ms: msg.sql_meta.duration_ms,
+        blocked: msg.sql_meta.blocked,
+      }
+    : undefined;
+
   return {
     id: msg.id,
     role: msg.role,
     content: msg.content,
     timestamp: new Date(msg.created_at),
-    sqlMeta: msg.sql_meta ? {
-      sql: msg.sql_meta.sql_query,
-      row_count: msg.sql_meta.row_count,
-      duration_ms: msg.sql_meta.duration_ms,
-      blocked: msg.sql_meta.blocked,
-    } : undefined,
+    sqlMeta: stored ?? legacy,
+    artifact: msg.artifact?.payload ?? undefined,
   };
 }
 
@@ -104,6 +121,17 @@ export const backendApi = {
       createdAt: new Date(conversation.created_at),
       messages: (conversation.messages || []).map(mapMessage),
     };
+  },
+
+  async renameConversation(conversationId: string, title: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/conversations/${conversationId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to rename conversation');
+    }
   },
 
   async deleteConversation(conversationId: string): Promise<void> {

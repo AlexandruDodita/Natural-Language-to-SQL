@@ -1,25 +1,27 @@
 {
   "model": "gemini-2.5-flash",
+  "dataset": "car_rental",
+  "questions_fingerprint": "86e194123bb3",
   "summary": {
-    "n": 26,
-    "chart_type_correct": 26,
+    "n": 44,
+    "chart_type_correct": 44,
     "chart_type_accuracy": 1.0,
     "chart_type_accuracy_chartable": 1.0,
     "chart_type_accuracy_scalar": 1.0,
-    "structurally_valid": 26,
+    "structurally_valid": 44,
     "structural_validity": 1.0,
     "unparseable_responses": 0,
     "usage": {
-      "n": 26,
-      "prompt_tokens_total": 10578,
-      "prompt_tokens_mean": 406.85,
-      "completion_tokens_total": 754,
-      "thinking_tokens_total": 19274,
-      "output_tokens_total": 20028,
-      "output_tokens_mean": 770.31,
-      "total_tokens_total": 30606,
-      "tokens_per_sec_mean": 164.57,
-      "tokens_per_sec_median": 164.54,
+      "n": 44,
+      "prompt_tokens_total": 20734,
+      "prompt_tokens_mean": 471.23,
+      "completion_tokens_total": 1380,
+      "thinking_tokens_total": 34048,
+      "output_tokens_total": 35428,
+      "output_tokens_mean": 805.18,
+      "total_tokens_total": 56162,
+      "tokens_per_sec_mean": 162.28,
+      "tokens_per_sec_median": 161.59,
       "decode_tokens_per_sec_mean": null,
       "ttft_ms_median": null
     }
@@ -35,10 +37,7 @@
       "predicted_chart": "none",
       "chart_type_correct": true,
       "raw_chart": {
-        "type": "none",
-        "title": "Number of currently available vehicles",
-        "x": null,
-        "y": null
+        "type": "none"
       },
       "structurally_valid": true,
       "checks": {
@@ -56,15 +55,15 @@
       "error": null,
       "usage": {
         "prompt_tokens": 272,
-        "completion_tokens": 26,
-        "thinking_tokens": 199,
-        "total_tokens": 497,
-        "latency_ms": 1479.4,
+        "completion_tokens": 6,
+        "thinking_tokens": 208,
+        "total_tokens": 486,
+        "latency_ms": 1476.3,
         "ttft_ms": null,
-        "tokens_per_sec": 152.09,
+        "tokens_per_sec": 144.96,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 225
+        "output_tokens": 214
       }
     },
     {
@@ -99,14 +98,14 @@
       "usage": {
         "prompt_tokens": 341,
         "completion_tokens": 25,
-        "thinking_tokens": 192,
-        "total_tokens": 558,
-        "latency_ms": 1369.9,
+        "thinking_tokens": 428,
+        "total_tokens": 794,
+        "latency_ms": 2408.4,
         "ttft_ms": null,
-        "tokens_per_sec": 158.41,
+        "tokens_per_sec": 188.1,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 217
+        "output_tokens": 453
       }
     },
     {
@@ -120,7 +119,9 @@
       "chart_type_correct": true,
       "raw_chart": {
         "type": "none",
-        "title": "Total Toyota cars owned: 12"
+        "title": "Number of Toyota cars owned",
+        "x": null,
+        "y": null
       },
       "structurally_valid": true,
       "checks": {
@@ -138,15 +139,15 @@
       "error": null,
       "usage": {
         "prompt_tokens": 273,
-        "completion_tokens": 19,
-        "thinking_tokens": 157,
-        "total_tokens": 449,
-        "latency_ms": 1243.4,
+        "completion_tokens": 26,
+        "thinking_tokens": 520,
+        "total_tokens": 819,
+        "latency_ms": 2945.3,
         "ttft_ms": null,
-        "tokens_per_sec": 141.55,
+        "tokens_per_sec": 185.38,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 176
+        "output_tokens": 546
       }
     },
     {
@@ -160,7 +161,7 @@
       "chart_type_correct": true,
       "raw_chart": {
         "type": "none",
-        "title": "Vehicles Currently in Maintenance",
+        "title": "Vehicles currently in maintenance",
         "x": null,
         "y": null
       },
@@ -181,14 +182,14 @@
       "usage": {
         "prompt_tokens": 418,
         "completion_tokens": 26,
-        "thinking_tokens": 313,
-        "total_tokens": 757,
-        "latency_ms": 1987.2,
+        "thinking_tokens": 172,
+        "total_tokens": 616,
+        "latency_ms": 1479.6,
         "ttft_ms": null,
-        "tokens_per_sec": 170.6,
+        "tokens_per_sec": 133.82,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 339
+        "output_tokens": 198
       }
     },
     {
@@ -202,7 +203,9 @@
       "chart_type_correct": true,
       "raw_chart": {
         "type": "none",
-        "title": "Num\u0103rul total de clien\u021bi \u00eenregistra\u021bi"
+        "title": "Num\u0103rul total de clien\u021bi \u00eenregistra\u021bi",
+        "x": null,
+        "y": null
       },
       "structurally_valid": true,
       "checks": {
@@ -220,15 +223,15 @@
       "error": null,
       "usage": {
         "prompt_tokens": 274,
-        "completion_tokens": 22,
-        "thinking_tokens": 221,
-        "total_tokens": 517,
-        "latency_ms": 1592.4,
+        "completion_tokens": 32,
+        "thinking_tokens": 167,
+        "total_tokens": 473,
+        "latency_ms": 1342.2,
         "ttft_ms": null,
-        "tokens_per_sec": 152.6,
+        "tokens_per_sec": 148.26,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 243
+        "output_tokens": 199
       }
     },
     {
@@ -242,7 +245,7 @@
       "chart_type_correct": true,
       "raw_chart": {
         "type": "bar",
-        "title": "Most Expensive Vehicles by Daily Rate",
+        "title": "Top 5 Most Expensive Vehicles by Daily Rate",
         "x": "model",
         "y": "daily_rate"
       },
@@ -262,15 +265,15 @@
       "error": null,
       "usage": {
         "prompt_tokens": 372,
-        "completion_tokens": 31,
-        "thinking_tokens": 2112,
-        "total_tokens": 2515,
-        "latency_ms": 11079.8,
+        "completion_tokens": 34,
+        "thinking_tokens": 2012,
+        "total_tokens": 2418,
+        "latency_ms": 10276.6,
         "ttft_ms": null,
-        "tokens_per_sec": 193.41,
+        "tokens_per_sec": 199.09,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 2143
+        "output_tokens": 2046
       }
     },
     {
@@ -305,14 +308,14 @@
       "usage": {
         "prompt_tokens": 506,
         "completion_tokens": 29,
-        "thinking_tokens": 105,
-        "total_tokens": 640,
-        "latency_ms": 1114.3,
+        "thinking_tokens": 140,
+        "total_tokens": 675,
+        "latency_ms": 1265.7,
         "ttft_ms": null,
-        "tokens_per_sec": 120.26,
+        "tokens_per_sec": 133.52,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 134
+        "output_tokens": 169
       }
     },
     {
@@ -327,7 +330,7 @@
       "chart_type_correct": true,
       "raw_chart": {
         "type": "bar",
-        "title": "Number of Vehicles per Category",
+        "title": "Number of Vehicles in Each Category",
         "x": "name",
         "y": "vehicle_count"
       },
@@ -347,15 +350,15 @@
       "error": null,
       "usage": {
         "prompt_tokens": 343,
-        "completion_tokens": 30,
-        "thinking_tokens": 395,
-        "total_tokens": 768,
-        "latency_ms": 2543.7,
+        "completion_tokens": 31,
+        "thinking_tokens": 313,
+        "total_tokens": 687,
+        "latency_ms": 2191.9,
         "ttft_ms": null,
-        "tokens_per_sec": 167.08,
+        "tokens_per_sec": 156.94,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 425
+        "output_tokens": 344
       }
     },
     {
@@ -368,10 +371,7 @@
       "predicted_chart": "none",
       "chart_type_correct": true,
       "raw_chart": {
-        "type": "none",
-        "title": "Total Revenue from Completed Payments",
-        "x": null,
-        "y": null
+        "type": "none"
       },
       "structurally_valid": true,
       "checks": {
@@ -389,15 +389,15 @@
       "error": null,
       "usage": {
         "prompt_tokens": 285,
-        "completion_tokens": 26,
-        "thinking_tokens": 185,
-        "total_tokens": 496,
-        "latency_ms": 1426.5,
+        "completion_tokens": 6,
+        "thinking_tokens": 222,
+        "total_tokens": 513,
+        "latency_ms": 1600.2,
         "ttft_ms": null,
-        "tokens_per_sec": 147.91,
+        "tokens_per_sec": 142.48,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 211
+        "output_tokens": 228
       }
     },
     {
@@ -412,7 +412,7 @@
       "chart_type_correct": true,
       "raw_chart": {
         "type": "bar",
-        "title": "Total Revenue by Location from Completed Payments",
+        "title": "Total Revenue by Location (Completed Payments)",
         "x": "name",
         "y": "revenue"
       },
@@ -433,14 +433,14 @@
       "usage": {
         "prompt_tokens": 444,
         "completion_tokens": 30,
-        "thinking_tokens": 102,
-        "total_tokens": 576,
-        "latency_ms": 1036.6,
+        "thinking_tokens": 96,
+        "total_tokens": 570,
+        "latency_ms": 1191.7,
         "ttft_ms": null,
-        "tokens_per_sec": 127.33,
+        "tokens_per_sec": 105.73,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 132
+        "output_tokens": 126
       }
     },
     {
@@ -454,7 +454,7 @@
       "chart_type_correct": true,
       "raw_chart": {
         "type": "bar",
-        "title": "Average Rating by Vehicle Category",
+        "title": "Average Rating for Each Vehicle Category",
         "x": "name",
         "y": "avg_rating"
       },
@@ -474,15 +474,15 @@
       "error": null,
       "usage": {
         "prompt_tokens": 453,
-        "completion_tokens": 30,
-        "thinking_tokens": 276,
-        "total_tokens": 759,
-        "latency_ms": 1858.0,
+        "completion_tokens": 31,
+        "thinking_tokens": 182,
+        "total_tokens": 666,
+        "latency_ms": 1466.7,
         "ttft_ms": null,
-        "tokens_per_sec": 164.69,
+        "tokens_per_sec": 145.22,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 306
+        "output_tokens": 213
       }
     },
     {
@@ -518,14 +518,14 @@
       "usage": {
         "prompt_tokens": 337,
         "completion_tokens": 32,
-        "thinking_tokens": 432,
-        "total_tokens": 801,
-        "latency_ms": 2531.5,
+        "thinking_tokens": 328,
+        "total_tokens": 697,
+        "latency_ms": 2319.4,
         "ttft_ms": null,
-        "tokens_per_sec": 183.29,
+        "tokens_per_sec": 155.21,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 464
+        "output_tokens": 360
       }
     },
     {
@@ -561,14 +561,14 @@
       "usage": {
         "prompt_tokens": 408,
         "completion_tokens": 30,
-        "thinking_tokens": 238,
-        "total_tokens": 676,
-        "latency_ms": 1733.6,
+        "thinking_tokens": 406,
+        "total_tokens": 844,
+        "latency_ms": 2462.7,
         "ttft_ms": null,
-        "tokens_per_sec": 154.59,
+        "tokens_per_sec": 177.04,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 268
+        "output_tokens": 436
       }
     },
     {
@@ -583,7 +583,7 @@
       "chart_type_correct": true,
       "raw_chart": {
         "type": "bar",
-        "title": "Venituri totale pe metod\u0103 de plat\u0103",
+        "title": "Venituri totale pe metoda de plat\u0103",
         "x": "payment_method",
         "y": "total"
       },
@@ -603,15 +603,15 @@
       "error": null,
       "usage": {
         "prompt_tokens": 355,
-        "completion_tokens": 35,
-        "thinking_tokens": 545,
-        "total_tokens": 935,
-        "latency_ms": 3296.6,
+        "completion_tokens": 34,
+        "thinking_tokens": 531,
+        "total_tokens": 920,
+        "latency_ms": 3266.3,
         "ttft_ms": null,
-        "tokens_per_sec": 175.94,
+        "tokens_per_sec": 172.98,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 580
+        "output_tokens": 565
       }
     },
     {
@@ -626,8 +626,8 @@
       "raw_chart": {
         "type": "none",
         "title": "Reservations picked up in Miami",
-        "x": "none",
-        "y": "none"
+        "x": null,
+        "y": null
       },
       "structurally_valid": true,
       "checks": {
@@ -645,15 +645,15 @@
       "error": null,
       "usage": {
         "prompt_tokens": 544,
-        "completion_tokens": 29,
-        "thinking_tokens": 548,
-        "total_tokens": 1121,
-        "latency_ms": 3386.4,
+        "completion_tokens": 27,
+        "thinking_tokens": 751,
+        "total_tokens": 1322,
+        "latency_ms": 4682.7,
         "ttft_ms": null,
-        "tokens_per_sec": 170.39,
+        "tokens_per_sec": 166.14,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 577
+        "output_tokens": 778
       }
     },
     {
@@ -689,14 +689,14 @@
       "usage": {
         "prompt_tokens": 416,
         "completion_tokens": 31,
-        "thinking_tokens": 1358,
-        "total_tokens": 1805,
-        "latency_ms": 6538.1,
+        "thinking_tokens": 1720,
+        "total_tokens": 2167,
+        "latency_ms": 9540.9,
         "ttft_ms": null,
-        "tokens_per_sec": 212.45,
+        "tokens_per_sec": 183.53,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 1389
+        "output_tokens": 1751
       }
     },
     {
@@ -731,14 +731,14 @@
       "usage": {
         "prompt_tokens": 356,
         "completion_tokens": 25,
-        "thinking_tokens": 139,
-        "total_tokens": 520,
-        "latency_ms": 1219.0,
+        "thinking_tokens": 142,
+        "total_tokens": 523,
+        "latency_ms": 1328.8,
         "ttft_ms": null,
-        "tokens_per_sec": 134.54,
+        "tokens_per_sec": 125.67,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 164
+        "output_tokens": 167
       }
     },
     {
@@ -752,9 +752,9 @@
       "chart_type_correct": true,
       "raw_chart": {
         "type": "none",
-        "title": "Reservations with No Payment Recorded",
-        "x": "",
-        "y": ""
+        "title": "Reservations with no payment recorded",
+        "x": "none",
+        "y": "none"
       },
       "structurally_valid": true,
       "checks": {
@@ -772,15 +772,15 @@
       "error": null,
       "usage": {
         "prompt_tokens": 495,
-        "completion_tokens": 25,
-        "thinking_tokens": 2128,
-        "total_tokens": 2648,
-        "latency_ms": 10953.2,
+        "completion_tokens": 29,
+        "thinking_tokens": 1000,
+        "total_tokens": 1524,
+        "latency_ms": 5821.7,
         "ttft_ms": null,
-        "tokens_per_sec": 196.56,
+        "tokens_per_sec": 176.75,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 2153
+        "output_tokens": 1029
       }
     },
     {
@@ -794,9 +794,7 @@
       "chart_type_correct": true,
       "raw_chart": {
         "type": "none",
-        "title": "Reviews with a Rating of 1",
-        "x": null,
-        "y": null
+        "title": "All Reviews with a Rating of 1"
       },
       "structurally_valid": true,
       "checks": {
@@ -814,15 +812,15 @@
       "error": null,
       "usage": {
         "prompt_tokens": 496,
-        "completion_tokens": 28,
-        "thinking_tokens": 289,
-        "total_tokens": 813,
-        "latency_ms": 1948.0,
+        "completion_tokens": 19,
+        "thinking_tokens": 525,
+        "total_tokens": 1040,
+        "latency_ms": 3311.6,
         "ttft_ms": null,
-        "tokens_per_sec": 162.73,
+        "tokens_per_sec": 164.27,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 317
+        "output_tokens": 544
       }
     },
     {
@@ -836,7 +834,7 @@
       "chart_type_correct": true,
       "raw_chart": {
         "type": "bar",
-        "title": "Vehicles with Daily Rate Above Average by Model",
+        "title": "Vehicles with Daily Rate Above Average",
         "x": "model",
         "y": "daily_rate"
       },
@@ -856,15 +854,15 @@
       "error": null,
       "usage": {
         "prompt_tokens": 421,
-        "completion_tokens": 39,
-        "thinking_tokens": 4959,
-        "total_tokens": 5419,
-        "latency_ms": 23620.9,
+        "completion_tokens": 32,
+        "thinking_tokens": 1567,
+        "total_tokens": 2020,
+        "latency_ms": 7786.0,
         "ttft_ms": null,
-        "tokens_per_sec": 211.59,
+        "tokens_per_sec": 205.37,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 4998
+        "output_tokens": 1599
       }
     },
     {
@@ -898,15 +896,15 @@
       "error": null,
       "usage": {
         "prompt_tokens": 474,
-        "completion_tokens": 39,
-        "thinking_tokens": 2534,
-        "total_tokens": 3047,
-        "latency_ms": 12884.1,
+        "completion_tokens": 34,
+        "thinking_tokens": 3105,
+        "total_tokens": 3613,
+        "latency_ms": 15131.0,
         "ttft_ms": null,
-        "tokens_per_sec": 199.7,
+        "tokens_per_sec": 207.45,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 2573
+        "output_tokens": 3139
       }
     },
     {
@@ -917,11 +915,11 @@
         "none",
         "bar"
       ],
-      "predicted_chart": "none",
+      "predicted_chart": "bar",
       "chart_type_correct": true,
       "raw_chart": {
-        "type": "none",
-        "title": "Branch with the highest total revenue",
+        "type": "bar",
+        "title": "Branch with Highest Total Revenue",
         "x": "name",
         "y": "revenue"
       },
@@ -936,20 +934,20 @@
         "chart_type_ok": true,
         "chart_refs_ok": true,
         "notes": [],
-        "axes_resolvable": false
+        "axes_resolvable": true
       },
       "error": null,
       "usage": {
         "prompt_tokens": 351,
-        "completion_tokens": 29,
-        "thinking_tokens": 911,
-        "total_tokens": 1291,
-        "latency_ms": 5217.8,
+        "completion_tokens": 28,
+        "thinking_tokens": 624,
+        "total_tokens": 1003,
+        "latency_ms": 3854.4,
         "ttft_ms": null,
-        "tokens_per_sec": 180.15,
+        "tokens_per_sec": 169.16,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 940
+        "output_tokens": 652
       }
     },
     {
@@ -984,14 +982,14 @@
       "usage": {
         "prompt_tokens": 439,
         "completion_tokens": 29,
-        "thinking_tokens": 400,
-        "total_tokens": 868,
-        "latency_ms": 2607.2,
+        "thinking_tokens": 324,
+        "total_tokens": 792,
+        "latency_ms": 2334.3,
         "ttft_ms": null,
-        "tokens_per_sec": 164.54,
+        "tokens_per_sec": 151.22,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 429
+        "output_tokens": 353
       }
     },
     {
@@ -1005,7 +1003,7 @@
       "chart_type_correct": true,
       "raw_chart": {
         "type": "none",
-        "title": "Clients Who Have Never Left a Review",
+        "title": "Clients who have never left a review",
         "x": null,
         "y": null
       },
@@ -1026,14 +1024,14 @@
       "usage": {
         "prompt_tokens": 379,
         "completion_tokens": 28,
-        "thinking_tokens": 163,
-        "total_tokens": 570,
-        "latency_ms": 1288.2,
+        "thinking_tokens": 247,
+        "total_tokens": 654,
+        "latency_ms": 1791.1,
         "ttft_ms": null,
-        "tokens_per_sec": 148.26,
+        "tokens_per_sec": 153.54,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 191
+        "output_tokens": 275
       }
     },
     {
@@ -1047,7 +1045,7 @@
       "chart_type_correct": true,
       "raw_chart": {
         "type": "bar",
-        "title": "Highest Paid Employee Salary per Branch",
+        "title": "Highest Paid Employee by Branch",
         "x": "name",
         "y": "salary"
       },
@@ -1067,15 +1065,15 @@
       "error": null,
       "usage": {
         "prompt_tokens": 534,
-        "completion_tokens": 29,
-        "thinking_tokens": 170,
-        "total_tokens": 733,
-        "latency_ms": 1471.1,
+        "completion_tokens": 28,
+        "thinking_tokens": 211,
+        "total_tokens": 773,
+        "latency_ms": 1654.3,
         "ttft_ms": null,
-        "tokens_per_sec": 135.27,
+        "tokens_per_sec": 144.47,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 199
+        "output_tokens": 239
       }
     },
     {
@@ -1111,17 +1109,778 @@
       "usage": {
         "prompt_tokens": 592,
         "completion_tokens": 32,
-        "thinking_tokens": 203,
-        "total_tokens": 827,
-        "latency_ms": 1538.2,
+        "thinking_tokens": 108,
+        "total_tokens": 732,
+        "latency_ms": 1394.0,
         "ttft_ms": null,
-        "tokens_per_sec": 152.77,
+        "tokens_per_sec": 100.43,
         "decode_tokens_per_sec": null,
         "finish_reason": "1",
-        "output_tokens": 235
+        "output_tokens": 140
+      }
+    },
+    {
+      "id": "q31",
+      "category": "multi_level_agg",
+      "question": "For each vehicle make, show the make, the total revenue from completed payments on that make's reservations, and the total maintenance cost recorded for that make's vehicles.",
+      "expected_chart": [
+        "bar",
+        "none"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Total Revenue by Vehicle Make",
+        "x": "make",
+        "y": "revenue"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 629,
+        "completion_tokens": 28,
+        "thinking_tokens": 1150,
+        "total_tokens": 1807,
+        "latency_ms": 6678.3,
+        "ttft_ms": null,
+        "tokens_per_sec": 176.39,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 1178
+      }
+    },
+    {
+      "id": "q32",
+      "category": "self_join",
+      "question": "Which vehicles are double-booked at least ten times \u2014 pairs of two different reservations on the same vehicle, neither of them cancelled or a no-show, whose date ranges share at least one calendar day (pickup and return days inclusive)? Show make, model, license plate and the number of such pairs.",
+      "expected_chart": [
+        "none",
+        "bar"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Number of Double-Booked Reservation Pairs by Vehicle",
+        "x": "license_plate",
+        "y": "overlapping_pairs"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 568,
+        "completion_tokens": 37,
+        "thinking_tokens": 1266,
+        "total_tokens": 1871,
+        "latency_ms": 7091.2,
+        "ttft_ms": null,
+        "tokens_per_sec": 183.75,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 1303
+      }
+    },
+    {
+      "id": "q33",
+      "category": "calendar",
+      "question": "Which vehicles were idle for at least 340 days of 2024? A day is idle when it is not covered by any reservation of that vehicle that is not cancelled and not a no-show; pickup and return days count as covered, and each calendar day counts at most once per vehicle even when reservations overlap. Show the license plate and the number of idle days.",
+      "expected_chart": [
+        "bar",
+        "none"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Vehicles with at least 340 Idle Days in 2024",
+        "x": "license_plate",
+        "y": "idle_days"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 621,
+        "completion_tokens": 44,
+        "thinking_tokens": 464,
+        "total_tokens": 1129,
+        "latency_ms": 2742.1,
+        "ttft_ms": null,
+        "tokens_per_sec": 185.26,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 508
+      }
+    },
+    {
+      "id": "q34",
+      "category": "temporal",
+      "question": "For each month of 2024, show the month as a date (the first day of the month), the revenue from completed payments received in that month (by payment date), and the percentage change versus the same month of 2023, rounded to two decimals.",
+      "expected_chart": [
+        "line",
+        "bar"
+      ],
+      "predicted_chart": "line",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "line",
+        "title": "Monthly Revenue for 2024",
+        "x": "month",
+        "y": "revenue"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 695,
+        "completion_tokens": 31,
+        "thinking_tokens": 1279,
+        "total_tokens": 2005,
+        "latency_ms": 6725.6,
+        "ttft_ms": null,
+        "tokens_per_sec": 194.78,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 1310
+      }
+    },
+    {
+      "id": "q35",
+      "category": "window",
+      "question": "Show the three-month trailing moving average of monthly revenue from completed payments - the mean of that month and the two preceding months - for every month of 2024. The average must be computed over the full payment history, so January 2024 averages November 2023, December 2023 and January 2024. Show the month as a date, that month's revenue, and the moving average rounded to two decimals.",
+      "expected_chart": [
+        "line",
+        "area"
+      ],
+      "predicted_chart": "line",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "line",
+        "title": "Three-Month Trailing Moving Average of Monthly Revenue (2024)",
+        "x": "month",
+        "y": "moving_avg"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 752,
+        "completion_tokens": 40,
+        "thinking_tokens": 241,
+        "total_tokens": 1033,
+        "latency_ms": 1877.2,
+        "ttft_ms": null,
+        "tokens_per_sec": 149.69,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 281
+      }
+    },
+    {
+      "id": "q36",
+      "category": "pivot",
+      "question": "For each branch, show the branch name and the revenue from completed payments split into three separate columns by payment method - credit card, debit card and cash. Attribute each payment to the pickup branch of its reservation.",
+      "expected_chart": [
+        "bar"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Credit Card Revenue by Branch",
+        "x": "name",
+        "y": "credit_card"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 720,
+        "completion_tokens": 35,
+        "thinking_tokens": 4130,
+        "total_tokens": 4885,
+        "latency_ms": 21135.4,
+        "ttft_ms": null,
+        "tokens_per_sec": 197.06,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 4165
+      }
+    },
+    {
+      "id": "q37",
+      "category": "percentile",
+      "question": "Pentru fiecare categorie de vehicule, care este costul median al rezerv\u0103rilor finalizate, calculat ca median\u0103 interpolat\u0103 (media celor dou\u0103 valori din mijloc c\u00e2nd num\u0103rul de rezerv\u0103ri este par) \u0219i rotunjit la dou\u0103 zecimale? Arat\u0103 numele categoriei \u0219i mediana.",
+      "expected_chart": [
+        "bar"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Costul median al rezerv\u0103rilor finalizate pe categorii de vehicule",
+        "x": "name",
+        "y": "median_cost"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 455,
+        "completion_tokens": 39,
+        "thinking_tokens": 129,
+        "total_tokens": 623,
+        "latency_ms": 1456.0,
+        "ttft_ms": null,
+        "tokens_per_sec": 115.39,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 168
+      }
+    },
+    {
+      "id": "q38",
+      "category": "ratio",
+      "question": "For each vehicle category, show the category name and the revenue per rental day, defined as the total amount of completed payments divided by the total number of rental days (return date minus pickup date) of the reservations those payments belong to, rounded to two decimals. Divide the two totals - do not average per-reservation daily rates.",
+      "expected_chart": [
+        "bar"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Revenue per Rental Day by Vehicle Category",
+        "x": "name",
+        "y": "revenue_per_day"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 471,
+        "completion_tokens": 34,
+        "thinking_tokens": 309,
+        "total_tokens": 814,
+        "latency_ms": 2122.6,
+        "ttft_ms": null,
+        "tokens_per_sec": 161.59,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 343
+      }
+    },
+    {
+      "id": "q39",
+      "category": "window",
+      "question": "For each branch, find the client who has spent the most in completed payments on reservations picked up at that branch. Show the branch name, the client's first name and last name, and the amount spent.",
+      "expected_chart": [
+        "bar",
+        "none"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Highest Spending Client per Branch",
+        "x": "name",
+        "y": "spent"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 643,
+        "completion_tokens": 33,
+        "thinking_tokens": 191,
+        "total_tokens": 867,
+        "latency_ms": 1653.1,
+        "ttft_ms": null,
+        "tokens_per_sec": 135.5,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 224
+      }
+    },
+    {
+      "id": "q40",
+      "category": "set_ops",
+      "question": "C\u00e2\u021bi clien\u021bi au avut cel pu\u021bin o rezervare neanulat\u0103 cu data de ridicare \u00een 2023, dar nicio rezervare neanulat\u0103 cu data de ridicare \u00een 2024? Returneaz\u0103 un singur num\u0103r.",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": "none",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "none",
+        "title": "Num\u0103r clien\u021bi cu rezerv\u0103ri neanulate \u00een 2023, dar f\u0103r\u0103 \u00een 2024",
+        "x": null,
+        "y": "churned_clients"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 442,
+        "completion_tokens": 51,
+        "thinking_tokens": 1993,
+        "total_tokens": 2486,
+        "latency_ms": 9874.6,
+        "ttft_ms": null,
+        "tokens_per_sec": 207.0,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 2044
+      }
+    },
+    {
+      "id": "q41",
+      "category": "cohort",
+      "question": "Consider the clients whose first non-cancelled reservation, by pickup date, was in 2022. How many such clients are there, how many of them made at least one non-cancelled reservation with a pickup date in 2023, and what percentage is that, rounded to two decimals? Return one row with the cohort size, the retained count and the retention percentage.",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": "none",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "none",
+        "title": "Client Retention Cohort 2022-2023",
+        "x": null,
+        "y": null
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 651,
+        "completion_tokens": 35,
+        "thinking_tokens": 1587,
+        "total_tokens": 2273,
+        "latency_ms": 8733.9,
+        "ttft_ms": null,
+        "tokens_per_sec": 185.71,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 1622
+      }
+    },
+    {
+      "id": "q42",
+      "category": "window",
+      "question": "Rank the vehicles by their number of maintenance records, where vehicles with the same count share a rank and no rank numbers are skipped. Show the license plate, the number of maintenance records and the rank, for ranks 1 through 3.",
+      "expected_chart": [
+        "bar",
+        "none"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Vehicles by Number of Maintenance Records (Top 3 Ranks)",
+        "x": "license_plate",
+        "y": "maintenance_count"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 485,
+        "completion_tokens": 40,
+        "thinking_tokens": 243,
+        "total_tokens": 768,
+        "latency_ms": 1872.4,
+        "ttft_ms": null,
+        "tokens_per_sec": 151.14,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 283
+      }
+    },
+    {
+      "id": "q43",
+      "category": "pivot",
+      "question": "For each branch, show the branch name, the number of distinct clients who picked up a reservation there in 2023, and the number of distinct clients who picked up a reservation there in 2024, as two separate columns.",
+      "expected_chart": [
+        "bar"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Distinct Clients per Branch in 2024",
+        "x": "name",
+        "y": "clients_2024"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 573,
+        "completion_tokens": 38,
+        "thinking_tokens": 1956,
+        "total_tokens": 2567,
+        "latency_ms": 10852.4,
+        "ttft_ms": null,
+        "tokens_per_sec": 183.74,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 1994
+      }
+    },
+    {
+      "id": "q44",
+      "category": "gaps_islands",
+      "question": "What is the longest run of consecutive calendar days on which at least one reservation was picked up at the Downtown Hub branch? Return the length of that run in days as a single number.",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": "none",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "none",
+        "title": "Longest run of consecutive calendar days with at least one reservation picked up at Downtown Hub",
+        "x": null,
+        "y": null
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 400,
+        "completion_tokens": 38,
+        "thinking_tokens": 103,
+        "total_tokens": 541,
+        "latency_ms": 1139.7,
+        "ttft_ms": null,
+        "tokens_per_sec": 123.72,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 141
+      }
+    },
+    {
+      "id": "q45",
+      "category": "subquery",
+      "question": "Which clients have rented vehicles from all five vehicle categories at least once? Show each client's first name and last name.",
+      "expected_chart": [
+        "none"
+      ],
+      "predicted_chart": "none",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "none",
+        "title": "Clients who have rented from all five vehicle categories"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": false
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 405,
+        "completion_tokens": 20,
+        "thinking_tokens": 349,
+        "total_tokens": 774,
+        "latency_ms": 2303.6,
+        "ttft_ms": null,
+        "tokens_per_sec": 160.18,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 369
+      }
+    },
+    {
+      "id": "q46",
+      "category": "aggregate",
+      "question": "For each branch, what percentage of the reservations picked up there were cancelled? Show the branch name and the percentage rounded to one decimal.",
+      "expected_chart": [
+        "bar"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Percentage of Cancelled Reservations per Branch",
+        "x": "name",
+        "y": "cancelled_pct"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 424,
+        "completion_tokens": 32,
+        "thinking_tokens": 180,
+        "total_tokens": 636,
+        "latency_ms": 1422.6,
+        "ttft_ms": null,
+        "tokens_per_sec": 149.02,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 212
+      }
+    },
+    {
+      "id": "q47",
+      "category": "multi_level_agg",
+      "question": "Which vehicles have cost more in total maintenance than 30 percent of the total revenue from completed payments on their reservations? Show the license plate, the revenue and the maintenance cost.",
+      "expected_chart": [
+        "none",
+        "bar"
+      ],
+      "predicted_chart": "bar",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "bar",
+        "title": "Maintenance Costs for Vehicles Exceeding 30% Revenue Threshold",
+        "x": "license_plate",
+        "y": "maintenance_cost"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 671,
+        "completion_tokens": 45,
+        "thinking_tokens": 2031,
+        "total_tokens": 2747,
+        "latency_ms": 11201.5,
+        "ttft_ms": null,
+        "tokens_per_sec": 185.33,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 2076
+      }
+    },
+    {
+      "id": "q48",
+      "category": "calendar",
+      "question": "For the vehicle with license plate BDH-1053, show the number of reservations picked up in each month of 2024 - all twelve months, with a zero for months in which it had none. Show the month as a date and the count.",
+      "expected_chart": [
+        "bar",
+        "line"
+      ],
+      "predicted_chart": "line",
+      "chart_type_correct": true,
+      "raw_chart": {
+        "type": "line",
+        "title": "Number of Reservations Picked Up for BDH-1053 by Month in 2024",
+        "x": "month",
+        "y": "reservations"
+      },
+      "structurally_valid": true,
+      "checks": {
+        "opens": true,
+        "data_sheet": true,
+        "header_ok": true,
+        "data_ok": true,
+        "chart_sheet_ok": true,
+        "chart_embedded": true,
+        "chart_type_ok": true,
+        "chart_refs_ok": true,
+        "notes": [],
+        "axes_resolvable": true
+      },
+      "error": null,
+      "usage": {
+        "prompt_tokens": 551,
+        "completion_tokens": 46,
+        "thinking_tokens": 398,
+        "total_tokens": 995,
+        "latency_ms": 2806.9,
+        "ttft_ms": null,
+        "tokens_per_sec": 158.18,
+        "decode_tokens_per_sec": null,
+        "finish_reason": "1",
+        "output_tokens": 444
       }
     }
-  ],
-  "dataset": "car_rental",
-  "questions_fingerprint": "e5f746342d1e"
+  ]
 }

@@ -584,3 +584,459 @@ questions:
       "Last year" has no anchor: the data ends 30 June 2014, so relative to now
       the answer is empty, and relative to the data it is 2013 or a trailing
       twelve months. The system should ask rather than pick one.
+
+
+  # =========================================================================
+  # Second wave (q39-q56): questions that discriminate at the frontier.
+  #
+  # q01-q38 are saturated -- four of five hosted models score 34/34. The 68-table
+  # schema raised the cost of the prompt without raising the difficulty of the
+  # query, which is the finding Spider 2.0 reports too: its difficulty premium
+  # came from query shape, not schema size (gold SQL averaging 144.5 tokens
+  # against BIRD's 30.9). See research.md.
+  #
+  # These exploit AdventureWorks features no earlier question touches: the
+  # effective-dated history tables (productcosthistory, employeepayhistory,
+  # salespersonquotahistory), the transactionhistoryarchive twin, the nullable
+  # creditcardid FK, and the many-to-many sales-reason bridge. Each carries a
+  # named TRAP that executes cleanly and returns different numbers.
+  #
+  # Every gold query was executed against the loaded database. Categories are
+  # the same additive set documented in questions.yaml.
+  # =========================================================================
+
+  # Trap (verified): using `product.standardcost` (the current cost, a decoy
+  # column on the obvious table) gives Bikes a margin of 2,582,240 vs the
+  # correct 3,286,316; joining the history without the date predicate fans out
+  # every line with 2-3 cost periods and inflates both terms.
+  - id: q39
+    question: For each product category, what was the gross margin on sales orders placed in 2013? Revenue is unitprice times (1 minus unitpricediscount) times quantity; cost is the product's standard cost that was in effect on the order date according to the cost history, times quantity. Count only order lines whose order date falls inside a recorded standard-cost period. Show the category name and the margin rounded to two decimals.
+    lang: en
+    category: temporal
+    tables: [sales.salesorderdetail, sales.salesorderheader, production.productcosthistory, production.product, production.productsubcategory, production.productcategory]
+    ordered: false
+    expected_chart: [bar, pie]
+    gold_sql: >
+      SELECT c.name,
+             ROUND(SUM(d.unitprice * (1 - d.unitpricediscount) * d.orderqty
+                       - ch.standardcost * d.orderqty), 2) AS gross_margin
+      FROM sales.salesorderdetail d
+      JOIN sales.salesorderheader h ON h.salesorderid = d.salesorderid
+      JOIN production.productcosthistory ch ON ch.productid = d.productid
+       AND h.orderdate >= ch.startdate
+       AND (ch.enddate IS NULL OR h.orderdate <= ch.enddate)
+      JOIN production.product p ON p.productid = d.productid
+      JOIN production.productsubcategory s ON s.productsubcategoryid = p.productsubcategoryid
+      JOIN production.productcategory c ON c.productcategoryid = s.productcategoryid
+      WHERE h.orderdate >= DATE '2013-01-01' AND h.orderdate < DATE '2014-01-01'
+      GROUP BY c.name
+    note: >
+      Temporal (effective-dated) join: 77 products have multiple cost periods,
+      so the date predicate on the history join is load-bearing. 45 order
+      lines of 2013 fall outside every recorded period; the question pins
+      their exclusion (the inner join's natural behaviour). Returns 4 rows.
+
+  # Trap (verified): `WHERE creditcardid NOT IN (SELECT creditcardid FROM
+  # sales.salesorderheader)` returns **0** because the subquery contains NULLs
+  # — executed, it yields a clean, confident, wrong scalar. No published
+  # benchmark category tests this; it is pure silent-failure territory.
+  - id: q40
+    question: How many credit cards on file have never been used on any sales order? Return a single number.
+    lang: en
+    category: anti_join
+    tables: [sales.creditcard, sales.salesorderheader]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: >
+      SELECT COUNT(*) AS unused_cards
+      FROM sales.creditcard c
+      WHERE NOT EXISTS (SELECT 1 FROM sales.salesorderheader h
+                        WHERE h.creditcardid = c.creditcardid)
+    note: >
+      salesorderheader.creditcardid is NULL on every cash order, which arms
+      the classic three-valued-logic trap. Answer: 734.
+
+  # Trap (verified): `SUM(COUNT(*)) OVER ()` as the denominator — the pattern
+  # the existing q31 rewards — computes percentage of citations: Price comes
+  # out 63.20% instead of 55.53% (verified). The right instinct from the
+  # earlier question is the wrong query here.
+  - id: q41
+    question: For each sales reason that appears on at least one sales order, show the reason name, the number of sales orders citing it, and that number as a percentage of all sales orders (not of reason citations), rounded to two decimals. An order can cite several reasons, so the percentages need not sum to 100.
+    lang: en
+    category: multi_level_agg
+    tables: [sales.salesorderheadersalesreason, sales.salesreason, sales.salesorderheader]
+    ordered: false
+    expected_chart: [bar]
+    gold_sql: >
+      SELECT sr.name, COUNT(*) AS orders,
+             ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM sales.salesorderheader), 2) AS pct_of_all_orders
+      FROM sales.salesorderheadersalesreason x
+      JOIN sales.salesreason sr ON sr.salesreasonid = x.salesreasonid
+      GROUP BY sr.name
+    note: >
+      The denominator lives in a table the numerator never touches. 4,482
+      orders cite more than one reason, so the bridge-table total (27,647
+      citations) and the order total (31,465) differ by enough to move every
+      percentage. Returns 7 rows.
+
+  # Trap (verified): querying only transactionhistory returns S = 74,575 —
+  # same shape, right types, 40% of the answer missing. Pre-aggregating each
+  # table and UNION-ing the *aggregates* (instead of UNION ALL then grouping)
+  # yields six rows or, with plain UNION, silently merges equal counts.
+  - id: q42
+    question: Câte tranzacții de inventar există pentru fiecare tip de tranzacție, luând în calcul atât istoricul curent de tranzacții cât și arhiva de istoric? Arată tipul tranzacției și numărul total de tranzacții.
+    lang: ro
+    category: set_ops
+    tables: [production.transactionhistory, production.transactionhistoryarchive]
+    ordered: false
+    expected_chart: [bar, pie]
+    gold_sql: >
+      SELECT transactiontype, COUNT(*) AS transactions FROM (
+        SELECT transactiontype FROM production.transactionhistory
+        UNION ALL
+        SELECT transactiontype FROM production.transactionhistoryarchive) t
+      GROUP BY transactiontype
+    note: >
+      UNION ALL across a table and its archive twin - the AdventureWorks
+      pattern nothing in the current set touches. Returns 3 rows
+      (P: 8,788 / S: 121,317 / W: 72,591).
+
+  # Trap (by construction): LAG(1) compares January 2013 to December 2012 —
+  # the exact gold answer of q38 — and differs in all 12 rows.
+  - id: q43
+    question: For each month of 2013, show the month as a date (the first day of the month), the total revenue counting the total due on each order, and the percentage change versus the same month of 2012, rounded to two decimals.
+    lang: en
+    category: temporal
+    tables: [sales.salesorderheader]
+    ordered: true
+    expected_chart: [line, bar]
+    gold_sql: >
+      WITH m AS (
+        SELECT DATE_TRUNC('month', orderdate)::date AS month, SUM(totaldue) AS revenue
+        FROM sales.salesorderheader GROUP BY 1)
+      SELECT a.month, a.revenue,
+             ROUND(100.0 * (a.revenue - b.revenue) / b.revenue, 2) AS yoy_pct
+      FROM m a JOIN m b ON b.month = a.month - INTERVAL '1 year'
+      WHERE a.month >= DATE '2013-01-01' AND a.month < DATE '2014-01-01'
+      ORDER BY a.month
+    note: >
+      Deliberately adjacent to the existing q38 (month-over-month LAG): a
+      model that pattern-matches to its q38 answer fails here. Jan 2013 vs Jan
+      2012 is -47.51%. Returns 12 rows.
+
+  # Trap (by construction): joining quota history to orders in one FROM
+  # multiplies each quota row by that person's order count and each order by
+  # 4; the decoy `salesperson.salesquota` scalar column (a different number)
+  # is sitting on the obvious table.
+  - id: q44
+    question: For each salesperson who had a sales quota set during 2013, show their first name, their last name, the sum of their 2013 quota amounts from the quota history, their actual 2013 sales as the sum of the total due on orders where they are the salesperson, rounded to two decimals, and the difference of actual minus quota, rounded to two decimals.
+    lang: en
+    category: multi_level_agg
+    tables: [sales.salespersonquotahistory, sales.salesorderheader, person.person]
+    ordered: false
+    expected_chart: [bar, none]
+    gold_sql: >
+      WITH quota AS (
+        SELECT businessentityid, SUM(salesquota) AS quota
+        FROM sales.salespersonquotahistory
+        WHERE quotadate >= DATE '2013-01-01' AND quotadate < DATE '2014-01-01'
+        GROUP BY businessentityid),
+      actual AS (
+        SELECT salespersonid, SUM(totaldue) AS actual
+        FROM sales.salesorderheader
+        WHERE salespersonid IS NOT NULL
+          AND orderdate >= DATE '2013-01-01' AND orderdate < DATE '2014-01-01'
+        GROUP BY salespersonid)
+      SELECT pe.firstname, pe.lastname, q.quota,
+             ROUND(a.actual, 2) AS actual,
+             ROUND(a.actual - q.quota, 2) AS difference
+      FROM quota q
+      JOIN actual a ON a.salespersonid = q.businessentityid
+      JOIN person.person pe ON pe.businessentityid = q.businessentityid
+    note: >
+      Two aggregates at different grains (4 quarterly quota rows vs hundreds
+      of orders per person) that must be computed separately. All 17 quota
+      holders also sold in 2013, so the join drops no one. Returns 17 rows.
+
+  # Trap (by construction): unquoted `group` is a syntax error; the long
+  # format (group, flag, revenue) is 6 rows x 3 cols and fails the shape
+  # check.
+  - id: q45
+    question: For each sales territory group, show the group name, the total revenue counting the total due on online orders, and the total revenue counting the total due on orders that are not online, as two separate revenue columns rounded to two decimals.
+    lang: en
+    category: pivot
+    tables: [sales.salesorderheader, sales.salesterritory]
+    ordered: false
+    expected_chart: [bar]
+    gold_sql: >
+      SELECT t."group",
+             ROUND(SUM(h.totaldue) FILTER (WHERE h.onlineorderflag), 2) AS online_revenue,
+             ROUND(SUM(h.totaldue) FILTER (WHERE NOT h.onlineorderflag), 2) AS offline_revenue
+      FROM sales.salesorderheader h
+      JOIN sales.salesterritory t ON t.territoryid = h.territoryid
+      GROUP BY t."group"
+    note: >
+      Conditional aggregation over the boolean flag, grouped by the reserved
+      word column the existing q17 already flags. Returns 3 rows (Europe,
+      North America, Pacific).
+
+  # Trap (verified): PERCENTILE_DISC differs from CONT (France 858.96 vs
+  # 859.02 — one cell, which is all the scorer needs); skipping the ::numeric
+  # cast makes ROUND(double, 2) fail outright in PostgreSQL.
+  - id: q46
+    question: For each sales territory, show the territory name, the mean order value and the median order value of the total due across its sales orders, both rounded to two decimals. Use the interpolated median (the average of the two middle values when the count is even).
+    lang: en
+    category: percentile
+    tables: [sales.salesorderheader, sales.salesterritory]
+    ordered: false
+    expected_chart: [bar, none]
+    gold_sql: >
+      SELECT t.name,
+             ROUND(AVG(h.totaldue), 2) AS mean_value,
+             ROUND((PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY h.totaldue))::numeric, 2) AS median_value
+      FROM sales.salesorderheader h
+      JOIN sales.salesterritory t ON t.territoryid = h.territoryid
+      GROUP BY t.name
+    note: >
+      The skew is the story: Canada's mean is 4,523.96 against a median of
+      87.27, because a few reseller orders dwarf thousands of online ones.
+      Returns 10 rows.
+
+  # Trap (verified): the single-level join returns 3; even a two-level self-
+  # join returns a fraction of 178. Only recursion (or an exhaustive N-level
+  # unrolling) reaches the answer.
+  - id: q47
+    question: How many distinct product assemblies contain the component named 'Blade' at any depth of the current bill of materials - directly or through intermediate assemblies? Return a single number.
+    lang: en
+    category: recursive
+    tables: [production.billofmaterials, production.product]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: >
+      WITH RECURSIVE used_in AS (
+        SELECT b.productassemblyid
+        FROM production.billofmaterials b
+        JOIN production.product c ON c.productid = b.componentid
+        WHERE c.name = 'Blade' AND b.enddate IS NULL
+        UNION
+        SELECT b.productassemblyid
+        FROM production.billofmaterials b
+        JOIN used_in u ON u.productassemblyid = b.componentid
+        WHERE b.enddate IS NULL)
+      SELECT COUNT(DISTINCT productassemblyid) AS assemblies FROM used_in
+    note: >
+      The inverse of the existing q35: where-used (upward) instead of explode
+      (downward). Chosen because for 'Blade' the depth genuinely matters:
+      answer 178, vs 3 direct parents. (Verified that the enddate filter does
+      not change this particular count, so a model omitting it is not unfairly
+      failed - the discriminator is the recursion, not the filter.)
+
+  # Trap (verified): `100 * AVG(unitpricediscount)` — Accessories 0.08 vs
+  # 0.52, Clothing 0.20 vs 0.98.
+  - id: q48
+    question: For each product category, what is the value-weighted average discount rate on its sales order lines - the sum of unitpricediscount times unitprice times quantity, divided by the sum of unitprice times quantity - expressed as a percentage rounded to two decimals? Show the category name and the percentage.
+    lang: en
+    category: ratio
+    tables: [sales.salesorderdetail, production.product, production.productsubcategory, production.productcategory]
+    ordered: false
+    expected_chart: [bar]
+    gold_sql: >
+      SELECT c.name,
+             ROUND(100.0 * SUM(d.unitpricediscount * d.unitprice * d.orderqty)
+                   / SUM(d.unitprice * d.orderqty), 2) AS weighted_discount_pct
+      FROM sales.salesorderdetail d
+      JOIN production.product p ON p.productid = d.productid
+      JOIN production.productsubcategory s ON s.productsubcategoryid = p.productsubcategoryid
+      JOIN production.productcategory c ON c.productcategoryid = s.productcategoryid
+      GROUP BY c.name
+    note: >
+      Ratio of aggregates with an explicit formula in the question - and the
+      unweighted AVG still differs by up to 5x (Clothing 0.98 vs 0.20), so a
+      model that skims the formula and reaches for AVG(unitpricediscount) is
+      caught. Returns 4 rows.
+
+  # Trap (by construction): reading "both ... but none" as "either 2012 or
+  # 2013, none in 2014" (UNION instead of INTERSECT) gives a different count,
+  # as does counting orders instead of distinct customers.
+  - id: q49
+    question: How many customers placed at least one sales order in both 2012 and 2013 but none in 2014? Return a single number.
+    lang: en
+    category: set_ops
+    tables: [sales.salesorderheader]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: >
+      SELECT COUNT(*) AS customers FROM (
+        (SELECT customerid FROM sales.salesorderheader
+         WHERE orderdate >= DATE '2012-01-01' AND orderdate < DATE '2013-01-01'
+         INTERSECT
+         SELECT customerid FROM sales.salesorderheader
+         WHERE orderdate >= DATE '2013-01-01' AND orderdate < DATE '2014-01-01')
+        EXCEPT
+        SELECT customerid FROM sales.salesorderheader
+        WHERE orderdate >= DATE '2014-01-01' AND orderdate < DATE '2015-01-01') t
+    note: >
+      Three-way set composition (INTERSECT then EXCEPT, or the equivalent
+      EXISTS chain). Answer: 1,225.
+
+  # Trap (by construction): any formulation that only groups existing orders
+  # returns all 17 salespeople (including twelve 0-month rows) or miscounts;
+  # the row-count check catches both.
+  - id: q50
+    question: Which salespeople had at least one calendar month of 2013 in which they were the salesperson on no sales orders at all? Show the first name, the last name and the number of such months.
+    lang: en
+    category: calendar
+    tables: [sales.salesperson, sales.salesorderheader, person.person]
+    ordered: false
+    expected_chart: [bar, none]
+    gold_sql: >
+      SELECT pe.firstname, pe.lastname, COUNT(*) AS months_without_orders
+      FROM sales.salesperson sp
+      JOIN person.person pe ON pe.businessentityid = sp.businessentityid
+      CROSS JOIN generate_series(DATE '2013-01-01', DATE '2013-12-01', INTERVAL '1 month') m
+      WHERE NOT EXISTS (
+        SELECT 1 FROM sales.salesorderheader h
+        WHERE h.salespersonid = sp.businessentityid
+          AND DATE_TRUNC('month', h.orderdate) = m)
+      GROUP BY pe.firstname, pe.lastname
+    note: >
+      Counting absence: the rows to count do not exist in any table, so the
+      query must manufacture the month spine and anti-join it. Returns 5 rows
+      (Syed Abbas 7, three at 4, one at 1). All 17 salespeople had at least one
+      2013 order, so 12-minus-distinct-months over their orders is an
+      acceptable equivalent - the filter to "at least one such month" is what
+      the spineless version tends to get wrong.
+
+  # Trap (by construction): joining employeepayhistory raw duplicates each
+  # employee once per raise (row count grows and rates disagree); dropping the
+  # enddate filter adds employees who have since left Engineering.
+  - id: q51
+    question: Which employees currently work in the Engineering department, according to the department history? Show each one's first name, last name and current pay rate - the rate on their most recent pay-change row.
+    lang: en
+    category: temporal
+    tables: [humanresources.employeedepartmenthistory, humanresources.department, humanresources.employeepayhistory, person.person]
+    ordered: false
+    expected_chart: [none, bar]
+    gold_sql: >
+      SELECT pe.firstname, pe.lastname, cur.rate
+      FROM humanresources.employeedepartmenthistory edh
+      JOIN humanresources.department dp
+        ON dp.departmentid = edh.departmentid AND dp.name = 'Engineering'
+      JOIN person.person pe ON pe.businessentityid = edh.businessentityid
+      JOIN LATERAL (
+        SELECT rate FROM humanresources.employeepayhistory ph
+        WHERE ph.businessentityid = edh.businessentityid
+        ORDER BY ph.ratechangedate DESC LIMIT 1) cur ON true
+      WHERE edh.enddate IS NULL
+    note: >
+      Two effective-dated history tables at once: "currently in the
+      department" is enddate IS NULL on one, "current rate" is the latest row
+      of the other (LATERAL, DISTINCT ON, or a windowed subquery all work).
+      Returns 6 rows. Extends the existing q23/q33, which each need only one
+      of the two moves.
+
+  # Trap (verified): the single-FROM version multiplies the two detail tables
+  # through their shared product: Accessories comes out 19,609,196 in "sales
+  # revenue" instead of 1,272,073 — a 15x inflation that still looks like
+  # money.
+  - id: q52
+    question: For each product category that has both sales and purchases, show the category name, the total sales revenue (unitprice times 1 minus unitpricediscount times quantity, over sales order lines) and the total purchasing spend (unitprice times quantity, over purchase order lines), each rounded to two decimals.
+    lang: en
+    category: multi_level_agg
+    tables: [sales.salesorderdetail, purchasing.purchaseorderdetail, production.product, production.productsubcategory, production.productcategory]
+    ordered: false
+    expected_chart: [bar]
+    gold_sql: >
+      WITH sold AS (
+        SELECT c.name, SUM(d.unitprice * (1 - d.unitpricediscount) * d.orderqty) AS sales_revenue
+        FROM sales.salesorderdetail d
+        JOIN production.product p ON p.productid = d.productid
+        JOIN production.productsubcategory s ON s.productsubcategoryid = p.productsubcategoryid
+        JOIN production.productcategory c ON c.productcategoryid = s.productcategoryid
+        GROUP BY c.name),
+      bought AS (
+        SELECT c.name, SUM(pd.unitprice * pd.orderqty) AS purchase_spend
+        FROM purchasing.purchaseorderdetail pd
+        JOIN production.product p ON p.productid = pd.productid
+        JOIN production.productsubcategory s ON s.productsubcategoryid = p.productsubcategoryid
+        JOIN production.productcategory c ON c.productcategoryid = s.productcategoryid
+        GROUP BY c.name)
+      SELECT sold.name, ROUND(sold.sales_revenue, 2) AS sales_revenue,
+             ROUND(bought.purchase_spend, 2) AS purchase_spend
+      FROM sold JOIN bought ON bought.name = sold.name
+    note: >
+      The AdventureWorks version of car_rental q31, across two schemas: sales
+      and purchasing lines both hang off product, and no product-level join
+      may connect them directly. Bikes are sold but never purchased, so the
+      inner join returns 3 rows - which the question pins ("that has both").
+
+  # Trap (verified): filter-then-window gives January 2013 its own revenue as
+  # the average; a RANGE/default frame over a month-truncated ORDER BY happens
+  # to agree here (unique months), so the discriminator is evaluation order.
+  - id: q53
+    question: Show the three-month trailing moving average of monthly sales revenue, counting the total due on each order - the mean of that month and the two preceding months - for every month of 2013. Compute the average over the full order history, so January 2013 averages November 2012, December 2012 and January 2013. Show the month as a date, that month's revenue and the moving average, both rounded to two decimals.
+    lang: en
+    category: window
+    tables: [sales.salesorderheader]
+    ordered: true
+    expected_chart: [line, area]
+    gold_sql: >
+      WITH m AS (
+        SELECT DATE_TRUNC('month', orderdate)::date AS month, SUM(totaldue) AS revenue
+        FROM sales.salesorderheader GROUP BY 1),
+      ma AS (
+        SELECT month, ROUND(revenue, 2) AS revenue,
+               ROUND(AVG(revenue) OVER (ORDER BY month
+                     ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 2) AS moving_avg
+        FROM m)
+      SELECT month, revenue, moving_avg
+      FROM ma
+      WHERE month >= DATE '2013-01-01' AND month < DATE '2014-01-01'
+      ORDER BY month
+    note: >
+      Same construct as car_rental q35 on the other dataset, which is
+      deliberate: the pair measures whether frame-clause competence transfers
+      across schema scale, the comparison the two-dataset design exists for.
+      Returns 12 rows; January's average is 2,538,020.95, not its own revenue.
+
+  - id: q54
+    question: What was our average discount in 2013?
+    lang: en
+    category: ambiguous
+    tables: [sales.salesorderdetail]
+    ordered: false
+    gold_sql: null
+    note: >
+      Instantly "answerable" as AVG(unitpricediscount) - but per-line simple
+      average, value-weighted average, average over only discounted lines, and
+      average per order are all defensible and differ by up to 5x on this
+      data (q48 exists to prove it). A system that answers without asking has
+      picked one silently. The dangerous ambiguity is the one wearing a
+      column's name.
+
+  - id: q55
+    question: Cine este cel mai bun agent de vânzări?
+    lang: ro
+    category: ambiguous
+    tables: [sales.salesperson, person.person]
+    ordered: false
+    gold_sql: null
+    note: >
+      Romanian, and sharper than q27's "best customers" because a decoy column
+      exists: salesperson.salesytd invites a one-line answer, while lifetime
+      revenue, 2013 revenue, quota attainment (q44) and commission all give
+      different names. "Best" with a plausible column is more dangerous than
+      "best" with none.
+
+  - id: q56
+    question: How much inventory are we holding?
+    lang: en
+    category: ambiguous
+    tables: [production.productinventory, production.product]
+    ordered: false
+    gold_sql: null
+    note: >
+      Units (SUM(quantity)), value at standard cost, and value at list price
+      are all defensible and differ by orders of magnitude; list price is zero
+      for components, so the choice even changes which products count at all.
+      The system should ask "in units or in value - and valued how?".

@@ -38,9 +38,25 @@ class Dataset:
     probe_sql: str       # returns a row once the database is seeded
     search_path: str | None = None
     note: str = ""
+    # Which engine the fixture runs on, and therefore which dialect the arms are
+    # asked for. PostgreSQL for everything this project ships; BIRD is SQLite
+    # because that is the engine its 1,534 gold queries were written against,
+    # and translating them would be substituting our SQL for the benchmark's.
+    backend: str = "postgres"
+    dialect: str = "PostgreSQL"
 
     def schema_text(self, repo: pathlib.Path) -> str:
         return (repo / self.schema_file).read_text()
+
+    def schema_for(self, repo: pathlib.Path):
+        """What the naive arm puts in its prompt.
+
+        Returns a string when the dataset is one database, or a
+        `question -> schema` callable when it is several. Single-database
+        datasets keep returning the same string they always did, so their
+        prompts are byte-identical to the ones already measured.
+        """
+        return self.schema_text(repo)
 
     def questions_path(self, benchmark_dir: pathlib.Path) -> pathlib.Path:
         return benchmark_dir / self.questions_file
@@ -72,6 +88,47 @@ class AdventureWorks(Dataset):
         subprocess.run([sys.executable, str(script)], check=True)
 
 
+@dataclasses.dataclass(frozen=True)
+class BirdDev(Dataset):
+    """BIRD-SQL dev: 1,534 questions over 11 SQLite databases.
+
+    The first dataset here that is not one database. Two consequences, both
+    handled by the base class's hooks rather than by branching in `run.py`:
+    the schema in the naive arm's prompt is a property of the question, and the
+    connection the scorer executes against is too.
+
+    Nothing is seeded. The databases are the upstream artefact, downloaded and
+    left read-only; `benchmark_data/bird/prepare.py` builds the schema files and
+    the question set from them and is what has to be run first.
+    """
+
+    db_root: str = "benchmark_data/bird/dev_20240627/dev_databases"
+    schema_dir: str = "benchmark_data/bird/schemas"
+
+    def schema_text(self, repo: pathlib.Path) -> str:
+        raise RuntimeError(
+            "bird_dev has 11 schemas; use schema_for(repo) and pass it a question")
+
+    def schema_for(self, repo: pathlib.Path):
+        # Read once and cached: 11 files against 1,534 questions is 1,523
+        # pointless reads otherwise, and the run is long enough already.
+        cache: dict[str, str] = {}
+
+        def schema(q: dict) -> str:
+            db_id = q["db_id"]
+            if db_id not in cache:
+                cache[db_id] = (repo / self.schema_dir / f"{db_id}.sql").read_text()
+            return cache[db_id]
+
+        return schema
+
+    def sqlite_path(self, repo: pathlib.Path, db_id: str) -> pathlib.Path:
+        return repo / self.db_root / db_id / f"{db_id}.sqlite"
+
+    def seed(self, conn, repo: pathlib.Path) -> None:
+        raise RuntimeError("bird_dev is not seeded; run benchmark_data/bird/prepare.py")
+
+
 REGISTRY: dict[str, Dataset] = {
     "car_rental": CarRental(
         name="car_rental",
@@ -99,6 +156,38 @@ REGISTRY: dict[str, Dataset] = {
         # worth counting. Fully qualified names keep working unchanged.
         search_path="person,humanresources,production,purchasing,sales,public",
         note="68 tables / 1,099 columns / 91 FKs / ~761k rows",
+    ),
+    "bird_dev": BirdDev(
+        name="bird_dev",
+        db_name="bird_dev",
+        domain="the database described below",
+        questions_file="questions_bird_dev.json",
+        # Unused: BirdDev overrides schema_text and schema_for. Recorded so the
+        # field means something when someone greps for where a schema comes from.
+        schema_file="benchmark_data/bird/schemas",
+        probe_sql="",
+        backend="sqlite",
+        dialect="SQLite",
+        note="1,534 questions over 11 SQLite databases; BIRD-SQL dev, "
+             "question revision 2026-11-06",
+    ),
+    # Same questions, same databases, same arm -- the schema in the prompt is
+    # the only thing that differs. BIRD withholds its column dictionary from the
+    # DDL on purpose (`financial.A3` reads as `A3 TEXT not null` and means
+    # "region"), so `bird_dev` measures this project's own prompt contract on a
+    # harder database, and `bird_dev_dict` measures what that withheld
+    # dictionary is worth. Neither is the "real" number; the pair is the result.
+    "bird_dev_dict": BirdDev(
+        name="bird_dev_dict",
+        db_name="bird_dev",
+        domain="the database described below",
+        questions_file="questions_bird_dev.json",
+        schema_file="benchmark_data/bird/schemas_dict",
+        schema_dir="benchmark_data/bird/schemas_dict",
+        probe_sql="",
+        backend="sqlite",
+        dialect="SQLite",
+        note="bird_dev plus BIRD's per-column descriptions in the prompt",
     ),
 }
 

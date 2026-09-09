@@ -61,6 +61,76 @@ def format_results(result: QueryResult) -> str:
     )
 
 
+@dataclass
+class DirectSqlOutcome:
+    """Result of running a SQL string the user supplied (SQL tab, history re-run).
+
+    No model is involved, but the query still goes through the same validator and
+    the same policy rewrite as a generated one — which is the point: editing the
+    SQL in the workbench cannot widen what the role is allowed to read.
+    """
+
+    ok: bool = False
+    sql: Optional[str] = None
+    stage: Optional[str] = None  # validation | policy | execution
+    error: Optional[str] = None
+    validation: dict = field(default_factory=dict)
+    policy: dict = field(default_factory=dict)
+    columns: list = field(default_factory=list)
+    rows: list = field(default_factory=list)
+    row_count: int = 0
+    duration_ms: float = 0.0
+    truncated: bool = False
+    plan: list[str] = field(default_factory=list)
+    max_rows: int = 0
+    role: str = ""
+
+    def to_dict(self) -> dict:
+        return {
+            "ok": self.ok,
+            "sql": self.sql,
+            "stage": self.stage,
+            "error": self.error,
+            "validation": self.validation,
+            "policy": self.policy,
+            "columns": self.columns,
+            "rows": self.rows,
+            "row_count": self.row_count,
+            "duration_ms": self.duration_ms,
+            "truncated": self.truncated,
+            "plan": self.plan,
+            "max_rows": self.max_rows,
+            "role": self.role,
+        }
+
+
+def _clean_options(raw: Any) -> list[dict]:
+    """Normalise the optional ``options`` array of a clarification response.
+
+    The model is asked for one entry per reading, each naming the measure
+    expression it would use. Anything malformed is dropped rather than raised:
+    the prose clarification is the contract, the options are an enrichment.
+    """
+    if not isinstance(raw, list):
+        return []
+    out: list[dict] = []
+    for item in raw[:5]:
+        if not isinstance(item, dict):
+            continue
+        label = item.get("label") or item.get("title")
+        if not label:
+            continue
+        out.append(
+            {
+                "label": str(label)[:120],
+                "measure": str(item.get("measure") or "")[:200] or None,
+                "note": str(item.get("note") or "")[:200] or None,
+                "question": str(item.get("question") or "")[:300] or None,
+            }
+        )
+    return out
+
+
 def split_messages(messages: list) -> tuple[list[dict], str, str]:
     """Return (gemini history, condensed history text, last user message)."""
     history: list[dict] = []
@@ -112,6 +182,82 @@ class Pipeline:
         if self.state.policy is None:
             return []
         return list(self.state.policy.role(ctx.role).denied_columns)
+
+    # -- user-supplied SQL -------------------------------------------------
+    async def run_sql(
+        self, sql: str, ctx: UserContext, explain: bool = False
+    ) -> DirectSqlOutcome:
+        """Validate, authorize and run a SQL string that did not come from the model.
+
+        Deliberately not recorded in telemetry: the evaluation chapter counts
+        model-generated requests, and a manual re-run is not one.
+        """
+        validator = self._validator(ctx)
+        session = self._session(ctx)
+        out = DirectSqlOutcome(max_rows=validator.max_rows, role=ctx.role)
+
+        validation = validator.validate(sql)
+        out.validation = validation.to_dict()
+        if not validation.ok:
+            out.stage = "validation"
+            out.error = validation.error
+            return out
+        safe_sql = validation.sql
+
+        if self.state.policy is not None and self.settings.policy_enabled:
+            try:
+                policy_result = self.state.policy.rewrite(safe_sql, ctx)
+            except PolicyError as exc:
+                out.stage = "policy"
+                out.error = str(exc)
+                return out
+            out.policy = policy_result.to_dict()
+            if not policy_result.ok:
+                out.stage = "policy"
+                out.error = policy_result.blocked_reason
+                return out
+            safe_sql = policy_result.sql
+
+        out.sql = safe_sql
+
+        if explain:
+            if not self.state.can_explain:
+                out.stage = "execution"
+                out.error = "EXPLAIN is unavailable with the current SQL executor"
+                return out
+            try:
+                plan = await self.state.direct_runner.execute(
+                    f"EXPLAIN {safe_sql}", session=session
+                )
+            except SqlExecutionError as exc:
+                out.stage = "execution"
+                out.error = str(exc)
+                return out
+            out.plan = [
+                " ".join("" if c is None else str(c) for c in row) for row in plan.rows
+            ]
+            out.duration_ms = plan.duration_ms
+            out.ok = True
+            return out
+
+        try:
+            result = await self.state.execute(safe_sql, session)
+        except SqlExecutionError as exc:
+            out.stage = "execution"
+            out.error = str(exc)
+            return out
+        except Exception as exc:  # pragma: no cover - unexpected
+            out.stage = "execution"
+            out.error = str(exc)
+            return out
+
+        out.ok = True
+        out.columns = result.columns
+        out.rows = result.rows
+        out.row_count = result.row_count
+        out.duration_ms = result.duration_ms
+        out.truncated = result.truncated
+        return out
 
     # -- main -------------------------------------------------------------
     async def run(self, messages: list, ctx: UserContext) -> PipelineOutcome:
@@ -166,6 +312,7 @@ class Pipeline:
         outcome = OUTCOME_GENERATION_FAILED
         results_text: Optional[str] = None
         clarification: Optional[str] = None
+        clarification_options: list[dict] = []
         last_error: Optional[str] = None
 
         max_attempts = max(1, settings.max_repair_attempts + 1)
@@ -193,6 +340,7 @@ class Pipeline:
 
             sql = payload.get("sql")
             clarification = payload.get("clarification")
+            clarification_options = _clean_options(payload.get("options"))
             chart_raw = payload.get("chart")
             if isinstance(chart_raw, dict) and chart_raw.get("type") not in (
                 None,
@@ -381,17 +529,52 @@ class Pipeline:
         sql_meta["attempts"] = len(trace.attempts)
         sql_meta["retries"] = trace.retries
 
-        if trace.policy:
-            sql_meta["policy"] = {
-                "role": ctx.role,
-                "filters": [f["table"] for f in trace.policy.get("applied_filters", [])],
-                "blocked_reason": trace.policy.get("blocked_reason"),
+        sql_meta["model"] = getattr(self.state.llm, "name", "unknown")
+        sql_meta["database"] = (
+            self.state.catalog.database if self.state.catalog else None
+        )
+        sql_meta["max_rows"] = validator.max_rows
+        sql_meta["truncated"] = bool(result.truncated) if result is not None else False
+        sql_meta["stages"] = dict(trace.stages)
+        sql_meta["total_ms"] = trace.total_ms
+        # The whole attempt trail, not just how many there were: the repair loop
+        # is only legible in the product if the failed attempt and its verbatim
+        # database error travel with the answer.
+        sql_meta["attempts_detail"] = [a.to_dict() for a in trace.attempts]
+
+        # Retrieval: the ranked list, not only the tables that made the cut.
+        sql_meta["retrieval"].update(
+            {
+                "ranking": trace.retrieval.get("ranking", []),
+                "value_matches": trace.retrieval.get("value_matches", []),
+                "expanded": trace.retrieval.get("expanded", []),
+                "latency_ms": trace.retrieval.get("latency_ms"),
+                "candidates": (
+                    len(self.state.catalog.tables) if self.state.catalog else None
+                ),
             }
+        )
+
+        # Authorization is always reported, so "no filter was needed" is
+        # distinguishable from "the policy was never consulted".
+        role_policy = self.state.policy.role(ctx.role) if self.state.policy else None
+        sql_meta["policy"] = {
+            "role": ctx.role,
+            "enabled": bool(self.state.policy is not None and settings.policy_enabled),
+            "filters": [f["table"] for f in trace.policy.get("applied_filters", [])],
+            "filter_predicates": trace.policy.get("applied_filters", []),
+            "expanded_stars": trace.policy.get("expanded_stars", []),
+            "denied_columns": list(role_policy.denied_columns) if role_policy else [],
+            "denied_tables": list(role_policy.denied_tables) if role_policy else [],
+            "blocked_reason": trace.policy.get("blocked_reason"),
+            "max_rows": validator.max_rows,
+        }
 
         if outcome == OUTCOME_ANSWERED:
             answer_prompt = llm_mod.build_answer_prompt(question, results_text)
         elif outcome == OUTCOME_CLARIFICATION:
             sql_meta["clarification"] = clarification
+            sql_meta["clarification_options"] = clarification_options
             answer_prompt = llm_mod.build_clarification_prompt(question, clarification or "")
         elif outcome == OUTCOME_NO_SQL:
             answer_prompt = llm_mod.build_answer_prompt(question, None)
@@ -428,6 +611,8 @@ class Pipeline:
                 "columns": result.columns,
                 "rows": result.rows,
                 "chart": chart_config,
+                "truncated": result.truncated,
+                "row_count": result.row_count,
             }
 
         return PipelineOutcome(

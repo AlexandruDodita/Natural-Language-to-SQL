@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 class SqlMetaCreate(BaseModel):
     sql_query: Optional[str] = None
@@ -17,18 +17,34 @@ class SqlMetaResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class ArtifactCreate(BaseModel):
+    """Result set plus the full pipeline metadata, so a reloaded conversation
+    still has its table, its chart and its provenance."""
+
+    payload: Optional[Dict[str, Any]] = None
+    meta: Optional[Dict[str, Any]] = None
+
+class ArtifactResponse(BaseModel):
+    payload: Optional[Dict[str, Any]] = None
+    meta: Optional[Dict[str, Any]] = None
+
+    class Config:
+        from_attributes = True
+
 class MessageBase(BaseModel):
     role: str
     content: str
 
 class MessageCreate(MessageBase):
     sql_meta: Optional[SqlMetaCreate] = None
+    artifact: Optional[ArtifactCreate] = None
 
 class Message(MessageBase):
     id: str
     conversation_id: str
     created_at: datetime
     sql_meta: Optional[SqlMetaResponse] = None
+    artifact: Optional[ArtifactResponse] = None
 
     class Config:
         from_attributes = True
@@ -38,6 +54,9 @@ class ConversationBase(BaseModel):
 
 class ConversationCreate(ConversationBase):
     user_id: Optional[str] = None
+
+class ConversationUpdate(BaseModel):
+    title: str
 
 class Conversation(ConversationBase):
     id: str

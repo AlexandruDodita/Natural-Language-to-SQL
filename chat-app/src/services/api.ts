@@ -1,4 +1,13 @@
-import type { Message, SqlMeta, ArtifactData, QueryEngine } from '../types';
+import type {
+  ArtifactData,
+  ExecuteResult,
+  Message,
+  QueryEngine,
+  RolePolicyInfo,
+  SchemaCatalog,
+  SqlMeta,
+  UserContext,
+} from '../types';
 
 const RAG_URL = import.meta.env.VITE_RAG_URL || 'http://localhost:8100';
 const MCP_URL = import.meta.env.VITE_MCP_URL || 'http://localhost:8300';
@@ -8,6 +17,15 @@ export interface StreamResponse {
   done: boolean;
   sqlMeta?: SqlMeta;
   artifact?: ArtifactData;
+}
+
+/** The user context travels with every request, so the role selector is real. */
+function userPayload(user: UserContext) {
+  return {
+    user_id: user.user_id ?? undefined,
+    role: user.role,
+    location_id: user.location_id ?? undefined,
+  };
 }
 
 async function* streamMcp(messages: Message[]): AsyncGenerator<StreamResponse, void, undefined> {
@@ -28,11 +46,17 @@ async function* streamMcp(messages: Message[]): AsyncGenerator<StreamResponse, v
     throw new Error(payload.error);
   }
 
+  // The MCP arm has no pipeline stages to report; the outcome is derived so the
+  // provenance strip reads the same way for both arms.
   const sqlMeta: SqlMeta = {
     sql: payload.final_sql ?? null,
     row_count: payload.final_sql ? payload.row_count ?? 0 : null,
     duration_ms: payload.final_sql ? payload.latency_ms ?? null : null,
     blocked: payload.error ?? null,
+    outcome: payload.error ? 'execution_failed' : payload.final_sql ? 'answered' : 'no_sql',
+    attempts: payload.attempts ?? undefined,
+    engine: 'mcp',
+    total_ms: payload.latency_ms ?? undefined,
   };
   yield { chunk: '', done: false, sqlMeta };
 
@@ -40,7 +64,12 @@ async function* streamMcp(messages: Message[]): AsyncGenerator<StreamResponse, v
     yield {
       chunk: '',
       done: false,
-      artifact: { columns: payload.columns, rows: payload.rows || [], chart: payload.chart ?? null },
+      artifact: {
+        columns: payload.columns,
+        rows: payload.rows || [],
+        chart: payload.chart ?? null,
+        row_count: payload.row_count ?? (payload.rows || []).length,
+      },
     };
   }
 
@@ -52,7 +81,8 @@ async function* streamMcp(messages: Message[]): AsyncGenerator<StreamResponse, v
 
 export async function* streamChat(
   messages: Message[],
-  engine: QueryEngine = 'rag',
+  engine: QueryEngine,
+  user: UserContext,
 ): AsyncGenerator<StreamResponse, void, undefined> {
   if (engine === 'mcp') {
     yield* streamMcp(messages);
@@ -62,10 +92,8 @@ export async function* streamChat(
   const body = {
     messages: messages
       .filter(m => m.content.trim() !== '')
-      .map(m => ({
-        role: m.role,
-        content: m.content,
-      })),
+      .map(m => ({ role: m.role, content: m.content })),
+    user: userPayload(user),
   };
 
   const response = await fetch(`${RAG_URL}/chat`, {
@@ -91,7 +119,6 @@ export async function* streamChat(
 
     buffer += decoder.decode(value, { stream: true });
 
-    // Parse SSE lines
     const lines = buffer.split('\n');
     buffer = lines.pop() || '';
 
@@ -110,7 +137,7 @@ export async function* streamChat(
 
       if (data.startsWith('[META]')) {
         try {
-          const sqlMeta: SqlMeta = JSON.parse(data.slice(6));
+          const sqlMeta: SqlMeta = { ...JSON.parse(data.slice(6)), engine: 'rag' };
           yield { chunk: '', done: false, sqlMeta };
         } catch {
           // malformed meta — ignore
@@ -139,11 +166,64 @@ export async function* streamChat(
   yield { chunk: '', done: true };
 }
 
-export async function sendMessage(messages: Message[], engine: QueryEngine = 'rag'): Promise<string> {
-  let result = '';
-  for await (const { chunk, done } of streamChat(messages, engine)) {
-    if (done) break;
-    result += chunk;
-  }
-  return result;
+// ---------------------------------------------------------------------------
+// The introspection endpoints the pipeline already exposed and the frontend
+// never called.
+// ---------------------------------------------------------------------------
+async function getJson<T>(path: string): Promise<T> {
+  const r = await fetch(`${RAG_URL}${path}`);
+  if (!r.ok) throw new Error(`${path} → ${r.status}`);
+  return r.json() as Promise<T>;
 }
+
+async function postJson<T>(path: string, body: unknown): Promise<T> {
+  const r = await fetch(`${RAG_URL}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const detail = await r.text().catch(() => '');
+    throw new Error(detail || `${path} → ${r.status}`);
+  }
+  return r.json() as Promise<T>;
+}
+
+export const ragApi = {
+  schema: () => getJson<SchemaCatalog>('/schema'),
+
+  roles: () => getJson<{ default: string; roles: RolePolicyInfo[] }>('/roles'),
+
+  health: () => getJson<Record<string, unknown>>('/health'),
+
+  config: () =>
+    getJson<{ knobs: Record<string, unknown>; settings: Record<string, unknown> }>('/config'),
+
+  retrieve: (question: string, topK?: number) =>
+    postJson<{ mode: string; tables: string[]; ranking: unknown[] }>('/retrieve', {
+      question,
+      top_k: topK,
+    }),
+
+  /** Run user-edited SQL. Same validator and policy rewrite as a generated query. */
+  execute: (sql: string, user: UserContext) =>
+    postJson<ExecuteResult>('/execute', { sql, user: userPayload(user) }),
+
+  explain: (sql: string, user: UserContext) =>
+    postJson<ExecuteResult>('/execute', { sql, user: userPayload(user), explain: true }),
+
+  async report(artifact: ArtifactData, title: string): Promise<Blob> {
+    const r = await fetch(`${RAG_URL}/report`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        columns: artifact.columns,
+        rows: artifact.rows,
+        chart: artifact.chart,
+        title,
+      }),
+    });
+    if (!r.ok) throw new Error('Report generation failed');
+    return r.blob();
+  },
+};

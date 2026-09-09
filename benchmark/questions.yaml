@@ -26,7 +26,13 @@
 #   id        stable identifier, referenced in results tables
 #   question  natural-language question as a user would type it
 #   lang      en | ro  (the system is specified to accept both)
-#   category  simple | aggregate | join | subquery | window | ambiguous
+#   category  simple | aggregate | join | subquery | window | ambiguous, plus
+#             the constructs the second wave adds: multi_level_agg | temporal |
+#             pivot | set_ops | calendar | gaps_islands | percentile | ratio |
+#             self_join | anti_join | recursive | cohort. Free-form as far as
+#             the harness is concerned - score.py groups whatever it finds -
+#             but tables.py maps them to table columns, so a new value needs a
+#             home in its CATEGORY_GROUPS or it drops out of the LaTeX table.
 #   tables    gold tables a correct answer must touch (schema-linking recall)
 #   gold_sql  reference query; null for questions with no single correct answer
 #   ordered   true when row order is part of correctness (gold SQL has ORDER BY
@@ -415,3 +421,572 @@ questions:
     note: >
       Requires no SQL at all. Guards the regression where the answering prompt
       claimed live data access and fabricated figures.
+
+
+  # =========================================================================
+  # Second wave (q31-q51): questions that discriminate at the frontier.
+  #
+  # q01-q30 are saturated -- four of five hosted models answer all 26 scored
+  # questions correctly, so the set can no longer rank them. The reason is that
+  # they are hard at FINDING tables, which the whole-schema arm gets for free,
+  # and easy at the SHAPE of the query, which is what still separates models.
+  # Spider 2.0's failure taxonomy puts 35.5% of frontier failures in "erroneous
+  # data analysis" -- the model emits a structurally simpler query than the task
+  # needs -- against 27.6% for schema linking. See research.md.
+  #
+  # Every question below has a named TRAP: a specific plausible-but-wrong query
+  # that EXECUTES CLEANLY and returns different numbers. That is the point. A
+  # question whose wrong answer is not characterisable is not a discriminator,
+  # and a wrong query that errors out would be caught without a benchmark.
+  #
+  # Every gold query here was executed against the seeded fixture and returns a
+  # non-empty, non-degenerate result; row counts are stated in the notes. Traps
+  # marked "verified" had their wrong variant executed and diffed too.
+  #
+  # New categories, all additive (score.py aggregates categories dynamically):
+  #   multi_level_agg  aggregating two fan-outs of one dimension separately
+  #   temporal         period-over-period against the right prior period
+  #   pivot            conditional aggregation to columns
+  #   set_ops          EXCEPT / INTERSECT over year cohorts
+  #   calendar         a date spine, so empty periods report zero
+  #   gaps_islands     consecutive-run detection
+  #   percentile       interpolated median, not the mean
+  #   ratio            ratio of sums, not average of ratios
+  #   self_join        interval overlap
+  #   anti_join        NOT IN vs NOT EXISTS under NULLs
+  #   cohort           retention against the acquisition period
+  # =========================================================================
+
+  # Trap (verified): putting both joins in one FROM multiplies each payment by
+  # the vehicle's maintenance rows and vice versa — total revenue comes out
+  # $4,797,624 instead of $951,911, all 17 rows wrong, and the query executes
+  # cleanly.
+  - id: q31
+    question: For each vehicle make, show the make, the total revenue from completed payments on that make's reservations, and the total maintenance cost recorded for that make's vehicles.
+    lang: en
+    category: multi_level_agg
+    tables: [payments, reservations, vehicles, maintenance_records]
+    ordered: false
+    expected_chart: [bar, none]
+    gold_sql: >
+      WITH rev AS (
+        SELECT v.make, SUM(p.amount) AS revenue
+        FROM payments p
+        JOIN reservations r ON r.id = p.reservation_id
+        JOIN vehicles v ON v.id = r.vehicle_id
+        WHERE p.status = 'completed'
+        GROUP BY v.make),
+      mnt AS (
+        SELECT v.make, SUM(m.cost) AS maintenance_cost
+        FROM maintenance_records m
+        JOIN vehicles v ON v.id = m.vehicle_id
+        GROUP BY v.make)
+      SELECT rev.make, rev.revenue, mnt.maintenance_cost
+      FROM rev JOIN mnt ON mnt.make = rev.make
+    note: >
+      Two measures over two different fan-outs of the same dimension. The two
+      aggregates must be computed separately and joined; every make has both
+      reservations and maintenance, so the result has all 17 makes either way
+      and only the numbers betray the bug. Returns 17 rows.
+
+  # Trap: `a.id <> b.id` counts every pair twice (each count doubles, a
+  # different set crosses the threshold); testing only `b.pickup BETWEEN
+  # a.pickup AND a.return` misses containment overlaps; forgetting the status
+  # filter inflates counts (verified: 73 vehicles qualify with naive
+  # variants).
+  - id: q32
+    question: Which vehicles are double-booked at least ten times — pairs of two different reservations on the same vehicle, neither of them cancelled or a no-show, whose date ranges share at least one calendar day (pickup and return days inclusive)? Show make, model, license plate and the number of such pairs.
+    lang: en
+    category: self_join
+    tables: [reservations, vehicles]
+    ordered: false
+    expected_chart: [none, bar]
+    gold_sql: >
+      SELECT v.make, v.model, v.license_plate, COUNT(*) AS overlapping_pairs
+      FROM reservations a
+      JOIN reservations b
+        ON b.vehicle_id = a.vehicle_id AND a.id < b.id
+       AND a.pickup_date <= b.return_date AND b.pickup_date <= a.return_date
+      JOIN vehicles v ON v.id = a.vehicle_id
+      WHERE a.status NOT IN ('cancelled', 'no_show')
+        AND b.status NOT IN ('cancelled', 'no_show')
+      GROUP BY v.id, v.make, v.model, v.license_plate
+      HAVING COUNT(*) >= 10
+    note: >
+      Interval-overlap self-join. The seed contains 342 overlapping
+      non-cancelled pairs over 73 vehicles; the >= 10 cut returns exactly 5
+      vehicles (pair counts 15, 15, 11, 10, 10), so both the overlap predicate
+      and the pair-counting must be right for the row set to match.
+
+  # Trap (verified): `366 - SUM(clipped reservation lengths)` double-subtracts
+  # overlapping reservations: UIK-1020 comes out 342 instead of 343 and
+  # JBL-1061 drops out of the >= 340 set entirely — same row count, different
+  # rows/values.
+  - id: q33
+    question: Which vehicles were idle for at least 340 days of 2024? A day is idle when it is not covered by any reservation of that vehicle that is not cancelled and not a no-show; pickup and return days count as covered, and each calendar day counts at most once per vehicle even when reservations overlap. Show the license plate and the number of idle days.
+    lang: en
+    category: calendar
+    tables: [vehicles, reservations]
+    ordered: false
+    expected_chart: [bar, none]
+    gold_sql: >
+      WITH days AS (
+        SELECT v.id AS vehicle_id, v.license_plate, d::date AS day
+        FROM vehicles v
+        CROSS JOIN generate_series(DATE '2024-01-01', DATE '2024-12-31', INTERVAL '1 day') d),
+      covered AS (
+        SELECT DISTINCT r.vehicle_id, d.day
+        FROM reservations r
+        JOIN days d ON d.vehicle_id = r.vehicle_id
+         AND d.day BETWEEN r.pickup_date AND r.return_date
+        WHERE r.status NOT IN ('cancelled', 'no_show'))
+      SELECT dy.license_plate, COUNT(*) AS idle_days
+      FROM days dy
+      LEFT JOIN covered c ON c.vehicle_id = dy.vehicle_id AND c.day = dy.day
+      WHERE c.vehicle_id IS NULL
+      GROUP BY dy.vehicle_id, dy.license_plate
+      HAVING COUNT(*) >= 340
+    note: >
+      Interval union over a calendar spine. Returns 5 rows (341, 342, 343,
+      345, 351 idle days). The question pins the union semantics ("each day
+      counts at most once") because without that pin the arithmetic reading
+      would be defensible; pinned, it is still the query most models write.
+
+  # Trap (verified): `LAG(revenue, 1)` compares to the preceding month —
+  # January 2024 comes out +0.46% instead of +23.52%. Every row differs. A
+  # LAG(12) over a complete month series also works; the discriminator is the
+  # offset, and models default to 1.
+  - id: q34
+    question: For each month of 2024, show the month as a date (the first day of the month), the revenue from completed payments received in that month (by payment date), and the percentage change versus the same month of 2023, rounded to two decimals.
+    lang: en
+    category: temporal
+    tables: [payments]
+    ordered: true
+    expected_chart: [line, bar]
+    gold_sql: >
+      WITH m AS (
+        SELECT DATE_TRUNC('month', payment_date)::date AS month, SUM(amount) AS revenue
+        FROM payments WHERE status = 'completed' GROUP BY 1)
+      SELECT a.month, a.revenue,
+             ROUND(100.0 * (a.revenue - b.revenue) / b.revenue, 2) AS yoy_pct
+      FROM m a JOIN m b ON b.month = a.month - INTERVAL '1 year'
+      WHERE a.month >= DATE '2024-01-01' AND a.month < DATE '2025-01-01'
+      ORDER BY a.month
+    note: >
+      Same-month-last-year comparison; payments run 2021-12 to 2025-06 so every
+      2024 month has a 2023 partner. Returns 12 rows. Attribution is pinned to
+      payment date because pickup date is the other defensible reading.
+
+  # Trap (verified): filtering to 2024 before the window gives January a
+  # moving average of 13,368.12 (itself) instead of 15,001.43 and a wrong
+  # February — the query is otherwise identical and executes cleanly.
+  - id: q35
+    question: Show the three-month trailing moving average of monthly revenue from completed payments - the mean of that month and the two preceding months - for every month of 2024. The average must be computed over the full payment history, so January 2024 averages November 2023, December 2023 and January 2024. Show the month as a date, that month's revenue, and the moving average rounded to two decimals.
+    lang: en
+    category: window
+    tables: [payments]
+    ordered: true
+    expected_chart: [line, area]
+    gold_sql: >
+      WITH m AS (
+        SELECT DATE_TRUNC('month', payment_date)::date AS month, SUM(amount) AS revenue
+        FROM payments WHERE status = 'completed' GROUP BY 1),
+      ma AS (
+        SELECT month, revenue,
+               ROUND(AVG(revenue) OVER (ORDER BY month
+                     ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 2) AS moving_avg
+        FROM m)
+      SELECT month, revenue, moving_avg
+      FROM ma
+      WHERE month >= DATE '2024-01-01' AND month < DATE '2025-01-01'
+      ORDER BY month
+    note: >
+      Frame clause plus evaluation order: the window must run over the full
+      series and the year filter must apply afterwards. Returns 12 rows.
+
+  # Trap (by construction): the long format - one row per (branch, method) -
+  # returns 30 rows x 3 columns and fails the scorer's shape check
+  # immediately; the question says "three separate columns" precisely so that
+  # long format is wrong rather than defensible.
+  - id: q36
+    question: For each branch, show the branch name and the revenue from completed payments split into three separate columns by payment method - credit card, debit card and cash. Attribute each payment to the pickup branch of its reservation.
+    lang: en
+    category: pivot
+    tables: [payments, reservations, locations]
+    ordered: false
+    expected_chart: [bar]
+    gold_sql: >
+      SELECT l.name,
+             COALESCE(SUM(p.amount) FILTER (WHERE p.payment_method = 'credit_card'), 0) AS credit_card,
+             COALESCE(SUM(p.amount) FILTER (WHERE p.payment_method = 'debit_card'), 0) AS debit_card,
+             COALESCE(SUM(p.amount) FILTER (WHERE p.payment_method = 'cash'), 0) AS cash
+      FROM payments p
+      JOIN reservations r ON r.id = p.reservation_id
+      JOIN locations l ON l.id = r.pickup_location
+      WHERE p.status = 'completed'
+      GROUP BY l.name
+    note: >
+      Conditional aggregation (FILTER or CASE) into a wide result: 10 rows x 4
+      columns. Every branch has all three methods in the seed, so COALESCE is
+      belt-and-braces rather than load-bearing.
+
+  # Trap (verified): AVG instead of the median (Economy 185.30 vs 176.17);
+  # PERCENTILE_DISC differs from CONT in three of five categories (Compact
+  # 248.99 vs 249.27).
+  - id: q37
+    question: Pentru fiecare categorie de vehicule, care este costul median al rezervărilor finalizate, calculat ca mediană interpolată (media celor două valori din mijloc când numărul de rezervări este par) și rotunjit la două zecimale? Arată numele categoriei și mediana.
+    lang: ro
+    category: percentile
+    tables: [reservations, vehicles, vehicle_categories]
+    ordered: false
+    expected_chart: [bar]
+    gold_sql: >
+      SELECT c.name,
+             ROUND((PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY r.total_cost))::numeric, 2) AS median_cost
+      FROM reservations r
+      JOIN vehicles v ON v.id = r.vehicle_id
+      JOIN vehicle_categories c ON c.id = v.category_id
+      WHERE r.status = 'completed'
+      GROUP BY c.name
+    note: >
+      Ordered-set aggregate in Romanian. The interpolation is pinned in the
+      question because PERCENTILE_DISC is otherwise defensible. Returns 5 rows;
+      the cast to numeric is needed because ROUND(double, int) does not exist
+      in PostgreSQL, which is its own small trap.
+
+  # Trap (verified): `AVG(p.amount / (r.return_date - r.pickup_date))` gives
+  # 78.81 vs 77.34 for SUVs — every category differs by ~1-1.5, small enough
+  # to look right and large enough for the 4-decimal scorer to reject.
+  - id: q38
+    question: For each vehicle category, show the category name and the revenue per rental day, defined as the total amount of completed payments divided by the total number of rental days (return date minus pickup date) of the reservations those payments belong to, rounded to two decimals. Divide the two totals - do not average per-reservation daily rates.
+    lang: en
+    category: ratio
+    tables: [payments, reservations, vehicles, vehicle_categories]
+    ordered: false
+    expected_chart: [bar]
+    gold_sql: >
+      SELECT c.name,
+             ROUND(SUM(p.amount) / SUM(r.return_date - r.pickup_date), 2) AS revenue_per_day
+      FROM payments p
+      JOIN reservations r ON r.id = p.reservation_id
+      JOIN vehicles v ON v.id = r.vehicle_id
+      JOIN vehicle_categories c ON c.id = v.category_id
+      WHERE p.status = 'completed'
+      GROUP BY c.name
+    note: >
+      The Spider 2.0 retention-rate failure in miniature: a ratio of two
+      aggregates, explicitly pinned, that models still write as
+      AVG(amount/days). No reservation has return_date = pickup_date in the
+      seed, so there is no division-by-zero escape hatch to confuse scoring.
+      Returns 5 rows.
+
+  # Trap (by construction): `GROUP BY branch` + `MAX(SUM(...))` cannot carry
+  # the client's name; the common repair - joining the max back without
+  # partitioning - returns one row per client with that spend anywhere, not
+  # per branch.
+  - id: q39
+    question: For each branch, find the client who has spent the most in completed payments on reservations picked up at that branch. Show the branch name, the client's first name and last name, and the amount spent.
+    lang: en
+    category: window
+    tables: [payments, reservations, clients, locations]
+    ordered: false
+    expected_chart: [bar, none]
+    gold_sql: >
+      WITH spend AS (
+        SELECT r.pickup_location, r.client_id, SUM(p.amount) AS spent
+        FROM payments p
+        JOIN reservations r ON r.id = p.reservation_id
+        WHERE p.status = 'completed'
+        GROUP BY r.pickup_location, r.client_id),
+      ranked AS (
+        SELECT pickup_location, client_id, spent,
+               ROW_NUMBER() OVER (PARTITION BY pickup_location ORDER BY spent DESC) AS rn
+        FROM spend)
+      SELECT l.name, c.first_name, c.last_name, rk.spent
+      FROM ranked rk
+      JOIN locations l ON l.id = rk.pickup_location
+      JOIN clients c ON c.id = rk.client_id
+      WHERE rk.rn = 1
+    note: >
+      Greatest-per-group over a derived aggregate (not a stored column, unlike
+      the existing q25 which ranks a raw salary). Verified: no branch has a
+      tie at the top, so ROW_NUMBER, RANK and a correlated MAX all agree and a
+      correct query cannot be punished for its tie-breaking choice. 10 rows.
+
+  # Trap (by construction): applying the non-cancelled filter only to 2023
+  # (letting any 2024 reservation, even cancelled, count as retention) changes
+  # the count; counting reservations instead of distinct clients changes it
+  # more.
+  - id: q40
+    question: Câți clienți au avut cel puțin o rezervare neanulată cu data de ridicare în 2023, dar nicio rezervare neanulată cu data de ridicare în 2024? Returnează un singur număr.
+    lang: ro
+    category: set_ops
+    tables: [reservations]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: >
+      SELECT COUNT(*) AS churned_clients FROM (
+        SELECT DISTINCT client_id FROM reservations
+        WHERE status <> 'cancelled'
+          AND pickup_date >= DATE '2023-01-01' AND pickup_date < DATE '2024-01-01'
+        EXCEPT
+        SELECT DISTINCT client_id FROM reservations
+        WHERE status <> 'cancelled'
+          AND pickup_date >= DATE '2024-01-01' AND pickup_date < DATE '2025-01-01') t
+    note: >
+      Set difference with a status filter on both sides. Answer: 111. The
+      "neanulată" (non-cancelled) qualifier matters on the 2024 side too: a
+      client whose only 2024 reservation was cancelled counts as churned.
+
+  # Trap (verified): cohorting on `registration_date` gives a 221-client
+  # cohort and a different percentage; the Spider 2.0 error analysis singles
+  # out exactly this collapse of a multi-stage cohort plan.
+  - id: q41
+    question: Consider the clients whose first non-cancelled reservation, by pickup date, was in 2022. How many such clients are there, how many of them made at least one non-cancelled reservation with a pickup date in 2023, and what percentage is that, rounded to two decimals? Return one row with the cohort size, the retained count and the retention percentage.
+    lang: en
+    category: cohort
+    tables: [reservations]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: >
+      WITH first_res AS (
+        SELECT client_id, MIN(pickup_date) AS first_pickup
+        FROM reservations WHERE status <> 'cancelled'
+        GROUP BY client_id),
+      cohort AS (
+        SELECT client_id FROM first_res
+        WHERE first_pickup >= DATE '2022-01-01' AND first_pickup < DATE '2023-01-01')
+      SELECT COUNT(*) AS cohort_size,
+             COUNT(*) FILTER (WHERE EXISTS (
+               SELECT 1 FROM reservations r
+               WHERE r.client_id = cohort.client_id AND r.status <> 'cancelled'
+                 AND r.pickup_date >= DATE '2023-01-01'
+                 AND r.pickup_date < DATE '2024-01-01')) AS retained,
+             ROUND(100.0 * COUNT(*) FILTER (WHERE EXISTS (
+               SELECT 1 FROM reservations r
+               WHERE r.client_id = cohort.client_id AND r.status <> 'cancelled'
+                 AND r.pickup_date >= DATE '2023-01-01'
+                 AND r.pickup_date < DATE '2024-01-01')) / COUNT(*), 2) AS retention_pct
+      FROM cohort
+    note: >
+      The cohort is defined by first activity, not by registration - the
+      clients table has a registration_date column sitting right there as a
+      decoy (221 clients registered in 2022; 411 first rented in 2022).
+      Answer: (411, 321, 78.10).
+
+  # Trap (verified against the count distribution): RANK() skips to 1,1,3,3,5
+  # and returns 4 rows; ROW_NUMBER() returns 3; only DENSE_RANK returns the 5
+  # rows the wording ("share a rank, no numbers skipped") specifies.
+  - id: q42
+    question: Rank the vehicles by their number of maintenance records, where vehicles with the same count share a rank and no rank numbers are skipped. Show the license plate, the number of maintenance records and the rank, for ranks 1 through 3.
+    lang: en
+    category: window
+    tables: [vehicles, maintenance_records]
+    ordered: false
+    expected_chart: [bar, none]
+    gold_sql: >
+      SELECT license_plate, maintenance_count, rnk FROM (
+        SELECT v.license_plate, COUNT(m.id) AS maintenance_count,
+               DENSE_RANK() OVER (ORDER BY COUNT(m.id) DESC) AS rnk
+        FROM vehicles v
+        JOIN maintenance_records m ON m.vehicle_id = v.id
+        GROUP BY v.id, v.license_plate) t
+      WHERE rnk <= 3
+    note: >
+      The top counts are 10, 10, 9, 9, 8 - real ties, so the three ranking
+      functions finally disagree on this data. Returns 5 rows.
+
+  # Trap (by construction): dropping DISTINCT counts reservations (~90-100 per
+  # cell instead of ~85-100 distinct clients — close enough to look right);
+  # computing the two years in separate queries and joining loses branches if
+  # either side is empty.
+  - id: q43
+    question: For each branch, show the branch name, the number of distinct clients who picked up a reservation there in 2023, and the number of distinct clients who picked up a reservation there in 2024, as two separate columns.
+    lang: en
+    category: pivot
+    tables: [locations, reservations]
+    ordered: false
+    expected_chart: [bar]
+    gold_sql: >
+      SELECT l.name,
+             COUNT(DISTINCT r.client_id) FILTER (
+               WHERE r.pickup_date >= DATE '2023-01-01' AND r.pickup_date < DATE '2024-01-01') AS clients_2023,
+             COUNT(DISTINCT r.client_id) FILTER (
+               WHERE r.pickup_date >= DATE '2024-01-01' AND r.pickup_date < DATE '2025-01-01') AS clients_2024
+      FROM locations l
+      LEFT JOIN reservations r ON r.pickup_location = l.id
+      GROUP BY l.name
+    note: >
+      DISTINCT inside a filtered aggregate, twice, in one pass. 10 rows.
+
+  # Trap (by construction): without DISTINCT, duplicate pickup dates shift the
+  # row_number offsets and shred the islands; a MAX-of-daily-count reading
+  # returns the busiest day instead of a streak.
+  - id: q44
+    question: What is the longest run of consecutive calendar days on which at least one reservation was picked up at the Downtown Hub branch? Return the length of that run in days as a single number.
+    lang: en
+    category: gaps_islands
+    tables: [reservations, locations]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: >
+      WITH d AS (
+        SELECT DISTINCT r.pickup_date
+        FROM reservations r
+        JOIN locations l ON l.id = r.pickup_location
+        WHERE l.name = 'Downtown Hub'),
+      grp AS (
+        SELECT pickup_date,
+               pickup_date - (ROW_NUMBER() OVER (ORDER BY pickup_date))::int AS g
+        FROM d)
+      SELECT MAX(len) AS longest_streak
+      FROM (SELECT COUNT(*) AS len FROM grp GROUP BY g) t
+    note: >
+      Classic islands detection (date minus row_number). Answer: 3. Two
+      distinct streaks tie at 3 days, which is why the question asks only for
+      the length - asking for the dates would have no single correct answer.
+      DISTINCT matters: multiple pickups on one day must not break the
+      row_number arithmetic.
+
+  # Trap (by construction): `HAVING COUNT(*) >= 5` selects clients with five
+  # reservations regardless of category — a much larger set; grouping by name
+  # alone merges distinct clients who share a name.
+  - id: q45
+    question: Which clients have rented vehicles from all five vehicle categories at least once? Show each client's first name and last name.
+    lang: en
+    category: subquery
+    tables: [clients, reservations, vehicles]
+    ordered: false
+    expected_chart: [none]
+    gold_sql: >
+      SELECT c.first_name, c.last_name
+      FROM clients c
+      JOIN reservations r ON r.client_id = c.id
+      JOIN vehicles v ON v.id = r.vehicle_id
+      GROUP BY c.id, c.first_name, c.last_name
+      HAVING COUNT(DISTINCT v.category_id) = 5
+    note: >
+      Relational division by distinct-count matching (the double NOT EXISTS is
+      the equivalent formulation). Returns 49 rows. Grouping is by c.id so
+      namesake clients are kept apart.
+
+  # Trap (verified): `100 * COUNT(...) / COUNT(*)` truncates every row
+  # (Airport Terminal 10 vs 10.5) — syntactically fine, silently wrong in all
+  # ten rows.
+  - id: q46
+    question: For each branch, what percentage of the reservations picked up there were cancelled? Show the branch name and the percentage rounded to one decimal.
+    lang: en
+    category: aggregate
+    tables: [reservations, locations]
+    ordered: false
+    expected_chart: [bar]
+    gold_sql: >
+      SELECT l.name,
+             ROUND(100.0 * COUNT(*) FILTER (WHERE r.status = 'cancelled') / COUNT(*), 1) AS cancelled_pct
+      FROM reservations r
+      JOIN locations l ON l.id = r.pickup_location
+      GROUP BY l.name
+    note: >
+      Deliberately the simplest question in the batch: the only hazard is
+      PostgreSQL integer division. 10 rows.
+
+  # Trap (verified): the single-FROM version inflates both sums and returns
+  # **77** vehicles instead of 11 — the inflation is asymmetric (revenue
+  # scales with maintenance-row count, maintenance with payment count), so the
+  # 30% threshold reshuffles.
+  - id: q47
+    question: Which vehicles have cost more in total maintenance than 30 percent of the total revenue from completed payments on their reservations? Show the license plate, the revenue and the maintenance cost.
+    lang: en
+    category: multi_level_agg
+    tables: [vehicles, payments, reservations, maintenance_records]
+    ordered: false
+    expected_chart: [none, bar]
+    gold_sql: >
+      WITH rev AS (
+        SELECT r.vehicle_id, SUM(p.amount) AS revenue
+        FROM payments p
+        JOIN reservations r ON r.id = p.reservation_id
+        WHERE p.status = 'completed'
+        GROUP BY r.vehicle_id),
+      mnt AS (
+        SELECT vehicle_id, SUM(cost) AS maintenance_cost
+        FROM maintenance_records
+        GROUP BY vehicle_id)
+      SELECT v.license_plate, rev.revenue, mnt.maintenance_cost
+      FROM rev
+      JOIN mnt ON mnt.vehicle_id = rev.vehicle_id
+      JOIN vehicles v ON v.id = rev.vehicle_id
+      WHERE mnt.maintenance_cost > 0.30 * rev.revenue
+    note: >
+      Same double-aggregation discipline as q31, but the fan-out now corrupts a
+      filter rather than a displayed number, so the wrong query returns the
+      wrong ROWS, not just wrong values. Returns 11 rows.
+
+  # Trap (verified): GROUP BY over reservations alone returns 6 rows and the
+  # scorer's row-count check fails it; the subtler version - LEFT JOIN but the
+  # vehicle filter in WHERE - collapses to the same 6 rows. `COUNT(*)` instead
+  # of `COUNT(r.id)` reports 1 for empty months.
+  - id: q48
+    question: For the vehicle with license plate BDH-1053, show the number of reservations picked up in each month of 2024 - all twelve months, with a zero for months in which it had none. Show the month as a date and the count.
+    lang: en
+    category: calendar
+    tables: [reservations, vehicles]
+    ordered: true
+    expected_chart: [bar, line]
+    gold_sql: >
+      SELECT m.month::date AS month, COUNT(r.id) AS reservations
+      FROM generate_series(DATE '2024-01-01', DATE '2024-12-01', INTERVAL '1 month') AS m(month)
+      LEFT JOIN reservations r
+        ON DATE_TRUNC('month', r.pickup_date) = m.month
+       AND r.vehicle_id = (SELECT id FROM vehicles WHERE license_plate = 'BDH-1053')
+      GROUP BY m.month
+      ORDER BY m.month
+    note: >
+      Date-spine LEFT JOIN with the vehicle predicate in the join condition
+      (in a WHERE it silently turns the join inner). BDH-1053 has six
+      zero months in 2024, so the spine visibly matters: 12 rows vs 6. Also a
+      value-index question - BDH-1053 must resolve to vehicles.license_plate.
+
+  - id: q49
+    question: Care sucursală a adus cei mai mulți bani în 2024?
+    lang: ro
+    category: ambiguous
+    tables: [payments, reservations, locations]
+    ordered: false
+    gold_sql: null
+    note: >
+      Looks answerable, which is the point - unlike "cum merge afacerea?", a
+      model can produce a plausible query instantly. But "brought in the most
+      money in 2024" has at least four defensible readings that give different
+      winners or amounts - attribute by payment date vs pickup date, by pickup
+      branch vs return branch, gross completed payments vs net of that
+      branch's maintenance costs. A good system asks which was meant.
+
+  - id: q50
+    question: What is our average revenue per client?
+    lang: en
+    category: ambiguous
+    tables: [payments, clients]
+    ordered: false
+    gold_sql: null
+    note: >
+      The denominator is the trap: all 600 registered clients, the 592 with at
+      least one reservation, or only clients with completed payments - the
+      seed makes all three numbers different. "Revenue" repeats the
+      completed/pending/refunded choice that q09 had to pin. A model that
+      answers without asking has silently chosen a denominator.
+
+  - id: q51
+    question: How many cars were rented last month?
+    lang: en
+    category: ambiguous
+    tables: [reservations, vehicles]
+    ordered: false
+    gold_sql: null
+    note: >
+      Two independent ambiguities: "last month" has no anchor (the data ends
+      June 2025, so relative to the wall clock the answer is zero), and
+      "rented" could mean pickups during the month, reservations active at any
+      point in it, or distinct vehicles vs reservation count. Modeled on the
+      adventureworks q30 finding that relative-time questions get guessed, not
+      clarified.

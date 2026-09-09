@@ -1,2 +1,4 @@
 # Throwaway PostgreSQL instance created by run.py when no --database-url is given
 .pgdata/
+.mcp-agent-config.json
+.sweep-logs/

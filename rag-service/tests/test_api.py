@@ -257,3 +257,164 @@ def test_report_without_a_chart_has_one_sheet(client):
 
     wb = load_workbook(io.BytesIO(response.content))
     assert wb.sheetnames == ["Data"]
+
+
+# ---------------------------------------------------------------------------
+# The workbench surface: what the redesigned frontend reads
+# ---------------------------------------------------------------------------
+def test_meta_carries_the_whole_trace(client):
+    """The panel renders the trace; it must arrive on the META frame."""
+    response = client.post(
+        "/chat", json={"messages": [{"role": "user", "content": "cities?"}]}
+    )
+    meta = json.loads(
+        next(l for l in sse_lines(response.text) if l.startswith("[META]"))[6:]
+    )
+
+    assert meta["stages"]["retrieval"] >= 0
+    assert meta["total_ms"] >= 0
+    assert meta["attempts_detail"][-1]["ok"] is True
+    assert meta["attempts_detail"][-1]["stage"] == "execution"
+    assert meta["retrieval"]["ranking"]
+    assert {"table", "score", "dense", "lexical", "value"} <= set(
+        meta["retrieval"]["ranking"][0]
+    )
+    assert meta["retrieval"]["candidates"] == len(main.state.catalog.tables)
+    assert meta["policy"]["enabled"] is True
+    assert meta["policy"]["max_rows"] == meta["max_rows"]
+    assert meta["truncated"] is False
+    assert meta["database"] == main.state.catalog.database
+
+
+def test_failed_attempts_travel_with_their_error(client):
+    """The repair trail is only legible if the verbatim error comes with it."""
+    calls = {"n": 0}
+
+    class Flaky(FakeRunner):
+        async def execute(self, sql, session=None):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                from db import SqlExecutionError
+
+                raise SqlExecutionError('column "p.paid_at" does not exist')
+            return await super().execute(sql, session)
+
+    main.state.runner = Flaky()
+    response = client.post(
+        "/chat", json={"messages": [{"role": "user", "content": "cities?"}]}
+    )
+    meta = json.loads(
+        next(l for l in sse_lines(response.text) if l.startswith("[META]"))[6:]
+    )
+
+    failed = [a for a in meta["attempts_detail"] if not a["ok"]]
+    assert failed and "paid_at" in failed[0]["error"]
+    assert failed[0]["sql"]
+    assert meta["retries"] == 1
+
+
+def test_clarification_options_reach_the_frontend(client):
+    main.state.llm = ScriptedLLM(
+        {
+            "clarification": "By spend or by rentals?",
+            "options": [
+                {"label": "By total spend", "measure": "SUM(p.amount)", "question": "..."},
+                {"nonsense": True},
+            ],
+            "sql": None,
+        }
+    )
+    response = client.post(
+        "/chat", json={"messages": [{"role": "user", "content": "best clients?"}]}
+    )
+    meta = json.loads(
+        next(l for l in sse_lines(response.text) if l.startswith("[META]"))[6:]
+    )
+
+    assert meta["outcome"] == "clarification"
+    # The prose clarification stays a plain string: `benchmark/arms.py` reads it.
+    assert isinstance(meta["clarification"], str)
+    # Malformed entries are dropped rather than raising.
+    assert len(meta["clarification_options"]) == 1
+    assert meta["clarification_options"][0]["measure"] == "SUM(p.amount)"
+
+
+def test_roles_endpoint_reports_policy_yaml(client):
+    body = client.get("/roles").json()
+    names = [r["name"] for r in body["roles"]]
+    assert {"manager", "agent", "analyst", "auditor"} <= set(names)
+    agent = next(r for r in body["roles"] if r["name"] == "agent")
+    assert agent["requires"] == ["location_id"]
+    assert "employees.salary" in agent["denied_columns"]
+
+
+def test_execute_runs_user_supplied_sql(client):
+    body = client.post("/execute", json={"sql": "SELECT city FROM locations"}).json()
+    assert body["ok"] is True
+    assert body["row_count"] == 2
+    assert body["columns"] == ["city", "n"]
+    assert body["role"] == "manager"
+
+
+def test_execute_applies_the_policy_rewrite(client):
+    """Editing the SQL in the workbench must not widen what a role can read."""
+    body = client.post(
+        "/execute",
+        json={
+            "sql": "SELECT id FROM vehicles",
+            "user": {"role": "agent", "location_id": 4},
+        },
+    ).json()
+
+    assert body["ok"] is True
+    assert body["policy"]["applied_filters"][0]["table"] == "vehicles"
+    assert "location_id" in main.state.runner.executed[-1]
+    assert body["max_rows"] == 200  # the agent row cap, not the service default
+
+
+def test_execute_refuses_a_denied_column(client):
+    body = client.post(
+        "/execute",
+        json={
+            "sql": "SELECT salary FROM employees",
+            "user": {"role": "analyst"},
+        },
+    ).json()
+
+    assert body["ok"] is False
+    assert body["stage"] == "policy"
+    assert "salary" in body["error"]
+
+
+def test_execute_rejects_a_write(client):
+    body = client.post("/execute", json={"sql": "DELETE FROM locations"}).json()
+    assert body["ok"] is False
+    assert body["stage"] == "validation"
+    assert main.state.runner.executed == []
+
+
+def test_execute_can_explain(client):
+    class ExplainingRunner(FakeRunner):
+        supports_session_context = True
+
+        async def execute(self, sql, session=None):
+            self.executed.append(sql)
+            return QueryResult(
+                columns=["QUERY PLAN"],
+                rows=[["Seq Scan on locations  (cost=0.00..1.10 rows=10 width=32)"]],
+                row_count=1,
+                duration_ms=0.4,
+            )
+
+    main.state.direct_runner = ExplainingRunner()
+    body = client.post(
+        "/execute", json={"sql": "SELECT city FROM locations", "explain": True}
+    ).json()
+
+    assert body["ok"] is True
+    assert body["plan"][0].startswith("Seq Scan")
+    assert main.state.direct_runner.executed[-1].startswith("EXPLAIN ")
+
+
+def test_execute_without_sql_is_a_400(client):
+    assert client.post("/execute", json={"sql": "   "}).status_code == 400
