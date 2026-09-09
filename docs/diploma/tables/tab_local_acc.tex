@@ -1,0 +1,14 @@
+\begin{tabular}{@{}lllrrr@{}}
+\toprule
+ & \multicolumn{2}{c}{\hd{Acuratețe}} & \multicolumn{3}{c}{\hd{Eșecuri pe car\_rental}} \\
+\cmidrule(lr){2-3}\cmidrule(l){4-6}
+\hd{Model} & \hd{car\_rental} & \hd{AdventureWorks} & \hd{SQL inv.} & \hd{fără SQL} & \hd{trunchiat} \\
+\midrule
+\code{qwen3.6-35B-A3B Q4} & \textbf{93,2\,\%} (41/44) & 85,7\,\% (42/49) & 2 & 0 & 0 \\
+\code{qwen3.6-27B IQ3} & \textbf{90,9\,\%} (40/44) & nerulat & 3 & 0 & 0 \\
+\code{qwen3.5-9B Q4} & \textbf{70,5\,\%} (31/44) & 67,3\,\% (33/49) & 0 & 5 & 5 \\
+\code{Arctic-7B Q4} & \textbf{65,9\,\%} (29/44) & 55,1\,\% (27/49) & 10 & 0 & 0 \\
+\code{Bonsai-27B Q1} & \textbf{63,6\,\%} (28/44) & 69,4\,\% (34/49) & 6 & 6 & 6 \\
+\code{Arctic-7B Q8} & \textbf{63,6\,\%} (28/44) & 55,1\,\% (27/49) & 9 & 0 & 0 \\
+\bottomrule
+\end{tabular}

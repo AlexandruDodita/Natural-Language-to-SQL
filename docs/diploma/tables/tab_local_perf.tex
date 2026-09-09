@@ -1,0 +1,12 @@
+\begin{tabular}{@{}lrrlrrr@{}}
+\toprule
+\hd{Model} & \hd{GGUF (GiB)} & \hd{VRAM (MiB)} & \hd{Cum încape} & \hd{tok/s} & \hd{Latență med.} & \hd{Durată, 44 î.} \\
+\midrule
+Arctic-7B Q4 & 4,4 & 6\,055 & rezident integral & 113 & 4,0\,s & 4 min \\
+qwen3.5-9B Q4 & 5,2 & 6\,702 & rezident integral & 91 & 8,7\,s & 15 min \\
+Arctic-7B Q8 & 7,5 & 9\,067 & rezident integral & 72 & 6,1\,s & 5 min \\
+Bonsai-27B Q1 & 3,5 & 6\,284 & rezident integral & 53 & 47,2\,s & 50 min \\
+\textbf{qwen3.6-35B-A3B Q4} & 20,6 & 9\,620 & experți în RAM & \textbf{50} & 39,5\,s & 37 min \\
+qwen3.6-27B IQ3 & 11,2 & 10\,438 & straturi parțiale & 8 & 268,5\,s & 247 min \\
+\bottomrule
+\end{tabular}
